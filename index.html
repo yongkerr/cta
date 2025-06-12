@@ -13,12 +13,13 @@
          ======================================== -->
     <style>
         /* ===== 01-1. 폰트 정의 (DSEG7, digital-7-mono-italic) 시작 ===== */
+
 @font-face {
     font-family: 'digital-7-mono-italic'; 
-    /* 파일들이 index.html과 같은 위치에 있으므로 경로에서 'fonts/'를 모두 제거합니다. */
-    src: url('digital-7-mono-italic.woff2?v=1') format('woff2'),
-         url('digital-7-mono-italic.woff?v=1') format('woff'),
-         url('digital-7-mono-italic.ttf?v=1') format('truetype');
+    /* GitHub 파일을 직접 CDN으로 불러오는 방식입니다. 경로 문제가 원천적으로 해결됩니다. */
+    src: url('https://cdn.jsdelivr.net/gh/yongkerr/cta/digital-7-mono-italic.woff2') format('woff2'),
+         url('https://cdn.jsdelivr.net/gh/yongkerr/cta/digital-7-mono-italic.woff') format('woff'),
+         url('https://cdn.jsdelivr.net/gh/yongkerr/cta/digital-7-mono-italic.ttf') format('truetype');
     font-weight: normal;
     font-style: italic;
 }
