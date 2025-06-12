@@ -12,13 +12,13 @@
          01. CSS 스타일 정의 섹션 시작
          ======================================== -->
     <style>
-        /* ===== 01-1. 폰트 정의 (DSEG7, Digital-7-Mono-Italic) 시작 ===== */
-        @font-face {
-    font-family: 'Digital-7-Mono-Italic';
-    /* 경로를 ./ 에서 /cta/fonts/ 로 수정했습니다. */
-    src: url('/cta/fonts/digital-7-mono-italic.woff2') format('woff2'),
-         url('/cta/fonts/digital-7-mono-italic.woff') format('woff'),
-         url('/cta/fonts/digital-7-mono-italic.ttf') format('truetype');
+        /* ===== 01-1. 폰트 정의 (DSEG7, digital-7-mono-italic) 시작 ===== */
+@font-face {
+    font-family: 'digital-7-mono-italic'; 
+    /* 파일들이 index.html과 같은 위치에 있으므로 경로에서 'fonts/'를 모두 제거합니다. */
+    src: url('digital-7-mono-italic.woff2?v=1') format('woff2'),
+         url('digital-7-mono-italic.woff?v=1') format('woff'),
+         url('digital-7-mono-italic.ttf?v=1') format('truetype');
     font-weight: normal;
     font-style: italic;
 }
@@ -32,7 +32,7 @@
         }
 
 
-        /* ===== 01-1. 폰트 정의 (DSEG7, Digital-7-Mono-Italic) 끝 ===== */
+        /* ===== 01-1. 폰트 정의 (DSEG7, digital-7-mono-italic) 끝 ===== */
 
         /* ===== 01-2. 전역 리셋 및 기본 설정 시작 ===== */
         * {
@@ -137,7 +137,7 @@
     padding: 8px 16px;
     border-radius: 6px;
     border: 1px solid #dee2e6;
-    font-family: 'Digital-7-Mono-Italic', 'Orbitron', monospace;
+    font-family: 'digital-7-mono-italic', 'Orbitron', monospace;
     min-width: 100px;
     text-align: center;
 }
@@ -456,7 +456,7 @@
             padding: 10px 5px 5px 5px;
             text-align: right;
             font-size: 32px;
-            font-family: 'Digital-7-Mono-Italic', monospace;
+            font-family: 'digital-7-mono-italic', monospace;
             font-weight: bold;
             border-radius: 4px;
             margin-bottom: 5px;
@@ -478,13 +478,13 @@
             font-size: 20px;
             font-weight: bold;
             color: #1f1d1d;
-            font-family: 'Digital-7-Mono-Italic', 'Orbitron', monospace;
+            font-family: 'digital-7-mono-italic', 'Orbitron', monospace;
             pointer-events: none;
         }
         
         .display-value {
             text-align: right;
-            font-family: 'Digital-7-Mono-Italic', 'Orbitron', monospace;
+            font-family: 'digital-7-mono-italic', 'Orbitron', monospace;
             font-weight: bold;
             font-size: 36.5px;
             width: 100%;
@@ -607,7 +607,7 @@
         }
 
         .history-value {
-            font-family: 'Digital-7-Mono-Italic', monospace;
+            font-family: 'digital-7-mono-italic', monospace;
             font-size: 12px;
             color: #495057;
             background: #e9ecef;
@@ -733,7 +733,7 @@
         .import-value {
             padding: 6px 12px;
             cursor: pointer;
-            font-family: 'Digital-7-Mono-Italic', monospace;
+            font-family: 'digital-7-mono-italic', monospace;
             font-size: 12px;
             border-bottom: 1px solid #f8f9fa;
         }
@@ -751,7 +751,7 @@
             background: transparent;
             border: none;
             outline: none;
-            font-family: 'Digital-7-Mono-Italic', monospace;
+            font-family: 'digital-7-mono-italic', monospace;
             font-size: 14px;
             color: #495057;
             padding: 10px;
