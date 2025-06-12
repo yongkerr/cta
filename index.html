@@ -14,14 +14,6 @@
     <style>
         /* ===== 01-1. 폰트 정의 (DSEG7, Digital-7-Mono-Italic) 시작 ===== */
         @font-face {
-            font-family: 'DSEG7';
-            src: url('https://cdn.jsdelivr.net/gh/keshikan/DSEG@master/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff2') format('woff2'),
-                 url('https://cdn.jsdelivr.net/gh/keshikan/DSEG@master/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff') format('woff');
-            font-weight: bold;
-            font-style: normal;
-        }
-
-@font-face {
     font-family: 'Digital-7-Mono-Italic';
     /* 경로를 ./ 에서 /cta/fonts/ 로 수정했습니다. */
     src: url('/cta/fonts/digital-7-mono-italic.woff2') format('woff2'),
@@ -30,6 +22,16 @@
     font-weight: normal;
     font-style: italic;
 }
+        
+        @font-face {
+            font-family: 'DSEG7';
+            src: url('https://cdn.jsdelivr.net/gh/keshikan/DSEG@master/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff2') format('woff2'),
+                 url('https://cdn.jsdelivr.net/gh/keshikan/DSEG@master/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff') format('woff');
+            font-weight: bold;
+            font-style: normal;
+        }
+
+
         /* ===== 01-1. 폰트 정의 (DSEG7, Digital-7-Mono-Italic) 끝 ===== */
 
         /* ===== 01-2. 전역 리셋 및 기본 설정 시작 ===== */
