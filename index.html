@@ -51,6 +51,15 @@
             flex-direction: column;
             height: 100vh;
         }
+
+        html, body {
+    touch-action: manipulation; /* 01-2-10. 더블탭/핀치 확대 방지 */
+    overscroll-behavior-y: contain; /* 01-2-11. 위아래 스크롤 튐 방지 */
+}
+* {
+    -webkit-tap-highlight-color: transparent; /* 01-2-12. 탭 하이라이트 제거 */
+}
+
         /* ===== 01-2. 전역 리셋 및 기본 설정 끝 ===== */
         
         /* ===== 01-3. 상단 네비게이션 바 스타일 시작 ===== */
@@ -2941,6 +2950,13 @@ async function testBack4AppConnection() {
         document.getElementById('question-text').textContent = "Back4App 서버 연결에 실패했습니다. 인터넷 연결을 확인해주세요.";
     }
 }
+
+// 06-13-3. 더블탭 확대/스크롤 방지 JS 추가
+document.addEventListener('dblclick', function(e) {
+    e.preventDefault();
+}, { passive: false });
+
+
 /* ===== 06-13. 초기화 함수 끝 ===== */
 
 /* ===== 06-14. Back4App 연동 및 퀴즈 데이터 관리 시작 ===== */
