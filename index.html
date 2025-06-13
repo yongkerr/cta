@@ -388,29 +388,15 @@
         /* ===== 01-7. 오버레이 스타일 끝 ===== */
         
         /* ===== 01-8. 문제풀이 화면 레이아웃 스타일 시작 ===== */
-        .quiz-layout {
-            display: flex;
-            height: 100%;
-            gap: 8px;
-            padding: 8px;
-        }
-        
-        .quiz-section {
-            flex: 2.2;
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .calculator-section {
-    flex: none;
-    width: 450px;          /* 원하는 고정 너비(px)로 설정 */
-    min-width: 340px;      /* 최소 너비 지정 */
-    max-width: 540px;      /* 최대 너비 지정 (원하는 경우) */
+.quiz-layout {
+    display: flex;
+    height: 100%;
+    gap: 8px;
+    padding: 8px;
+}
+
+.quiz-section {
+    flex: 2.2;
     background: white;
     border-radius: 8px;
     padding: 20px;
@@ -418,14 +404,28 @@
     border: 1px solid #e9ecef;
     display: flex;
     flex-direction: column;
-    position: sticky;      /* 뷰포트 오른쪽에 고정 */
-    right: 0;
-    top: 0;
-    height: 100%;
-    z-index: 10;
 }
 
-        /* ===== 01-8. 문제풀이 화면 레이아웃 스타일 끝 ===== */
+.calculator-section {
+    flex: none;
+    width: 450px;
+    min-width: 340px;
+    max-width: 540px;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    
+    /* ▼▼▼ (추가) 계산기 위치 고정을 위한 코드 ▼▼▼ */
+    position: sticky; /* 스크롤 시 달라붙는 효과 */
+    top: 8px;         /* 상단에서 8px 떨어진 위치에 고정 */
+    align-self: flex-start; /* flex 컨테이너 내에서 sticky가 잘 동작하도록 함 */
+    /* ▲▲▲ (추가) 계산기 위치 고정을 위한 코드 ▲▲▲ */
+}
+/* ===== 01-8. 문제풀이 화면 레이아웃 스타일 끝 ===== */
         
         /* ===== 01-9. 계산기 컨테이너 스타일 (CASIO JS-40B 디자인) 시작 ===== */
         .calculator-container {
