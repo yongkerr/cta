@@ -1931,7 +1931,7 @@
          06. JavaScript 기능 구현 섹션 시작
          ======================================== -->
     <script>
-        /* ===== 06-1. 전역 변수 선언 (수정) 시작 ===== */
+/* ===== 06-1. 전역 변수 선언 (수정) 시작 ===== */
 let calculatorMemory = 0;
 let grandTotalMemory = 0;
 let shouldClearOnNextInput = false;
@@ -1942,6 +1942,9 @@ let viewHistory = [];
 // 캔버스 관련 전역 변수
 let annotationCanvas, annotationCtx;
 let workspaceCanvas, workspaceCtx;
+let isDrawing = false; // 현재 그림을 그리고 있는지 여부
+let lastX = 0, lastY = 0; // 마지막 포인터 좌표
+let workspaceStates = {}; // 문제별 연습장 상태(이미지 데이터) 저장 객체
 
 // 포인터(마우스/터치) 이벤트 상태 관리 변수
 let isPointerDown = false;
@@ -1957,7 +1960,6 @@ let currentQuestionIndex = 0;
 let userAnswers = {};
 let selectedAnswers = {};
 let quizCompleted = false;
-
 /* ===== 06-1. 전역 변수 선언 (수정) 끝 ===== */
 
         /* ===== 06-2. 숫자 포맷팅 함수들 시작 ===== */
@@ -2319,42 +2321,11 @@ function clearCalculationHistory() {
 async function selectChapter(subject, chapter) {
     console.log(`🎯 selectChapter 호출됨: ${subject}, ${chapter}`);
 
-    // [06-10-4. selectChapter 함수 일부] 연습장/스마트주석/크기조절 포함 구조로 교체
-if (!document.getElementById('quiz-layout')) {
-    const mainContent = document.querySelector('.main-content');
-    if (mainContent) {
-        mainContent.innerHTML = `
-        <div class="quiz-layout" id="quiz-layout">
-            <div class="main-column">
-                <section class="quiz-section" id="quiz-section">
-                    <canvas class="annotation-canvas" id="annotation-canvas"></canvas>
-                    <div class="quiz-header">
-                        <span id="question-counter">문제 준비중</span>
-                        <span id="quiz-status">대기</span>
-                    </div>
-                    <div class="question-container" id="question-container">
-                        <h3 id="question-text">문제를 불러오는 중...</h3>
-                        <div class="options-container" id="options-container"></div>
-                    </div>
-                </section>
-                <div class="resizer-vertical" id="vertical-resizer"></div>
-                <section class="workspace-section-new" id="workspace-section">
-                    <div class="workspace-header">
-                        <h3>✏️ 연습장 (문제별 자동저장)</h3>
-                        <button class="draw-btn" onclick="clearWorkspaceCanvas()">지우기</button>
-                    </div>
-                    <canvas class="workspace-canvas" id="workspace-canvas"></canvas>
-                </section>
-
-            </div>
-                            <section class="calculator-section">
-                    <div class="calculator-container"><div class="calc-brand">CASIO JS-40B</div><div class="calculator-display" id="calc-display"><div class="memory-indicator" id="memory-indicator"></div><div class="display-value" id="display-value">0</div></div><div class="calculator-buttons"><button class="calc-btn memory" onclick="memoryExchange()">M/EX</button><button class="calc-btn function" onclick="percentage()">%</button><button class="calc-btn function" onclick="squareRoot()">√</button><button class="calc-btn function" onclick="backspace()">⌫</button><button class="calc-btn memory" onclick="grandTotal()">GT</button><button class="calc-btn memory" onclick="memoryClear()">MC</button><button class="calc-btn memory" onclick="memoryRecall()">MR</button><button class="calc-btn memory" onclick="memorySubtract()">M-</button><button class="calc-btn memory" onclick="memoryAdd()">M+</button><button class="calc-btn operator" onclick="appendToDisplay('/')">÷</button><button class="calc-btn function" onclick="changeSign()">+/-</button><button class="calc-btn number" onclick="appendToDisplay('7')">7</button><button class="calc-btn number" onclick="appendToDisplay('8')">8</button><button class="calc-btn number" onclick="appendToDisplay('9')">9</button><button class="calc-btn operator" onclick="appendToDisplay('*')">×</button><button class="calc-btn function" onclick="clearEntry()">C</button><button class="calc-btn number" onclick="appendToDisplay('4')">4</button><button class="calc-btn number" onclick="appendToDisplay('5')">5</button><button class="calc-btn number" onclick="appendToDisplay('6')">6</button><button class="calc-btn operator" onclick="appendToDisplay('-')">-</button><button class="calc-btn function" onclick="clearAll()">AC</button><button class="calc-btn number" onclick="appendToDisplay('1')">1</button><button class="calc-btn number" onclick="appendToDisplay('2')">2</button><button class="calc-btn number" onclick="appendToDisplay('3')">3</button><button class="calc-btn plus-tall" onclick="appendToDisplay('+')">+</button><button class="calc-btn number" onclick="appendToDisplay('0')">0</button><button class="calc-btn number" onclick="appendToDisplay('00')">00</button><button class="calc-btn number" onclick="appendToDisplay('.')">.</button><button class="calc-btn equals" onclick="calculate()">=</button></div><div class="calculation-history"><div class="history-title">계산기록<button class="clear-history-btn" onclick="clearCalculationHistory()">지우기</button></div><div class="history-values" id="historyValues"></div></div></div>
-                </section>`;
-
-            // 복원된 DOM 요소의 기능들을 다시 활성화합니다.
-            setTimeout(() => {
-                updateHistoryDisplay();
-            }, 100);
+    // 화면 레이아웃이 없으면 새로 생성
+    if (!document.getElementById('quiz-layout')) {
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.innerHTML = getQuizLayoutHTML(); // 표준 함수 사용
         }
     }
     
@@ -2367,6 +2338,7 @@ if (!document.getElementById('quiz-layout')) {
         return;
     }
 
+    // 경로 표시 로직 (기존과 동일)
     let path = ['1차 시험 문제풀이'];
     const subjectToPath = {
         '재무회계': ['회계학개론', '과목별 기출'], '원가관리회계': ['회계학개론', '과목별 기출'], '회계학개론': ['회계학개론'],
@@ -2374,12 +2346,10 @@ if (!document.getElementById('quiz-layout')) {
         '국세기본법': ['세법학개론', '세목별 기출'], '국세징수법': ['세법학개론', '세목별 기출'], '조세범처벌법': ['세법학개론', '세목별 기출'],
         '세법학개론': ['세법학개론'], '재정학': ['재정학'], '행정소송법': ['행정소송법'],
     };
-
     if (subjectToPath[subject]) {
         path.push(...subjectToPath[subject]);
     }
     path.push(chapter.includes('기출문제') || chapter.includes('AI추천') ? chapter : `단원별 기출 > ${chapter}`);
-    
     breadcrumb.innerHTML = path.map((p, i) => i === path.length - 1 ? `<span class="current">${p.split(' > ').pop()}</span>` : `<span>${p}</span>`).join(' &gt; ');
 
     questionText.textContent = `${subject} ${chapter} 문제를 불러오는 중...`;
@@ -2395,10 +2365,10 @@ if (!document.getElementById('quiz-layout')) {
             currentQuestionSet = questions;
             currentQuestionIndex = 0;
             
-            // (핵심 수정) 여기서 새로운 히스토리 함수를 사용합니다.
-            pushToViewHistory({
-                view: 'quiz', data: { subject, chapter }
-            });
+            pushToViewHistory({ view: 'quiz', data: { subject, chapter } });
+
+            // UI 기능 초기화 (캔버스, 리사이저 등)
+            setupQuizInterface(); 
 
             loadQuestion(questions[0]);
             updateQuestionCounter();
@@ -2675,6 +2645,7 @@ function resetQuizState() {
     selectedAnswers = {};
     userAnswers = {};
     quizCompleted = false;
+    workspaceStates = {}; // 연습장 상태 초기화
     if(typeof resetTimer === 'function') {
         resetTimer();
     }
@@ -2683,29 +2654,16 @@ function resetQuizState() {
 // 06-12-3. 초기 화면으로 돌아가는 함수
 function goHome() {
     console.log('🏠 초기 화면으로 돌아가기');
-    viewHistory = []; // 히스토리 초기화
-    pushToViewHistory({ view: 'home', data: null }); // 홈 상태를 첫 히스토리로 기록
+    viewHistory = []; 
+    pushToViewHistory({ view: 'home', data: null }); 
 
-    // 기본 레이아웃으로 복원
     const mainContent = document.querySelector('.main-content');
-    mainContent.innerHTML = `
-        <div class="quiz-layout" id="quiz-layout">
-            <section class="quiz-section">
-                <div class="quiz-header">
-                    <span id="question-counter">문제 준비중</span>
-                    <span id="quiz-status">대기</span>
-                </div>
-                <div class="question-container" id="question-container">
-                    <h3 id="question-text">목차에서 원하는 과목과 단원을 선택해주세요.</h3>
-                    <div class="options-container" id="options-container"></div>
-                </div>
-            </section>
-            <section class="calculator-section">
-                <div class="calculator-container"><div class="calc-brand">CASIO JS-40B</div><div class="calculator-display" id="calc-display"><div class="memory-indicator" id="memory-indicator"></div><div class="display-value" id="display-value">0</div></div><div class="calculator-buttons"><button class="calc-btn memory" onclick="memoryExchange()">M/EX</button><button class="calc-btn function" onclick="percentage()">%</button><button class="calc-btn function" onclick="squareRoot()">√</button><button class="calc-btn function" onclick="backspace()">⌫</button><button class="calc-btn memory" onclick="grandTotal()">GT</button><button class="calc-btn memory" onclick="memoryClear()">MC</button><button class="calc-btn memory" onclick="memoryRecall()">MR</button><button class="calc-btn memory" onclick="memorySubtract()">M-</button><button class="calc-btn memory" onclick="memoryAdd()">M+</button><button class="calc-btn operator" onclick="appendToDisplay('/')">÷</button><button class="calc-btn function" onclick="changeSign()">+/-</button><button class="calc-btn number" onclick="appendToDisplay('7')">7</button><button class="calc-btn number" onclick="appendToDisplay('8')">8</button><button class="calc-btn number" onclick="appendToDisplay('9')">9</button><button class="calc-btn operator" onclick="appendToDisplay('*')">×</button><button class="calc-btn function" onclick="clearEntry()">C</button><button class="calc-btn number" onclick="appendToDisplay('4')">4</button><button class="calc-btn number" onclick="appendToDisplay('5')">5</button><button class="calc-btn number" onclick="appendToDisplay('6')">6</button><button class="calc-btn operator" onclick="appendToDisplay('-')">-</button><button class="calc-btn function" onclick="clearAll()">AC</button><button class="calc-btn number" onclick="appendToDisplay('1')">1</button><button class="calc-btn number" onclick="appendToDisplay('2')">2</button><button class="calc-btn number" onclick="appendToDisplay('3')">3</button><button class="calc-btn plus-tall" onclick="appendToDisplay('+')">+</button><button class="calc-btn number" onclick="appendToDisplay('0')">0</button><button class="calc-btn number" onclick="appendToDisplay('00')">00</button><button class="calc-btn number" onclick="appendToDisplay('.')">.</button><button class="calc-btn equals" onclick="calculate()">=</button></div><div class="calculation-history"><div class="history-title">계산기록<button class="clear-history-btn" onclick="clearCalculationHistory()">지우기</button></div><div class="history-values" id="historyValues"></div></div></div>
-            </section>
-        </div>
-    `;
+    mainContent.innerHTML = getQuizLayoutHTML(); // 새로운 표준 함수로 화면 구성
+
     document.getElementById('breadcrumb-text').innerHTML = '세법 학습 시스템';
+    
+    // 화면을 그린 직후, 관련 기능들을 초기화합니다.
+    setupQuizInterface();
     updateHistoryDisplay();
 }
 
@@ -2911,11 +2869,13 @@ function loadQuestion(questionData) {
         <button class="nav-btn finish-btn" onclick="finishQuiz()">풀이완료</button>`;
     optionsContainer.appendChild(navDiv);
 
-    // ▼▼▼ (핵심 수정) 누락된 타이머 시작 코드를 여기에 추가합니다. ▼▼▼
     if (currentQuestionIndex === 0 && !quizCompleted) {
         autoStartTimer();
     }
+    // 추가된 코드: 문제에 맞는 연습장 내용 불러오기
+    loadWorkspaceState(currentQuestionIndex); 
 }
+
 
 // 06-15-2. 선택지 선택 처리 함수
 function selectOption(questionId, optionNumber) {
@@ -2928,6 +2888,7 @@ function selectOption(questionId, optionNumber) {
 // 06-15-3. 이전/다음 문제 이동 함수
 function previousQuestion() {
     if (currentQuestionIndex > 0) {
+        saveWorkspaceState(currentQuestionIndex); // 상태 저장
         currentQuestionIndex--;
         loadQuestion(currentQuestionSet[currentQuestionIndex]);
         updateQuestionCounter();
@@ -2936,6 +2897,7 @@ function previousQuestion() {
 
 function nextQuestion() {
     if (currentQuestionIndex < currentQuestionSet.length - 1) {
+        saveWorkspaceState(currentQuestionIndex); // 상태 저장
         currentQuestionIndex++;
         loadQuestion(currentQuestionSet[currentQuestionIndex]);
         updateQuestionCounter();
@@ -3204,15 +3166,14 @@ document.addEventListener('DOMContentLoaded', function() {
     Parse.serverURL = "https://parseapi.back4app.com/";
     
     testBack4AppConnection();
-    updateHistoryDisplay();
-    goHome(); // 초기 화면으로 시작
+    goHome(); // goHome 함수가 UI 생성과 기능 초기화를 모두 담당합니다.
 });
 
 async function testBack4AppConnection() {
     try {
         await Parse.Cloud.run('health');
         console.log("✅ Back4App 연결 성공!");
-        document.getElementById('question-text').textContent = "Back4App 연결이 완료되었습니다. 목차에서 문제를 선택해주세요.";
+        // goHome 함수가 호출되므로 아래 라인은 없어도 됩니다.
     } catch (error) {
         console.error("❌ Back4App 연결 실패:", error);
         document.getElementById('question-text').textContent = "Back4App 서버 연결에 실패했습니다. 인터넷 연결을 확인해주세요.";
@@ -3223,6 +3184,208 @@ document.addEventListener('dblclick', function(e) {
     e.preventDefault();
 }, { passive: false });
 /* ===== 06-19. 초기화 함수 끝 ===== */
+/* ===== 06-20. 연습장 및 크기 조절 기능 시작 ===== */
+
+// 06-20-1. 캔버스 및 리사이저 초기화 함수
+function setupQuizInterface() {
+    initializeCanvases();
+    initializeVerticalResizer();
+}
+
+// 06-20-2. 캔버스 초기화 (크기 조절 및 이벤트 리스너 설정)
+function initializeCanvases() {
+    workspaceCanvas = document.getElementById('workspace-canvas');
+    if (!workspaceCanvas) return;
+    workspaceCtx = workspaceCanvas.getContext('2d');
+
+    // 부모 컨테이너 크기에 맞춰 캔버스 해상도 설정
+    const parent = workspaceCanvas.parentElement;
+    workspaceCanvas.width = parent.clientWidth;
+    workspaceCanvas.height = parent.clientHeight;
+
+    // 그리기 이벤트 리스너 추가
+    workspaceCanvas.addEventListener('pointerdown', startDrawing);
+    workspaceCanvas.addEventListener('pointermove', draw);
+    workspaceCanvas.addEventListener('pointerup', stopDrawing);
+    workspaceCanvas.addEventListener('pointerleave', stopDrawing);
+}
+
+// 06-20-3. 그리기 시작
+function startDrawing(e) {
+    isDrawing = true;
+    [lastX, lastY] = [e.offsetX, e.offsetY];
+}
+
+// 06-20-4. 그리기 진행
+function draw(e) {
+    if (!isDrawing) return;
+    workspaceCtx.beginPath();
+    workspaceCtx.moveTo(lastX, lastY);
+    workspaceCtx.lineTo(e.offsetX, e.offsetY);
+    workspaceCtx.strokeStyle = '#000'; // 펜 색상
+    workspaceCtx.lineWidth = 2;       // 펜 굵기
+    workspaceCtx.lineCap = 'round';   // 선 끝 모양
+    workspaceCtx.stroke();
+    [lastX, lastY] = [e.offsetX, e.offsetY];
+}
+
+// 06-20-5. 그리기 중지
+function stopDrawing() {
+    isDrawing = false;
+}
+
+// 06-20-6. 연습장 내용 지우기 (기존 함수 재정의)
+function clearWorkspaceCanvas() {
+    if (workspaceCanvas && workspaceCtx) {
+        workspaceCtx.clearRect(0, 0, workspaceCanvas.width, workspaceCanvas.height);
+    }
+}
+
+// 06-20-7. 문제별 연습장 상태 저장
+function saveWorkspaceState(index) {
+    if (workspaceCanvas) {
+        workspaceStates[index] = workspaceCanvas.toDataURL();
+        console.log(`💾 연습장 상태 저장: 문제 ${index + 1}`);
+    }
+}
+
+// 06-20-8. 문제별 연습장 상태 불러오기
+function loadWorkspaceState(index) {
+    clearWorkspaceCanvas();
+    if (workspaceCanvas && workspaceStates[index]) {
+        const img = new Image();
+        img.onload = () => {
+            if (workspaceCtx) {
+                workspaceCtx.drawImage(img, 0, 0);
+                console.log(`🎨 연습장 상태 복원: 문제 ${index + 1}`);
+            }
+        };
+        img.src = workspaceStates[index];
+    } else {
+        console.log(`✨ 새 연습장 준비: 문제 ${index + 1}`);
+    }
+}
+
+// 06-20-9. 수직 리사이저 초기화
+function initializeVerticalResizer() {
+    const resizer = document.getElementById('vertical-resizer');
+    const mainColumn = document.querySelector('.main-column');
+    const quizSection = document.getElementById('quiz-section');
+    const workspaceSection = document.getElementById('workspace-section');
+
+    if (!resizer || !mainColumn || !quizSection || !workspaceSection) return;
+
+    let isResizing = false;
+
+    resizer.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        document.body.style.cursor = 'row-resize';
+        document.body.style.userSelect = 'none';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        const mainRect = mainColumn.getBoundingClientRect();
+        const newQuizHeight = e.clientY - mainRect.top;
+        const newWorkspaceHeight = mainRect.height - newQuizHeight - resizer.offsetHeight;
+
+        if (newQuizHeight > 100 && newWorkspaceHeight > 50) { // 최소 높이 제한
+            quizSection.style.flex = `0 0 ${newQuizHeight}px`;
+            workspaceSection.style.flex = `1 1 auto`;
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.cursor = 'default';
+            document.body.style.userSelect = 'auto';
+            // 리사이징 후 캔버스 크기 재조정
+            initializeCanvases();
+            loadWorkspaceState(currentQuestionIndex);
+        }
+    });
+}
+/* ===== 06-20. 연습장 및 크기 조절 기능 끝 ===== */
+
+/* ===== 06-21. UI 템플릿 함수 시작 ===== */
+
+// 06-21-1. 퀴즈 화면 레이아웃 HTML 생성 함수
+function getQuizLayoutHTML() {
+    return `
+    <div class="quiz-layout" id="quiz-layout">
+        <div class="main-column">
+            <section class="quiz-section" id="quiz-section">
+                <canvas class="annotation-canvas" id="annotation-canvas"></canvas>
+                <div class="quiz-header">
+                    <span id="question-counter">문제 준비중</span>
+                    <span id="quiz-status">대기</span>
+                </div>
+                <div class="question-container" id="question-container">
+                    <h3 id="question-text">목차에서 원하는 과목과 단원을 선택해주세요.</h3>
+                    <div class="options-container" id="options-container"></div>
+                </div>
+            </section>
+            <div class="resizer-vertical" id="vertical-resizer"></div>
+            <section class="workspace-section-new" id="workspace-section">
+                <div class="workspace-header">
+                    <h3>✏️ 연습장 (문제별 자동저장)</h3>
+                    <button class="draw-btn" onclick="clearWorkspaceCanvas()">지우기</button>
+                </div>
+                <canvas class="workspace-canvas" id="workspace-canvas"></canvas>
+            </section>
+        </div>
+        <section class="calculator-section">
+            <div class="calculator-container">
+                <div class="calc-brand">CASIO JS-40B</div>
+                <div class="calculator-display" id="calc-display">
+                    <div class="memory-indicator" id="memory-indicator"></div>
+                    <div class="display-value" id="display-value">0</div>
+                </div>
+                <div class="calculator-buttons">
+                    <button class="calc-btn memory" onclick="memoryExchange()">M/EX</button>
+                    <button class="calc-btn function" onclick="percentage()">%</button>
+                    <button class="calc-btn function" onclick="squareRoot()">√</button>
+                    <button class="calc-btn function" onclick="backspace()">⌫</button>
+                    <button class="calc-btn memory" onclick="grandTotal()">GT</button>
+                    <button class="calc-btn memory" onclick="memoryClear()">MC</button>
+                    <button class="calc-btn memory" onclick="memoryRecall()">MR</button>
+                    <button class="calc-btn memory" onclick="memorySubtract()">M-</button>
+                    <button class="calc-btn memory" onclick="memoryAdd()">M+</button>
+                    <button class="calc-btn operator" onclick="appendToDisplay('/')">÷</button>
+                    <button class="calc-btn function" onclick="changeSign()">+/-</button>
+                    <button class="calc-btn number" onclick="appendToDisplay('7')">7</button>
+                    <button class="calc-btn number" onclick="appendToDisplay('8')">8</button>
+                    <button class="calc-btn number" onclick="appendToDisplay('9')">9</button>
+                    <button class="calc-btn operator" onclick="appendToDisplay('*')">×</button>
+                    <button class="calc-btn function" onclick="clearEntry()">C</button>
+                    <button class="calc-btn number" onclick="appendToDisplay('4')">4</button>
+                    <button class="calc-btn number" onclick="appendToDisplay('5')">5</button>
+                    <button class="calc-btn number" onclick="appendToDisplay('6')">6</button>
+                    <button class="calc-btn operator" onclick="appendToDisplay('-')">-</button>
+                    <button class="calc-btn function" onclick="clearAll()">AC</button>
+                    <button class="calc-btn number" onclick="appendToDisplay('1')">1</button>
+                    <button class="calc-btn number" onclick="appendToDisplay('2')">2</button>
+                    <button class="calc-btn number" onclick="appendToDisplay('3')">3</button>
+                    <button class="calc-btn plus-tall" onclick="appendToDisplay('+')">+</button>
+                    <button class="calc-btn number" onclick="appendToDisplay('0')">0</button>
+                    <button class="calc-btn number" onclick="appendToDisplay('00')">00</button>
+                    <button class="calc-btn number" onclick="appendToDisplay('.')">.</button>
+                    <button class="calc-btn equals" onclick="calculate()">=</button>
+                </div>
+                <div class="calculation-history">
+                    <div class="history-title">
+                        계산기록
+                        <button class="clear-history-btn" onclick="clearCalculationHistory()">지우기</button>
+                    </div>
+                    <div class="history-values" id="historyValues"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+    `;
+}
+/* ===== 06-21. UI 템플릿 함수 끝 ===== */
 
 
     </script>
