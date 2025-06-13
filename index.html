@@ -396,7 +396,7 @@
         }
         
         .quiz-section {
-            flex: 1;
+            flex: 2.2;
             background: white;
             border-radius: 8px;
             padding: 20px;
@@ -406,19 +406,10 @@
             flex-direction: column;
         }
         
-        .workspace-section {
-            flex: 1;
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-            display: flex;
-            flex-direction: column;
-        }
+       
         
         .calculator-section {
-            flex: 1;
+            flex: 0.8;
             background: white;
             border-radius: 8px;
             padding: 20px;
@@ -639,128 +630,7 @@
             background: #5a6268;
         }
         /* ===== 01-12. 계산기록 영역 스타일 끝 ===== */
-        
-        /* ===== 01-13. 연습장 영역 스타일 시작 ===== */
-        .workspace-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .workspace-header h3 {
-            font-size: 16px;
-            font-weight: 500;
-            color: #495057;
-        }
-        
-        .workspace-controls {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .clear-btn {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        .clear-btn:hover {
-            background: #5a6268;
-        }
-
-        .import-btn {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .import-btn:hover {
-            background: #0056b3;
-        }
-        
-        .canvas-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-        
-        .paper-workspace {
-            background: #fefefe;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            cursor: crosshair;
-            display: block;
-            background-image: 
-                linear-gradient(90deg, #f0f0f0 1px, transparent 1px),
-                linear-gradient(#f0f0f0 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-        /* ===== 01-13. 연습장 영역 스타일 끝 ===== */
-
-        /* ===== 01-14. 계산기록 불러오기 패널 스타일 시작 ===== */
-        .import-panel {
-            position: absolute;
-            top: 50px;
-            right: 0;
-            width: 200px;
-            background: white;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 1000;
-            display: none;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .import-panel-header {
-            padding: 8px 12px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-            font-size: 12px;
-            font-weight: 600;
-            color: #495057;
-        }
-
-        .import-value {
-            padding: 6px 12px;
-            cursor: pointer;
-            font-family: 'digital-7-mono-italic', monospace;
-            font-size: 12px;
-            border-bottom: 1px solid #f8f9fa;
-        }
-
-        .import-value:hover {
-            background: #e9ecef;
-        }
-
-        .notepad-text {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            border: none;
-            outline: none;
-            font-family: 'digital-7-mono-italic', monospace;
-            font-size: 14px;
-            color: #495057;
-            padding: 10px;
-            resize: none;
-            z-index: 1;
-        }
-        /* ===== 01-14. 계산기록 불러오기 패널 스타일 끝 ===== */
-        
+                
         /* ===== 01-15. 퀴즈 영역 스타일 시작 ===== */
         .quiz-header {
             display: flex;
@@ -1815,34 +1685,7 @@
                 </section>
                 <!-- 05-1-1. 왼쪽: 퀴즈 영역 끝 -->
 
-                <!-- 05-1-2. 가운데: 연습장 영역 시작 -->
-                <section class="workspace-section">
-                    <!-- 05-1-2-1. 연습장 헤더 시작 -->
-                    <div class="workspace-header">
-                        <h3>연습장</h3>
-                        <div class="workspace-controls">
-                            <button class="import-btn" onclick="toggleImportPanel()">📊 계산기록</button>
-                            <button class="clear-btn" onclick="clearCanvas()">🗑️ 지우기</button>
-                            <button class="clear-btn" onclick="undoLastStroke()">↶ 되돌리기</button>
-                        </div>
-                        
-                        <!-- 05-1-2-1-1. 계산기록 불러오기 패널 시작 -->
-                        <div class="import-panel" id="importPanel">
-                            <div class="import-panel-header">계산기록 불러오기</div>
-                            <div id="importValuesList"></div>
-                        </div>
-                        <!-- 05-1-2-1-1. 계산기록 불러오기 패널 끝 -->
-                    </div>
-                    <!-- 05-1-2-1. 연습장 헤더 끝 -->
-                    
-                    <!-- 05-1-2-2. 캔버스 컨테이너 시작 -->
-                    <div class="canvas-container">
-                        <canvas id="handwriting-canvas" class="paper-workspace"></canvas>
-                        <textarea id="notepad-text" class="notepad-text" placeholder="여기에 텍스트를 입력하거나 계산기록을 불러오세요..."></textarea>
-                    </div>
-                    <!-- 05-1-2-2. 캔버스 컨테이너 끝 -->
-                </section>
-                <!-- 05-1-2. 가운데: 연습장 영역 끝 -->
+                
 
                 <!-- 05-1-3. 오른쪽: 계산기 영역 시작 -->
                 <section class="calculator-section">
@@ -2059,8 +1902,25 @@ let viewHistory = [];           // (신규) 화면 이동 기록을 저장하는
             }
             updateImportPanel();
         }
+        // 06-5-2. 계산 기록 표시 업데이트 (개별 버튼으로) 시작
+        function updateHistoryDisplay() {
+            const historyElement = document.getElementById('historyValues');
+            historyElement.innerHTML = '';
+            
+            if (calculationHistory.length === 0) {
+                historyElement.innerHTML = '<span style="color: #6c757d; font-size: 11px;">계산 결과가 여기에 표시됩니다</span>';
+            } else {
+                calculationHistory.forEach((value, index) => {
+                    const valueButton = document.createElement('span');
+                    valueButton.className = 'history-value';
+                    valueButton.textContent = formatNumberWithCommas(value);
+                    valueButton.onclick = () => useHistoryValue(value);
+                    historyElement.appendChild(valueButton);
+                });
+            }
+            // updateImportPanel(); // 06-5-2-1. (수정) 삭제된 연습장 관련 함수 호출 코드를 제거하여 오류를 해결합니다.
+        }
         // 06-5-2. 계산 기록 표시 업데이트 (개별 버튼으로) 끝
-
         // 06-5-3. 계산기록 값 사용 (기존 입력과 연산자 유지) 시작
         function useHistoryValue(value) {
             const currentDisplay = document.getElementById('display-value').textContent;
@@ -2093,45 +1953,7 @@ let viewHistory = [];           // (신규) 화면 이동 기록을 저장하는
         // 06-5-4. 계산 기록 전체 삭제 끝
         /* ===== 06-5. 계산기록 관리 함수들 끝 ===== */
 
-        /* ===== 06-6. 연습장 관련 함수들 시작 ===== */
-        // 06-6-1. 연습장 불러오기 패널 토글 시작
-        function toggleImportPanel() {
-            const panel = document.getElementById('importPanel');
-            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-            updateImportPanel();
-        }
-        // 06-6-1. 연습장 불러오기 패널 토글 끝
-
-        // 06-6-2. 연습장 불러오기 패널 업데이트 시작
-        function updateImportPanel() {
-            const importList = document.getElementById('importValuesList');
-            importList.innerHTML = '';
-            
-            calculationHistory.forEach(value => {
-                const importItem = document.createElement('div');
-                importItem.className = 'import-value';
-                importItem.textContent = formatNumberWithCommas(value);
-                importItem.onclick = () => importToNotepad(value);
-                importList.appendChild(importItem);
-            });
-        }
-        // 06-6-2. 연습장 불러오기 패널 업데이트 끝
-
-        // 06-6-3. 연습장에 값 불러오기 시작
-        function importToNotepad(value) {
-            const notepad = document.getElementById('notepad-text');
-            const currentContent = notepad.value;
-            
-            if (currentContent) {
-                notepad.value = currentContent + '\n' + formatNumberWithCommas(value);
-            } else {
-                notepad.value = formatNumberWithCommas(value);
-            }
-            
-            toggleImportPanel(); // 패널 닫기
-        }
-        // 06-6-3. 연습장에 값 불러오기 끝
-        /* ===== 06-6. 연습장 관련 함수들 끝 ===== */
+        
 
         /* ===== 06-7. 기본 계산기 함수들 시작 ===== */
         // 06-7-1. 숫자/연산자 입력 처리 시작
@@ -2689,74 +2511,7 @@ function updateQuestionCounter() {
 
         /* ===== 06-10. 사이드바 관련 함수들 (다중 중첩 메뉴 지원) 끝 ===== */
 
-        /* ===== 06-11. 캔버스 관련 함수들 (손글씨 기능) 시작 ===== */
-        // 06-11-1. 캔버스 크기 조정 시작
-        function resizeCanvas() {
-            if (!canvas) return;
-            const container = canvas.parentElement;
-            const rect = container.getBoundingClientRect();
-            canvas.width = rect.width - 2;
-            canvas.height = rect.height - 2;
-            canvas.style.width = (rect.width - 2) + 'px';
-            canvas.style.height = (rect.height - 2) + 'px';
-        }
-        // 06-11-1. 캔버스 크기 조정 끝
-
-        // 06-11-2. 캔버스 지우기 시작
-        function clearCanvas() {
-            if (!ctx) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            document.getElementById('notepad-text').value = '';
-        }
-        // 06-11-2. 캔버스 지우기 끝
-
-        // 06-11-3. 되돌리기 (미구현) 시작
-        function undoLastStroke() {
-            console.log('되돌리기 기능');
-        }
-        // 06-11-3. 되돌리기 (미구현) 끝
-
-        // 06-11-4. 그리기 시작 시작
-        function startDrawing(e) {
-            isDrawing = true;
-            [lastX, lastY] = getMousePos(e);
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-        }
-        // 06-11-4. 그리기 시작 끝
-
-        // 06-11-5. 그리기 진행 시작
-        function draw(e) {
-            if (!isDrawing) return;
-            
-            const [currentX, currentY] = getMousePos(e);
-            
-            ctx.lineWidth = 2;
-            ctx.lineCap = 'round';
-            ctx.strokeStyle = '#333';
-            ctx.lineTo(currentX, currentY);
-            ctx.stroke();
-            
-            [lastX, lastY] = [currentX, currentY];
-        }
-        // 06-11-5. 그리기 진행 끝
-
-        // 06-11-6. 그리기 종료 시작
-        function stopDrawing() {
-            isDrawing = false;
-        }
-        // 06-11-6. 그리기 종료 끝
-
-        // 06-11-7. 마우스 위치 계산 시작
-        function getMousePos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-            return [clientX - rect.left, clientY - rect.top];
-        }
-        // 06-11-7. 마우스 위치 계산 끝
-        /* ===== 06-11. 캔버스 관련 함수들 (손글씨 기능) 끝 ===== */
-
+        
         /* ===== 06-12. 기타 UI 함수들 시작 ===== */
 
 // 06-12-1. 뒤로가기 버튼 상태 업데이트 함수
@@ -2919,22 +2674,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // 2. 서버 연결이 잘 되었는지 테스트하고 콘솔에 메시지를 표시합니다.
     testBack4AppConnection();
     
-    // 3. 필기용 캔버스 기능을 활성화합니다.
-    canvas = document.getElementById('handwriting-canvas');
-    if (canvas) {
-        ctx = canvas.getContext('2d');
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-        
-        // 마우스 및 터치 이벤트 연결
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseout', stopDrawing);
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); });
-        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
-        canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); });
-    }
     
     // 4. 기타 UI 요소들을 초기화합니다.
     updateHistoryDisplay();   // 계산기록 표시 초기화
