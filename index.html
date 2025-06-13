@@ -254,10 +254,25 @@
     border: 1px solid #e9ecef;
     display: flex;
     flex-direction: column;
-    overflow-y: auto; /* 세로 스크롤 추가 */
-    max-height: calc(100vh - 140px); /* 최대 높이 설정 */
+    overflow-y: auto;
+    position: relative;
+    /* (추가) 스크롤바 트랙 배경색을 지정하여 넓어보이게 함 */
+    scrollbar-color: #ced4da #f1f3f4;
 }
 
+/* 스크롤바 웹킷 브라우저(크롬, 사파리 등)용 스타일 */
+.quiz-section::-webkit-scrollbar {
+    width: 15px; /* 스크롤바 너비 */
+}
+.quiz-section::-webkit-scrollbar-track {
+    background: #f1f3f4; /* 트랙 배경색 */
+    border-radius: 10px;
+}
+.quiz-section::-webkit-scrollbar-thumb {
+    background: #ced4da; /* 스크롤바 색상 */
+    border-radius: 10px;
+    border: 3px solid #f1f3f4;
+}
 .question-container {
     flex: 1;
     margin-bottom: 20px;
@@ -391,7 +406,7 @@
 .quiz-layout {
     display: flex;
     height: 100%;
-    gap: 8px;
+    gap: 4px;
     padding: 8px;
 }
 
@@ -1185,13 +1200,18 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10; /* 다른 요소들 위에 위치 */
+    bottom: 0;
+    /* (핵심 수정) 오른쪽에서 17px의 공간을 남겨 스크롤바 영역을 물리적으로 확보합니다. */
+    right: 17px; 
+    /* width와 height는 auto로 설정하여 위/아래/왼쪽/오른쪽 속성에 반응하도록 합니다. */
+    width: auto; 
+    height: auto;
+    z-index: 10;
     cursor: crosshair;
-    /* 기본적으로 이 캔버스는 모든 클릭/터치 이벤트를 받습니다. */
-    pointer-events: auto; 
+    pointer-events: auto;
+    touch-action: none; 
 }
+
 
 /* 01-23-2. 퀴즈 섹션의 상대 위치 설정 (주석 캔버스의 기준점) */
 .quiz-section {
@@ -1827,14 +1847,14 @@
         <div class="resizer-vertical" id="vertical-resizer"></div>
         <!-- 05-1-3. 하단 연습장(Workspace) -->
         <section class="workspace-section-new" id="workspace-section">
-            <div class="workspace-header">
-                <h3>✏️ 연습장 (문제별 자동저장)</h3>
-                <button class="draw-btn" onclick="clearWorkspaceCanvas()">지우기</button>
+    <div class="workspace-header">
+        <h3>✏️ 연습장 (문제별 자동저장)</h3>
+        <button class="draw-btn" onclick="clearAllCanvases()">전체 필기 지우기</button>
+    </div>
+    <canvas class="workspace-canvas" id="workspace-canvas"></canvas>
+    </section>
             </div>
-            <canvas class="workspace-canvas" id="workspace-canvas"></canvas>
-        </section>
-       
-            </div>
+
             <!-- 05-1-3. 오른쪽: 계산기 영역 시작 -->
                 <section class="calculator-section">
                     <!-- 05-1-3-1. 계산기 컨테이너 시작 -->
@@ -1941,15 +1961,20 @@ let viewHistory = [];
 // 캔버스 관련 전역 변수
 let annotationCanvas, annotationCtx;
 let workspaceCanvas, workspaceCtx;
-let isDrawing = false; // 현재 그림을 그리고 있는지 여부
-let lastX = 0, lastY = 0; // 마지막 포인터 좌표
-let workspaceStates = {}; // 문제별 연습장 상태(이미지 데이터) 저장 객체
+let workspaceStates = {};
+let annotationStates = {};
 
-// 포인터(마우스/터치) 이벤트 상태 관리 변수
-let isPointerDown = false;
-let isDragging = false;
-let startX, startY;
-let tapTimeoutId = null;
+// 스마트 캔버스 상호작용을 위한 변수
+let isPointerDown = false;      // 포인터(마우스/터치)가 눌렸는지 여부
+let isDragging = false;         // '필기(드래그)' 동작으로 확정되었는지 여부
+let pointerDownTime = 0;        // 포인터가 눌린 시각
+let startCoords = { x: 0, y: 0 }; // 포인터가 눌린 화면 좌표
+let lastCanvasCoords = { x: 0, y: 0 }; // 캔버스 내 마지막 좌표
+let isEraserMode = false; // (추가) 지우개 모드 상태 변수
+
+// 스마트 캔버스 판정 기준 (임계값)
+const TAP_THRESHOLD_MS = 200;   // '탭'으로 간주할 최대 시간 (0.2초)
+const DRAG_THRESHOLD_PX = 5;    // '필기'로 간주할 최소 이동 거리 (5픽셀)
 
 // 퀴즈 상태 관련 전역 변수
 let currentView = 'home';
@@ -2645,6 +2670,7 @@ function resetQuizState() {
     userAnswers = {};
     quizCompleted = false;
     workspaceStates = {}; // 연습장 상태 초기화
+    annotationStates = {}; // (추가) 주석 상태 초기화
     if(typeof resetTimer === 'function') {
         resetTimer();
     }
@@ -2871,8 +2897,6 @@ function loadQuestion(questionData) {
     if (currentQuestionIndex === 0 && !quizCompleted) {
         autoStartTimer();
     }
-    // 추가된 코드: 문제에 맞는 연습장 내용 불러오기
-    loadWorkspaceState(currentQuestionIndex); 
 }
 
 
@@ -2887,7 +2911,8 @@ function selectOption(questionId, optionNumber) {
 // 06-15-3. 이전/다음 문제 이동 함수
 function previousQuestion() {
     if (currentQuestionIndex > 0) {
-        saveWorkspaceState(currentQuestionIndex); // 상태 저장
+        saveWorkspaceState(currentQuestionIndex);
+        saveAnnotationState(currentQuestionIndex); // (추가) 주석 상태 저장
         currentQuestionIndex--;
         loadQuestion(currentQuestionSet[currentQuestionIndex]);
         updateQuestionCounter();
@@ -2896,7 +2921,8 @@ function previousQuestion() {
 
 function nextQuestion() {
     if (currentQuestionIndex < currentQuestionSet.length - 1) {
-        saveWorkspaceState(currentQuestionIndex); // 상태 저장
+        saveWorkspaceState(currentQuestionIndex);
+        saveAnnotationState(currentQuestionIndex); // (추가) 주석 상태 저장
         currentQuestionIndex++;
         loadQuestion(currentQuestionSet[currentQuestionIndex]);
         updateQuestionCounter();
@@ -3183,129 +3209,234 @@ document.addEventListener('dblclick', function(e) {
     e.preventDefault();
 }, { passive: false });
 /* ===== 06-19. 초기화 함수 끝 ===== */
-/* ===== 06-20. 연습장 및 크기 조절 기능 시작 ===== */
 
-// 06-20-1. 캔버스 및 리사이저 초기화 함수
+/* ===== 06-20. 스마트 캔버스 및 UI 기능 (최종 완성본) 시작 ===== */
+
+// 06-20-1. 캔버스 및 리사이저 초기화 메인 함수
 function setupQuizInterface() {
     initializeCanvases();
     initializeVerticalResizer();
 }
 
-// 06-20-2. 캔버스 초기화 (크기 조절 및 이벤트 리스너 설정)
+// 06-20-2. (전면 교체) ResizeObserver를 사용한 캔버스 초기화 및 자동 리사이징
+// 전역에 Observer 변수 선언
+let canvasResizeObserver = null;
+
 function initializeCanvases() {
+    // 감시할 컨테이너 요소들을 가져옵니다.
+    const quizSection = document.getElementById('quiz-section');
+    const workspaceSection = document.getElementById('workspace-section');
+
+    // 캔버스 요소들을 가져옵니다.
+    annotationCanvas = document.getElementById('annotation-canvas');
     workspaceCanvas = document.getElementById('workspace-canvas');
-    if (!workspaceCanvas) return;
+
+    if (!quizSection || !workspaceSection || !annotationCanvas || !workspaceCanvas) return;
+
+    // 만약 기존 Observer가 있다면 연결을 끊어 중복을 방지합니다.
+    if (canvasResizeObserver) canvasResizeObserver.disconnect();
+    
+    // ResizeObserver를 생성합니다. 이 함수는 컨테이너 크기가 변경될 때마다 실행됩니다.
+    canvasResizeObserver = new ResizeObserver(entries => {
+        for (const entry of entries) {
+            const container = entry.target;
+            const canvas = container.querySelector('canvas');
+            if (canvas) {
+                // 캔버스의 그리기 해상도를 컨테이너의 실제 크기와 일치시킵니다. (영점 문제 해결)
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                console.log(`${canvas.id}가 자동으로 리사이즈됨: ${canvas.width}x${canvas.height}`);
+
+                // 크기가 재조정된 후에는 저장된 필기 내용을 다시 그려줍니다.
+                if (canvas.id === 'annotation-canvas') {
+                    loadAnnotationState(currentQuestionIndex);
+                } else if (canvas.id === 'workspace-canvas') {
+                    loadWorkspaceState(currentQuestionIndex);
+                }
+            }
+        }
+    });
+
+    // 두 컨테이너의 크기 변경을 감시 시작합니다.
+    canvasResizeObserver.observe(quizSection);
+    canvasResizeObserver.observe(workspaceSection);
+
+    // 각 캔버스에 이벤트 리스너를 설정합니다. (휠, 터치/클릭 등)
+    [annotationCanvas, workspaceCanvas].forEach(canvas => {
+        if (canvas) {
+            // (휠 스크롤 해결) 휠 이벤트는 기본 스크롤 동작을 허용합니다.
+            canvas.addEventListener('wheel', e => {}, { passive: true });
+            
+            // 포인터(터치/마우스) 이벤트 리스너를 설정합니다.
+            canvas.removeEventListener('pointerdown', handlePointerDown);
+            canvas.addEventListener('pointerdown', handlePointerDown);
+        }
+    });
+
+    // 전역 컨텍스트 변수를 할당합니다.
+    annotationCtx = annotationCanvas.getContext('2d');
     workspaceCtx = workspaceCanvas.getContext('2d');
-
-    // 부모 컨테이너 크기에 맞춰 캔버스 해상도 설정
-    const parent = workspaceCanvas.parentElement;
-    workspaceCanvas.width = parent.clientWidth;
-    workspaceCanvas.height = parent.clientHeight;
-
-    // 그리기 이벤트 리스너 추가
-    workspaceCanvas.addEventListener('pointerdown', startDrawing);
-    workspaceCanvas.addEventListener('pointermove', draw);
-    workspaceCanvas.addEventListener('pointerup', stopDrawing);
-    workspaceCanvas.addEventListener('pointerleave', stopDrawing);
+    
+    // 문서 전체에 대한 이벤트 리스너를 설정합니다.
+    document.removeEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointermove', handlePointerMove);
+    document.removeEventListener('pointerup', handlePointerUp);
+    document.addEventListener('pointerup', handlePointerUp);
 }
 
-// 06-20-3. 그리기 시작
-function startDrawing(e) {
-    isDrawing = true;
-    [lastX, lastY] = [e.offsetX, e.offsetY];
+// 06-20-3. 포인터 '누름' 이벤트 핸들러 (단순화)
+function handlePointerDown(e) {
+    // CSS에서 스크롤바 영역을 제외했으므로, 이 이벤트는 캔버스 위에서만 발생합니다.
+    if (e.target.tagName !== 'CANVAS') return;
+
+    // 오른쪽 클릭 무시
+    if (e.button === 2) return;
+    
+    isPointerDown = true;
+    isDragging = false;
+    pointerDownTime = Date.now();
+    startCoords = { x: e.clientX, y: e.clientY };
+    lastCanvasCoords = { x: e.offsetX, y: e.offsetY };
+    
+    // 텍스트 선택 같은 기본 동작을 막아 필기/탭 기능이 원활하게 작동하도록 합니다.
+    e.preventDefault();
 }
 
-// 06-20-4. 그리기 진행
-function draw(e) {
-    if (!isDrawing) return;
-    workspaceCtx.beginPath();
-    workspaceCtx.moveTo(lastX, lastY);
-    workspaceCtx.lineTo(e.offsetX, e.offsetY);
-    workspaceCtx.strokeStyle = '#000'; // 펜 색상
-    workspaceCtx.lineWidth = 2;       // 펜 굵기
-    workspaceCtx.lineCap = 'round';   // 선 끝 모양
-    workspaceCtx.stroke();
-    [lastX, lastY] = [e.offsetX, e.offsetY];
-}
+// 06-20-4. 포인터 '이동' 이벤트 핸들러 (지우개 및 색상 변경 로직 포함)
+function handlePointerMove(e) {
+    if (!isPointerDown) return;
+    if (!isDragging) {
+        const distance = Math.sqrt(Math.pow(e.clientX - startCoords.x, 2) + Math.pow(e.clientY - startCoords.y, 2));
+        if (distance > DRAG_THRESHOLD_PX) isDragging = true;
+    }
 
-// 06-20-5. 그리기 중지
-function stopDrawing() {
-    isDrawing = false;
-}
+    if (isDragging) {
+        // e.target이 캔버스가 아닌 경우(캔버스 밖으로 드래그)를 대비해 활성 캔버스를 추적해야 하지만,
+        // 현재는 e.target이 캔버스인 경우에만 그리도록 단순화합니다.
+        const currentCanvas = e.target;
+        if (currentCanvas && currentCanvas.tagName === 'CANVAS') {
+            const ctx = currentCanvas.getContext('2d');
+            ctx.beginPath();
+            ctx.moveTo(lastCanvasCoords.x, lastCanvasCoords.y);
+            ctx.lineTo(e.offsetX, e.offsetY);
 
-// 06-20-6. 연습장 내용 지우기 (기존 함수 재정의)
-function clearWorkspaceCanvas() {
-    if (workspaceCanvas && workspaceCtx) {
-        workspaceCtx.clearRect(0, 0, workspaceCanvas.width, workspaceCanvas.height);
+            // 지우개 모드와 그리기 모드 분기
+            if (isEraserMode) {
+                ctx.globalCompositeOperation = 'destination-out'; // 지우개 모드
+                ctx.lineWidth = 20; // 지우개 크기
+            } else {
+                ctx.globalCompositeOperation = 'source-over'; // 그리기 모드
+                ctx.strokeStyle = '#000000'; // 필기 색상 검은색
+                ctx.lineWidth = 2.5; // 펜 굵기
+            }
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            lastCanvasCoords = { x: e.offsetX, y: e.offsetY };
+        }
     }
 }
 
-// 06-20-7. 문제별 연습장 상태 저장
+// 06-20-5. 포인터 '뗌' 이벤트 핸들러
+function handlePointerUp(e) {
+    if (!isPointerDown) return;
+    isPointerDown = false;
+    const duration = Date.now() - pointerDownTime;
+    if (!isDragging && duration < TAP_THRESHOLD_MS) handleTap(e);
+    isDragging = false;
+}
+
+// 06-20-6. '탭' 동작 처리 함수
+function handleTap(e) {
+    const tappedCanvas = e.target;
+    if (!tappedCanvas || tappedCanvas.tagName !== 'CANVAS') return;
+    tappedCanvas.style.pointerEvents = 'none';
+    const elementBeneath = document.elementFromPoint(e.clientX, e.clientY);
+    tappedCanvas.style.pointerEvents = 'auto';
+    if (elementBeneath && typeof elementBeneath.click === 'function') {
+        elementBeneath.click();
+    }
+}
+
+// 06-20-7. 지우개 모드 토글 함수
+function toggleEraserMode() {
+    isEraserMode = !isEraserMode;
+    const btn = document.getElementById('eraser-btn');
+    if (btn) {
+        if (isEraserMode) {
+            btn.style.background = '#007bff';
+            btn.style.color = 'white';
+        } else {
+            btn.style.background = '';
+            btn.style.color = '';
+        }
+    }
+}
+
+// 06-20-8. 모든 캔버스 필기 지우기
+function clearAllCanvases() {
+    if (confirm('문제와 연습장의 모든 필기를 지우시겠습니까?')) {
+        if (workspaceCtx) workspaceCtx.clearRect(0, 0, workspaceCanvas.width, workspaceCanvas.height);
+        if (annotationCtx) annotationCtx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+    }
+}
+
+// 06-20-9. 문제별 상태 저장/복원 함수 (생략 없이 모두 포함)
 function saveWorkspaceState(index) {
-    if (workspaceCanvas) {
-        workspaceStates[index] = workspaceCanvas.toDataURL();
-        console.log(`💾 연습장 상태 저장: 문제 ${index + 1}`);
-    }
+    if (workspaceCanvas) workspaceStates[index] = workspaceCanvas.toDataURL();
 }
-
-// 06-20-8. 문제별 연습장 상태 불러오기
+function saveAnnotationState(index) {
+    if (annotationCanvas) annotationStates[index] = annotationCanvas.toDataURL();
+}
 function loadWorkspaceState(index) {
-    clearWorkspaceCanvas();
+    if (workspaceCtx) workspaceCtx.clearRect(0, 0, workspaceCanvas.width, workspaceCanvas.height);
     if (workspaceCanvas && workspaceStates[index]) {
         const img = new Image();
-        img.onload = () => {
-            if (workspaceCtx) {
-                workspaceCtx.drawImage(img, 0, 0);
-                console.log(`🎨 연습장 상태 복원: 문제 ${index + 1}`);
-            }
-        };
+        img.onload = () => { if (workspaceCtx) workspaceCtx.drawImage(img, 0, 0); };
         img.src = workspaceStates[index];
-    } else {
-        console.log(`✨ 새 연습장 준비: 문제 ${index + 1}`);
+    }
+}
+function loadAnnotationState(index) {
+    if (annotationCtx) annotationCtx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+    if (annotationCanvas && annotationStates[index]) {
+        const img = new Image();
+        img.onload = () => { if (annotationCtx) annotationCtx.drawImage(img, 0, 0); };
+        img.src = annotationStates[index];
     }
 }
 
-// 06-20-9. 수직 리사이저 초기화
+// 06-20-10. 수직 리사이저 초기화
 function initializeVerticalResizer() {
     const resizer = document.getElementById('vertical-resizer');
     const mainColumn = document.querySelector('.main-column');
     const quizSection = document.getElementById('quiz-section');
-    const workspaceSection = document.getElementById('workspace-section');
-
-    if (!resizer || !mainColumn || !quizSection || !workspaceSection) return;
+    
+    if (!resizer || !mainColumn || !quizSection) return;
 
     let isResizing = false;
-
     resizer.addEventListener('mousedown', (e) => {
         isResizing = true;
         document.body.style.cursor = 'row-resize';
         document.body.style.userSelect = 'none';
     });
-
     document.addEventListener('mousemove', (e) => {
         if (!isResizing) return;
         const mainRect = mainColumn.getBoundingClientRect();
         const newQuizHeight = e.clientY - mainRect.top;
-        const newWorkspaceHeight = mainRect.height - newQuizHeight - resizer.offsetHeight;
-
-        if (newQuizHeight > 100 && newWorkspaceHeight > 50) { // 최소 높이 제한
-            quizSection.style.flex = `0 0 ${newQuizHeight}px`;
-            workspaceSection.style.flex = `1 1 auto`;
+        if (newQuizHeight > 100 && (mainRect.height - newQuizHeight) > 80) {
+            quizSection.style.height = `${newQuizHeight}px`;
+            quizSection.style.flex = 'none';
         }
     });
-
     document.addEventListener('mouseup', () => {
         if (isResizing) {
             isResizing = false;
             document.body.style.cursor = 'default';
             document.body.style.userSelect = 'auto';
-            // 리사이징 후 캔버스 크기 재조정
-            initializeCanvases();
-            loadWorkspaceState(currentQuestionIndex);
+            
         }
     });
 }
-/* ===== 06-20. 연습장 및 크기 조절 기능 끝 ===== */
+/* ===== 06-20. 스마트 캔버스 및 UI 기능 (최종 완성본) 끝 ===== */
 
 /* ===== 06-21. UI 템플릿 함수 시작 ===== */
 
@@ -3317,8 +3448,7 @@ function getQuizLayoutHTML() {
             <section class="quiz-section" id="quiz-section">
                 <canvas class="annotation-canvas" id="annotation-canvas"></canvas>
                 <div class="quiz-header">
-                    <span id="question-counter">문제 준비중</span>
-                    <span id="quiz-status">대기</span>
+                    <span id="question-counter">문제 준비중</span><span id="quiz-status">대기</span>
                 </div>
                 <div class="question-container" id="question-container">
                     <h3 id="question-text">목차에서 원하는 과목과 단원을 선택해주세요.</h3>
@@ -3328,8 +3458,11 @@ function getQuizLayoutHTML() {
             <div class="resizer-vertical" id="vertical-resizer"></div>
             <section class="workspace-section-new" id="workspace-section">
                 <div class="workspace-header">
-                    <h3>✏️ 연습장 (문제별 자동저장)</h3>
-                    <button class="draw-btn" onclick="clearWorkspaceCanvas()">지우기</button>
+                    <h3>✏️ 연습장</h3>
+                    <div>
+                        <button class="draw-btn" id="eraser-btn" onclick="toggleEraserMode()">지우개</button>
+                        <button class="draw-btn" onclick="clearAllCanvases()">전체 지우기</button>
+                    </div>
                 </div>
                 <canvas class="workspace-canvas" id="workspace-canvas"></canvas>
             </section>
