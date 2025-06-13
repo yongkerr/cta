@@ -406,18 +406,25 @@
             flex-direction: column;
         }
         
-       
-        
         .calculator-section {
-            flex: 0.8;
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-            display: flex;
-            flex-direction: column;
-        }
+    flex: none;
+    width: 450px;          /* 원하는 고정 너비(px)로 설정 */
+    min-width: 340px;      /* 최소 너비 지정 */
+    max-width: 540px;      /* 최대 너비 지정 (원하는 경우) */
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    position: sticky;      /* 뷰포트 오른쪽에 고정 */
+    right: 0;
+    top: 0;
+    height: 100%;
+    z-index: 10;
+}
+
         /* ===== 01-8. 문제풀이 화면 레이아웃 스타일 끝 ===== */
         
         /* ===== 01-9. 계산기 컨테이너 스타일 (CASIO JS-40B 디자인) 시작 ===== */
@@ -842,7 +849,7 @@
 }
 
 .explanation-content {
-    flex: 2;
+    flex: 1;
     background: white;
     border-radius: 8px;
     padding: 20px;
@@ -852,38 +859,6 @@
     max-height: calc(100vh - 140px);
 }
 
-.memo-section {
-    flex: 1;
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    border: 1px solid #e9ecef;
-    display: flex;
-    flex-direction: column;
-}
-
-.memo-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #e9ecef;
-}
-
-.memo-textarea {
-    flex: 1;
-    border: none;
-    outline: none;
-    resize: none;
-    font-family: 'Malgun Gothic', sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
-    padding: 10px;
-    background: #fafafa;
-    border-radius: 6px;
-}
 
 /* 동적 해설 칸 크기 조정 */
 .explanation-item.short {
@@ -1153,13 +1128,182 @@
 }
 /* ===== 01-20. 참고사항 스타일 끝 ===== */
 
+/* ===== 01-21. 퀴즈 결과 화면 스타일 (그리드 뷰) 시작 ===== */
+.results-mode {
+    padding: 20px;
+    background-color: #f8f9fa;
+    height: 100%;
+    overflow-y: auto;
+    text-align: center;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 10px;
+    margin-top: 30px;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.result-grid-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid transparent;
+}
+
+.result-grid-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.result-grid-item.correct {
+    background: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+.result-grid-item.incorrect {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+/* ===== 01-21. 퀴즈 결과 화면 스타일 (그리드 뷰) 끝 ===== */
+
+/* ===== 01-23. 주석(Annotation) 및 연습장(Workspace) 스타일 시작 ===== */
+
+/* 01-23-1. 문제 위에 겹쳐지는 투명 필기 캔버스 */
+.annotation-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10; /* 다른 요소들 위에 위치 */
+    cursor: crosshair;
+    /* 기본적으로 이 캔버스는 모든 클릭/터치 이벤트를 받습니다. */
+    pointer-events: auto; 
+}
+
+/* 01-23-2. 퀴즈 섹션의 상대 위치 설정 (주석 캔버스의 기준점) */
+.quiz-section {
+    position: relative; /* 자식 absolute 요소의 기준이 됨 */
+}
+
+/* 01-23-3. 퀴즈 영역과 연습장을 감싸는 세로 컨테이너 */
+.main-column {
+    display: flex;
+    flex-direction: column;
+    flex: 2.2; /* 기존 quiz-section과 동일한 너비 비율 */
+    gap: 0; /* 분할 바로 간격 제어 */
+    min-width: 0; /* flex item의 크기가 줄어들 수 있도록 설정 */
+}
+
+/* 01-23-4. 하단 연습장 섹션 */
+.workspace-section-new {
+    flex-basis: 200px; /* 초기 높이 지정 */
+    min-height: 50px; /* 최소 높이 보장 */
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+}
+
+.workspace-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e9ecef;
+    flex-shrink: 0;
+}
+
+.workspace-header h3 {
+    font-size: 16px;
+    margin: 0;
+}
+
+.draw-btn {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+/* 01-23-5. 연습장 캔버스 */
+.workspace-canvas {
+    width: 100%;
+    flex-grow: 1; /* 남은 공간을 모두 차지 */
+    background: #fdfdfd;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+}
+
+/* 01-23-6. 크기 조절 바(Resizer) 스타일 */
+.resizer-vertical {
+    background: #e9ecef;
+    cursor: row-resize;
+    height: 10px;
+    border-top: 1px solid #dee2e6;
+    border-bottom: 1px solid #dee2e6;
+    position: relative;
+    transition: background 0.2s;
+}
+
+.resizer-vertical:hover {
+    background: #007bff;
+}
+
+.resizer-vertical::before {
+    content: '•••';
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #6c757d;
+    font-size: 16px;
+    letter-spacing: 2px;
+}
+
+/* 01-23-7. 개별 해설 화면의 연습장 이미지 스타일 */
+.workspace-snapshot {
+    margin-top: 20px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+}
+
+.workspace-snapshot-header {
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+/* ===== 01-23. 주석(Annotation) 및 연습장(Workspace) 스타일 끝 ===== */
+
     </style>
 
-    <!-- ===== 01-21. iOS 전체화면(PWA) 메타태그 추가 ===== -->
+    <!-- ===== 01-22. iOS 전체화면(PWA) 메타태그 추가 ===== -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="세무사 학습 웹앱">
-<!-- ===== 01-21. iOS 전체화면(PWA) 메타태그 끝 ===== -->
+<!-- ===== 01-22. iOS 전체화면(PWA) 메타태그 끝 ===== -->
+
+
 
     <!-- ========================================
          01. CSS 스타일 정의 섹션 끝
@@ -1664,41 +1808,44 @@
         <main class="main-content">
             <!-- 05-1. 문제풀이 화면 레이아웃 시작 -->
             <div class="quiz-layout" id="quiz-layout">
-                
-                <!-- 05-1-1. 왼쪽: 퀴즈 영역 시작 -->
-                <section class="quiz-section">
-                    <!-- 05-1-1-1. 퀴즈 헤더 시작 -->
-                    <div class="quiz-header">
-                        <span id="question-counter">문제 준비중</span>
-                        <span id="quiz-status">대기</span>
-                    </div>
-                    <!-- 05-1-1-1. 퀴즈 헤더 끝 -->
-                    
-                    <!-- 05-1-1-2. 문제 컨테이너 시작 -->
-                    <div class="question-container" id="question-container">
-                        <h3 id="question-text">목차에서 원하는 과목과 단원을 선택해주세요.</h3>
-                        <div class="options-container" id="options-container">
-                            <!-- 선택지들이 동적으로 추가됩니다 -->
-                        </div>
-                    </div>
-                    <!-- 05-1-1-2. 문제 컨테이너 끝 -->
-                </section>
-                <!-- 05-1-1. 왼쪽: 퀴즈 영역 끝 -->
-
-                
-
-                <!-- 05-1-3. 오른쪽: 계산기 영역 시작 -->
+    <div class="main-column">
+        <!-- 05-1-1. 문제풀이(퀴즈) 영역 시작 -->
+        <section class="quiz-section" id="quiz-section">
+            <!-- 05-1-1-0. 문제 위 스마트 주석(Annotation) 캔버스 -->
+            <canvas class="annotation-canvas" id="annotation-canvas"></canvas>
+            <!-- 05-1-1-1. 퀴즈 헤더 -->
+            <div class="quiz-header">
+                <span id="question-counter">문제 준비중</span>
+                <span id="quiz-status">대기</span>
+            </div>
+            <!-- 05-1-1-2. 문제 컨테이너 -->
+            <div class="question-container" id="question-container">
+                <h3 id="question-text">목차에서 원하는 과목과 단원을 선택해주세요.</h3>
+                <div class="options-container" id="options-container"></div>
+            </div>
+        </section>
+        <!-- 05-1-2. 문제풀이/연습장 크기조절바 -->
+        <div class="resizer-vertical" id="vertical-resizer"></div>
+        <!-- 05-1-3. 하단 연습장(Workspace) -->
+        <section class="workspace-section-new" id="workspace-section">
+            <div class="workspace-header">
+                <h3>✏️ 연습장 (문제별 자동저장)</h3>
+                <button class="draw-btn" onclick="clearWorkspaceCanvas()">지우기</button>
+            </div>
+            <canvas class="workspace-canvas" id="workspace-canvas"></canvas>
+        </section>
+       
+            </div>
+            <!-- 05-1-3. 오른쪽: 계산기 영역 시작 -->
                 <section class="calculator-section">
                     <!-- 05-1-3-1. 계산기 컨테이너 시작 -->
                     <div class="calculator-container">
-                        <!-- 05-1-3-1-1. 계산기 브랜드 시작 -->
-                        <div class="calc-brand">CASIO JS-40B</div>
-                        <!-- 05-1-3-1-1. 계산기 브랜드 끝 -->
-                        
-                        <!-- 05-1-3-1-2. 계산기 디스플레이 (14자리 지원) 시작 -->
-                        <div class="calculator-display" id="calc-display">
-                            <div class="memory-indicator" id="memory-indicator"></div>
-                            <div class="display-value" id="display-value">0</div>
+                    <div class="calc-brand">CASIO JS-40B</div>
+                                          
+                    <!-- 05-1-3-1-2. 계산기 디스플레이 (14자리 지원) 시작 -->
+                    <div class="calculator-display" id="calc-display">
+                    <div class="memory-indicator" id="memory-indicator"></div>
+                     <div class="display-value" id="display-value">0</div>
                         </div>
                         <!-- 05-1-3-1-2. 계산기 디스플레이 (14자리 지원) 끝 -->
                         
@@ -1773,7 +1920,6 @@
                     <!-- 05-1-3-1. 계산기 컨테이너 끝 -->
                 </section>
                 <!-- 05-1-3. 오른쪽: 계산기 영역 끝 -->
-            </div>
             <!-- 05-1. 문제풀이 화면 레이아웃 끝 -->
         </main>
         <!-- ========================================
@@ -1785,17 +1931,34 @@
          06. JavaScript 기능 구현 섹션 시작
          ======================================== -->
     <script>
-        /* ===== 06-1. 전역 변수 선언 (계산기 상태 관리) 시작 ===== */
-let calculatorMemory = 0;       // 메모리 저장값
-let grandTotalMemory = 0;       // GT(Grand Total) 누적값
-let shouldClearOnNextInput = false; // 다음 입력시 화면 클리어 여부
-let currentExpression = '';       // 현재 계산식
-let canvas, ctx;                // 캔버스 관련 변수
-let isDrawing = false;          // 그리기 상태
-let lastX = 0, lastY = 0;       // 마지막 마우스 위치
-let calculationHistory = [];    // 계산 기록 배열
-let viewHistory = [];           // (신규) 화면 이동 기록을 저장하는 배열
-/* ===== 06-1. 전역 변수 선언 (계산기 상태 관리) 끝 ===== */
+        /* ===== 06-1. 전역 변수 선언 (수정) 시작 ===== */
+let calculatorMemory = 0;
+let grandTotalMemory = 0;
+let shouldClearOnNextInput = false;
+let currentExpression = '';
+let calculationHistory = [];
+let viewHistory = [];
+
+// 캔버스 관련 전역 변수
+let annotationCanvas, annotationCtx;
+let workspaceCanvas, workspaceCtx;
+
+// 포인터(마우스/터치) 이벤트 상태 관리 변수
+let isPointerDown = false;
+let isDragging = false;
+let startX, startY;
+let tapTimeoutId = null;
+
+// 퀴즈 상태 관련 전역 변수
+let currentView = 'home';
+let currentQuestionData = null;
+let currentQuestionSet = [];
+let currentQuestionIndex = 0;
+let userAnswers = {};
+let selectedAnswers = {};
+let quizCompleted = false;
+
+/* ===== 06-1. 전역 변수 선언 (수정) 끝 ===== */
 
         /* ===== 06-2. 숫자 포맷팅 함수들 시작 ===== */
         // 06-2-1. 천단위 콤마 추가 함수 시작
@@ -1872,89 +2035,72 @@ let viewHistory = [];           // (신규) 화면 이동 기록을 저장하는
         /* ===== 06-4. 디스플레이 관련 함수들 끝 ===== */
 
         /* ===== 06-5. 계산기록 관리 함수들 시작 ===== */
-        // 06-5-1. 계산 기록에 값 추가 시작
-        function addToCalculationHistory(value) {
-            if (!isNaN(value) && value !== 0) {
-                calculationHistory.push(value);
-                if (calculationHistory.length > 20) {
-                    calculationHistory.shift(); // 최대 20개까지만 유지
-                }
-                updateHistoryDisplay();
-            }
+// 06-5-1. 계산 기록에 값 추가 시작
+function addToCalculationHistory(value) {
+    if (!isNaN(value) && value !== 0) {
+        calculationHistory.push(value);
+        if (calculationHistory.length > 20) {
+            calculationHistory.shift(); // 최대 20개까지만 유지
         }
-        // 06-5-1. 계산 기록에 값 추가 끝
+        updateHistoryDisplay();
+    }
+}
+// 06-5-1. 계산 기록에 값 추가 끝
 
-        // 06-5-2. 계산 기록 표시 업데이트 (개별 버튼으로) 시작
-        function updateHistoryDisplay() {
-            const historyElement = document.getElementById('historyValues');
-            historyElement.innerHTML = '';
-            
-            if (calculationHistory.length === 0) {
-                historyElement.innerHTML = '<span style="color: #6c757d; font-size: 11px;">계산 결과가 여기에 표시됩니다</span>';
-            } else {
-                calculationHistory.forEach((value, index) => {
-                    const valueButton = document.createElement('span');
-                    valueButton.className = 'history-value';
-                    valueButton.textContent = formatNumberWithCommas(value);
-                    valueButton.onclick = () => useHistoryValue(value);
-                    historyElement.appendChild(valueButton);
-                });
-            }
-            updateImportPanel();
-        }
-        // 06-5-2. 계산 기록 표시 업데이트 (개별 버튼으로) 시작
-        function updateHistoryDisplay() {
-            const historyElement = document.getElementById('historyValues');
-            historyElement.innerHTML = '';
-            
-            if (calculationHistory.length === 0) {
-                historyElement.innerHTML = '<span style="color: #6c757d; font-size: 11px;">계산 결과가 여기에 표시됩니다</span>';
-            } else {
-                calculationHistory.forEach((value, index) => {
-                    const valueButton = document.createElement('span');
-                    valueButton.className = 'history-value';
-                    valueButton.textContent = formatNumberWithCommas(value);
-                    valueButton.onclick = () => useHistoryValue(value);
-                    historyElement.appendChild(valueButton);
-                });
-            }
-            // updateImportPanel(); // 06-5-2-1. (수정) 삭제된 연습장 관련 함수 호출 코드를 제거하여 오류를 해결합니다.
-        }
-        // 06-5-2. 계산 기록 표시 업데이트 (개별 버튼으로) 끝
-        // 06-5-3. 계산기록 값 사용 (기존 입력과 연산자 유지) 시작
-        function useHistoryValue(value) {
-            const currentDisplay = document.getElementById('display-value').textContent;
-            
-            if (['+', '-', '×', '÷', '*', '/'].includes(currentDisplay.trim())) {
+// 06-5-2. 계산 기록 표시 업데이트 (중복 제거된 최종 버전)
+function updateHistoryDisplay() {
+    const historyElement = document.getElementById('historyValues');
+    if (!historyElement) return; // historyElement가 없는 화면(결과창 등)에서 오류 방지
+
+    historyElement.innerHTML = '';
+    
+    if (calculationHistory.length === 0) {
+        historyElement.innerHTML = '<span style="color: #6c757d; font-size: 11px;">계산 결과가 여기에 표시됩니다</span>';
+    } else {
+        calculationHistory.forEach((value, index) => {
+            const valueButton = document.createElement('span');
+            valueButton.className = 'history-value';
+            valueButton.textContent = formatNumberWithCommas(value);
+            valueButton.onclick = () => useHistoryValue(value);
+            historyElement.appendChild(valueButton);
+        });
+    }
+}
+// 06-5-2. 계산 기록 표시 업데이트 끝
+
+// 06-5-3. 계산기록 값 사용
+function useHistoryValue(value) {
+    const currentDisplay = document.getElementById('display-value').textContent;
+    
+    if (['+', '-', '×', '÷', '*', '/'].includes(currentDisplay.trim())) {
+        updateDisplay(value.toString());
+    } else {
+        if (shouldClearOnNextInput) {
+            updateDisplay(value.toString());
+        } else {
+            const cleanDisplay = removeCommas(currentDisplay);
+            if (cleanDisplay === '0') {
                 updateDisplay(value.toString());
             } else {
-                if (shouldClearOnNextInput) {
-                    updateDisplay(value.toString());
-                } else {
-                    const cleanDisplay = removeCommas(currentDisplay);
-                    if (cleanDisplay === '0') {
-                        updateDisplay(value.toString());
-                    } else {
-                        const newValue = cleanDisplay + value.toString();
-                        updateDisplay(limitTo14Digits(newValue));
-                    }
-                }
+                const newValue = cleanDisplay + value.toString();
+                updateDisplay(limitTo14Digits(newValue));
             }
-            shouldClearOnNextInput = false;
-            currentExpression = removeCommas(document.getElementById('display-value').textContent);
         }
-        // 06-5-3. 계산기록 값 사용 (기존 입력과 연산자 유지) 끝
+    }
+    shouldClearOnNextInput = false;
+    currentExpression = removeCommas(document.getElementById('display-value').textContent);
+}
+// 06-5-3. 계산기록 값 사용 끝
 
-        // 06-5-4. 계산 기록 전체 삭제 시작
-        function clearCalculationHistory() {
-            calculationHistory = [];
-            updateHistoryDisplay();
-        }
-        // 06-5-4. 계산 기록 전체 삭제 끝
-        /* ===== 06-5. 계산기록 관리 함수들 끝 ===== */
+// 06-5-4. 계산 기록 전체 삭제 시작
+function clearCalculationHistory() {
+    calculationHistory = [];
+    updateHistoryDisplay();
+}
+// 06-5-4. 계산 기록 전체 삭제 끝
+/* ===== 06-5. 계산기록 관리 함수들 끝 ===== */
 
         
-
         /* ===== 06-7. 기본 계산기 함수들 시작 ===== */
         // 06-7-1. 숫자/연산자 입력 처리 시작
         function appendToDisplay(value) {
@@ -2173,39 +2319,40 @@ let viewHistory = [];           // (신규) 화면 이동 기록을 저장하는
 async function selectChapter(subject, chapter) {
     console.log(`🎯 selectChapter 호출됨: ${subject}, ${chapter}`);
 
-    // [추가] '전체 해설 보기' 화면일 경우, 기본 레이아웃으로 복원하는 로직
-    if (!document.getElementById('quiz-layout')) {
-        const mainContent = document.querySelector('.main-content');
-        if (mainContent) {
-            // 기본 3단 레이아웃 HTML 구조로 복원
-            mainContent.innerHTML = `
-            <div class="quiz-layout" id="quiz-layout">
-                <section class="quiz-section">
+    // [06-10-4. selectChapter 함수 일부] 연습장/스마트주석/크기조절 포함 구조로 교체
+if (!document.getElementById('quiz-layout')) {
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        mainContent.innerHTML = `
+        <div class="quiz-layout" id="quiz-layout">
+            <div class="main-column">
+                <section class="quiz-section" id="quiz-section">
+                    <canvas class="annotation-canvas" id="annotation-canvas"></canvas>
                     <div class="quiz-header">
                         <span id="question-counter">문제 준비중</span>
                         <span id="quiz-status">대기</span>
                     </div>
                     <div class="question-container" id="question-container">
-                        <h3 id="question-text">결과 화면을 불러오는 중...</h3>
+                        <h3 id="question-text">문제를 불러오는 중...</h3>
                         <div class="options-container" id="options-container"></div>
                     </div>
                 </section>
-                <section class="workspace-section">
-                    <div class="workspace-header"><h3>연습장</h3><div class="workspace-controls"><button class="import-btn" onclick="toggleImportPanel()">📊 계산기록</button><button class="clear-btn" onclick="clearCanvas()">🗑️ 지우기</button><button class="clear-btn" onclick="undoLastStroke()">↶ 되돌리기</button></div><div class="import-panel" id="importPanel"><div class="import-panel-header">계산기록 불러오기</div><div id="importValuesList"></div></div></div><div class="canvas-container"><canvas id="handwriting-canvas" class="paper-workspace"></canvas><textarea id="notepad-text" class="notepad-text" placeholder="여기에 텍스트를 입력하거나 계산기록을 불러오세요..."></textarea></div>
+                <div class="resizer-vertical" id="vertical-resizer"></div>
+                <section class="workspace-section-new" id="workspace-section">
+                    <div class="workspace-header">
+                        <h3>✏️ 연습장 (문제별 자동저장)</h3>
+                        <button class="draw-btn" onclick="clearWorkspaceCanvas()">지우기</button>
+                    </div>
+                    <canvas class="workspace-canvas" id="workspace-canvas"></canvas>
                 </section>
-                <section class="calculator-section">
-                    <div class="calculator-container"><div class="calc-brand">CASIO JS-40B</div><div class="calculator-display" id="calc-display"><div class="memory-indicator" id="memory-indicator"></div><div class="display-value" id="display-value">0</div></div><div class="calculator-buttons"><button class="calc-btn memory" onclick="memoryExchange()">M/EX</button><button class="calc-btn function" onclick="percentage()">%</button><button class="calc-btn function" onclick="squareRoot()">√</button><button class="calc-btn function" onclick="backspace()">⌫</button><button class="calc-btn memory" onclick="grandTotal()">GT</button><button class="calc-btn memory" onclick="memoryClear()">MC</button><button class="calc-btn memory" onclick="memoryRecall()">MR</button><button class="calc-btn memory" onclick="memorySubtract()">M-</button><button class="calc-btn memory" onclick="memoryAdd()">M+</button><button class="calc-btn operator" onclick="appendToDisplay('/')">÷</button><button class="calc-btn function" onclick="changeSign()">+/-</button><button class="calc-btn number" onclick="appendToDisplay('7')">7</button><button class="calc-btn number" onclick="appendToDisplay('8')">8</button><button class="calc-btn number" onclick="appendToDisplay('9')">9</button><button class="calc-btn operator" onclick="appendToDisplay('*')">×</button><button class="calc-btn function" onclick="clearEntry()">C</button><button class="calc-btn number" onclick="appendToDisplay('4')">4</button><button class="calc-btn number" onclick="appendToDisplay('5')">5</button><button class="calc-btn number" onclick="appendToDisplay('6')">6</button><button class="calc-btn operator" onclick="appendToDisplay('-')">-</button><button class="calc-btn function" onclick="clearAll()">AC</button><button class="calc-btn number" onclick="appendToDisplay('1')">1</button><button class="calc-btn number" onclick="appendToDisplay('2')">2</button><button class="calc-btn number" onclick="appendToDisplay('3')">3</button><button class="calc-btn plus-tall" onclick="appendToDisplay('+')">+</button><button class="calc-btn number" onclick="appendToDisplay('0')">0</button><button class="calc-btn number" onclick="appendToDisplay('00')">00</button><button class="calc-btn number" onclick="appendToDisplay('.')">.</button><button class="calc-btn equals" onclick="calculate()">=</button></div><div class="calculation-history"><div class="history-title">계산기록<button class="clear-history-btn" onclick="clearCalculationHistory()">지우기</button></div><div class="history-values" id="historyValues"></div></div></div>
-                </section>
-            </div>`;
 
-            // 복원된 DOM 요소(캔버스, 계산기 등)의 기능들을 다시 활성화
+            </div>
+                            <section class="calculator-section">
+                    <div class="calculator-container"><div class="calc-brand">CASIO JS-40B</div><div class="calculator-display" id="calc-display"><div class="memory-indicator" id="memory-indicator"></div><div class="display-value" id="display-value">0</div></div><div class="calculator-buttons"><button class="calc-btn memory" onclick="memoryExchange()">M/EX</button><button class="calc-btn function" onclick="percentage()">%</button><button class="calc-btn function" onclick="squareRoot()">√</button><button class="calc-btn function" onclick="backspace()">⌫</button><button class="calc-btn memory" onclick="grandTotal()">GT</button><button class="calc-btn memory" onclick="memoryClear()">MC</button><button class="calc-btn memory" onclick="memoryRecall()">MR</button><button class="calc-btn memory" onclick="memorySubtract()">M-</button><button class="calc-btn memory" onclick="memoryAdd()">M+</button><button class="calc-btn operator" onclick="appendToDisplay('/')">÷</button><button class="calc-btn function" onclick="changeSign()">+/-</button><button class="calc-btn number" onclick="appendToDisplay('7')">7</button><button class="calc-btn number" onclick="appendToDisplay('8')">8</button><button class="calc-btn number" onclick="appendToDisplay('9')">9</button><button class="calc-btn operator" onclick="appendToDisplay('*')">×</button><button class="calc-btn function" onclick="clearEntry()">C</button><button class="calc-btn number" onclick="appendToDisplay('4')">4</button><button class="calc-btn number" onclick="appendToDisplay('5')">5</button><button class="calc-btn number" onclick="appendToDisplay('6')">6</button><button class="calc-btn operator" onclick="appendToDisplay('-')">-</button><button class="calc-btn function" onclick="clearAll()">AC</button><button class="calc-btn number" onclick="appendToDisplay('1')">1</button><button class="calc-btn number" onclick="appendToDisplay('2')">2</button><button class="calc-btn number" onclick="appendToDisplay('3')">3</button><button class="calc-btn plus-tall" onclick="appendToDisplay('+')">+</button><button class="calc-btn number" onclick="appendToDisplay('0')">0</button><button class="calc-btn number" onclick="appendToDisplay('00')">00</button><button class="calc-btn number" onclick="appendToDisplay('.')">.</button><button class="calc-btn equals" onclick="calculate()">=</button></div><div class="calculation-history"><div class="history-title">계산기록<button class="clear-history-btn" onclick="clearCalculationHistory()">지우기</button></div><div class="history-values" id="historyValues"></div></div></div>
+                </section>`;
+
+            // 복원된 DOM 요소의 기능들을 다시 활성화합니다.
             setTimeout(() => {
-                canvas = document.getElementById('handwriting-canvas');
-                if (canvas) {
-                    ctx = canvas.getContext('2d');
-                    resizeCanvas();
-                    canvas.addEventListener('mousedown', startDrawing); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stopDrawing); canvas.addEventListener('mouseout', stopDrawing); canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }); canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }); canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); });
-                }
                 updateHistoryDisplay();
             }, 100);
         }
@@ -2220,21 +2367,12 @@ async function selectChapter(subject, chapter) {
         return;
     }
 
-    // (수정) 선택된 메뉴에 따라 전체 경로를 동적으로 생성
     let path = ['1차 시험 문제풀이'];
     const subjectToPath = {
-        '재무회계': ['회계학개론', '과목별 기출'],
-        '원가관리회계': ['회계학개론', '과목별 기출'],
-        '회계학개론': ['회계학개론'],
-        '법인세법': ['세법학개론', '세목별 기출'],
-        '소득세법': ['세법학개론', '세목별 기출'],
-        '부가가치세법': ['세법학개론', '세목별 기출'],
-        '국세기본법': ['세법학개론', '세목별 기출'],
-        '국세징수법': ['세법학개론', '세목별 기출'],
-        '조세범처벌법': ['세법학개론', '세목별 기출'],
-        '세법학개론': ['세법학개론'],
-        '재정학': ['재정학'],
-        '행정소송법': ['행정소송법'],
+        '재무회계': ['회계학개론', '과목별 기출'], '원가관리회계': ['회계학개론', '과목별 기출'], '회계학개론': ['회계학개론'],
+        '법인세법': ['세법학개론', '세목별 기출'], '소득세법': ['세법학개론', '세목별 기출'], '부가가치세법': ['세법학개론', '세목별 기출'],
+        '국세기본법': ['세법학개론', '세목별 기출'], '국세징수법': ['세법학개론', '세목별 기출'], '조세범처벌법': ['세법학개론', '세목별 기출'],
+        '세법학개론': ['세법학개론'], '재정학': ['재정학'], '행정소송법': ['행정소송법'],
     };
 
     if (subjectToPath[subject]) {
@@ -2242,13 +2380,11 @@ async function selectChapter(subject, chapter) {
     }
     path.push(chapter.includes('기출문제') || chapter.includes('AI추천') ? chapter : `단원별 기출 > ${chapter}`);
     
-    // (수정) 생성된 경로를 HTML로 변환하여 표시
     breadcrumb.innerHTML = path.map((p, i) => i === path.length - 1 ? `<span class="current">${p.split(' > ').pop()}</span>` : `<span>${p}</span>`).join(' &gt; ');
 
     questionText.textContent = `${subject} ${chapter} 문제를 불러오는 중...`;
     optionsContainer.innerHTML = '';
     
-    // 전역 변수 초기화
     resetQuizState();
     closeSidebar();
 
@@ -2259,11 +2395,9 @@ async function selectChapter(subject, chapter) {
             currentQuestionSet = questions;
             currentQuestionIndex = 0;
             
-            // (신규) 퀴즈 화면 상태를 방문 기록에 추가
-            viewHistory.push({
-                view: 'quiz',
-                data: { subject, chapter }, // 퀴즈를 다시 시작할 정보 저장
-                scrollPos: 0
+            // (핵심 수정) 여기서 새로운 히스토리 함수를 사용합니다.
+            pushToViewHistory({
+                view: 'quiz', data: { subject, chapter }
             });
 
             loadQuestion(questions[0]);
@@ -2511,31 +2645,36 @@ function updateQuestionCounter() {
 
         /* ===== 06-10. 사이드바 관련 함수들 (다중 중첩 메뉴 지원) 끝 ===== */
 
-        
-        /* ===== 06-12. 기타 UI 함수들 시작 ===== */
+/* ===== 06-12. 기타 UI 함수들 시작 ===== */
+
+// 06-12-0. 화면 이동 기록을 관리하는 함수
+function pushToViewHistory(state) {
+    if (viewHistory.length > 0) {
+        const lastView = viewHistory[viewHistory.length - 1];
+        if (lastView.view === state.view && JSON.stringify(lastView.data) === JSON.stringify(state.data)) {
+            return;
+        }
+    }
+    viewHistory.push(state);
+    updateBackButtonState();
+}
 
 // 06-12-1. 뒤로가기 버튼 상태 업데이트 함수
 function updateBackButtonState() {
     const backBtn = document.querySelector('.back-btn');
     if(backBtn) {
-        // 'home' 뷰 상태에서는 뒤로가기 버튼을 비활성화합니다.
-        backBtn.disabled = (currentView === 'home');
+        backBtn.disabled = (viewHistory.length <= 1);
     }
 }
 
-// 06-12-2. 퀴즈 상태 초기화 함수 (Solution B의 장점 채용)
+// 06-12-2. 퀴즈 상태 초기화 함수
 function resetQuizState() {
     console.log('🔄 퀴즈 상태 초기화');
-    
     currentQuestionSet = [];
     currentQuestionIndex = 0;
     selectedAnswers = {};
     userAnswers = {};
-    showingResults = false;
     quizCompleted = false;
-    currentQuestionData = null;
-    
-    // 타이머가 있다면 초기화
     if(typeof resetTimer === 'function') {
         resetTimer();
     }
@@ -2544,43 +2683,60 @@ function resetQuizState() {
 // 06-12-3. 초기 화면으로 돌아가는 함수
 function goHome() {
     console.log('🏠 초기 화면으로 돌아가기');
-    currentView = 'home';
-    updateBackButtonState(); // 버튼 상태 업데이트
+    viewHistory = []; // 히스토리 초기화
+    pushToViewHistory({ view: 'home', data: null }); // 홈 상태를 첫 히스토리로 기록
 
-    resetQuizState(); // 퀴즈 상태 초기화
-
-    // UI를 초기 상태로 리셋
+    // 기본 레이아웃으로 복원
+    const mainContent = document.querySelector('.main-content');
+    mainContent.innerHTML = `
+        <div class="quiz-layout" id="quiz-layout">
+            <section class="quiz-section">
+                <div class="quiz-header">
+                    <span id="question-counter">문제 준비중</span>
+                    <span id="quiz-status">대기</span>
+                </div>
+                <div class="question-container" id="question-container">
+                    <h3 id="question-text">목차에서 원하는 과목과 단원을 선택해주세요.</h3>
+                    <div class="options-container" id="options-container"></div>
+                </div>
+            </section>
+            <section class="calculator-section">
+                <div class="calculator-container"><div class="calc-brand">CASIO JS-40B</div><div class="calculator-display" id="calc-display"><div class="memory-indicator" id="memory-indicator"></div><div class="display-value" id="display-value">0</div></div><div class="calculator-buttons"><button class="calc-btn memory" onclick="memoryExchange()">M/EX</button><button class="calc-btn function" onclick="percentage()">%</button><button class="calc-btn function" onclick="squareRoot()">√</button><button class="calc-btn function" onclick="backspace()">⌫</button><button class="calc-btn memory" onclick="grandTotal()">GT</button><button class="calc-btn memory" onclick="memoryClear()">MC</button><button class="calc-btn memory" onclick="memoryRecall()">MR</button><button class="calc-btn memory" onclick="memorySubtract()">M-</button><button class="calc-btn memory" onclick="memoryAdd()">M+</button><button class="calc-btn operator" onclick="appendToDisplay('/')">÷</button><button class="calc-btn function" onclick="changeSign()">+/-</button><button class="calc-btn number" onclick="appendToDisplay('7')">7</button><button class="calc-btn number" onclick="appendToDisplay('8')">8</button><button class="calc-btn number" onclick="appendToDisplay('9')">9</button><button class="calc-btn operator" onclick="appendToDisplay('*')">×</button><button class="calc-btn function" onclick="clearEntry()">C</button><button class="calc-btn number" onclick="appendToDisplay('4')">4</button><button class="calc-btn number" onclick="appendToDisplay('5')">5</button><button class="calc-btn number" onclick="appendToDisplay('6')">6</button><button class="calc-btn operator" onclick="appendToDisplay('-')">-</button><button class="calc-btn function" onclick="clearAll()">AC</button><button class="calc-btn number" onclick="appendToDisplay('1')">1</button><button class="calc-btn number" onclick="appendToDisplay('2')">2</button><button class="calc-btn number" onclick="appendToDisplay('3')">3</button><button class="calc-btn plus-tall" onclick="appendToDisplay('+')">+</button><button class="calc-btn number" onclick="appendToDisplay('0')">0</button><button class="calc-btn number" onclick="appendToDisplay('00')">00</button><button class="calc-btn number" onclick="appendToDisplay('.')">.</button><button class="calc-btn equals" onclick="calculate()">=</button></div><div class="calculation-history"><div class="history-title">계산기록<button class="clear-history-btn" onclick="clearCalculationHistory()">지우기</button></div><div class="history-values" id="historyValues"></div></div></div>
+            </section>
+        </div>
+    `;
     document.getElementById('breadcrumb-text').innerHTML = '세법 학습 시스템';
-    document.getElementById('question-text').textContent = "목차에서 원하는 과목과 단원을 선택해주세요.";
-    document.getElementById('options-container').innerHTML = '';
-    document.getElementById('question-counter').textContent = '문제 준비중';
-    document.getElementById('quiz-status').textContent = '대기';
+    updateHistoryDisplay();
 }
 
-// 06-12-4. 뒤로가기 기능 구현 (수정)
+// 06-12-4. 뒤로가기 기능 구현 (새로운 로직)
 function goBack() {
-    if (viewHistory.length > 1) {
-        viewHistory.pop();
-        const previousState = viewHistory[viewHistory.length - 1];
-        
-        console.log("되돌아갈 화면:", previousState.view);
-
-        switch (previousState.view) {
-            case 'quiz':
-                selectChapter(previousState.data.subject, previousState.data.chapter);
-                break;
-            case 'results':
-                showResults();
-                break;
-            case 'detail':
-                showQuestionDetail(previousState.data);
-                break;
-            default:
-                goHome();
-                break;
-        }
-    } else {
+    if (viewHistory.length <= 1) {
         goHome();
+        return;
+    }
+
+    viewHistory.pop(); // 현재 뷰를 히스토리에서 제거
+    const previousState = viewHistory[viewHistory.length - 1];
+    console.log("뒤로가기 실행. 되돌아갈 화면:", previousState);
+
+    // 이전 상태에 따라 화면을 복원 (함수를 다시 호출하여 화면을 그림)
+    switch (previousState.view) {
+        case 'quiz':
+            selectChapter(previousState.data.subject, previousState.data.chapter, true); // isReturning = true
+            break;
+        case 'results':
+            showResults();
+            break;
+        case 'detail':
+            showQuestionDetail(previousState.data);
+            break;
+        case 'allExplanations':
+            showAllExplanations();
+            break;
+        default:
+            goHome();
+            break;
     }
 }
 
@@ -2591,13 +2747,12 @@ function switchTab(tabName) {
 
 /* ===== 06-12. 기타 UI 함수들 끝 ===== */
 
-/* ===== 06-12-1. 타이머 기능 함수들 시작 ===== */
-// 06-12-1-1. 타이머 전역 변수
+
+/* ===== 06-13. 타이머 기능 함수들 시작 ===== */
 let timerInterval = null;
 let timerSeconds = 0;
 let timerRunning = false;
 
-// 06-12-1-2. 타이머 시작
 function startTimer() {
     if (!timerRunning) {
         timerRunning = true;
@@ -2605,117 +2760,56 @@ function startTimer() {
             timerSeconds++;
             updateTimerDisplay();
         }, 1000);
-        
-        // 버튼 상태 업데이트
         document.getElementById('start-timer-btn').disabled = true;
         document.getElementById('pause-timer-btn').disabled = false;
     }
 }
 
-// 06-12-1-3. 타이머 일시정지
 function pauseTimer() {
     if (timerRunning) {
         timerRunning = false;
         clearInterval(timerInterval);
-        
-        // 버튼 상태 업데이트
         document.getElementById('start-timer-btn').disabled = false;
         document.getElementById('pause-timer-btn').disabled = true;
     }
 }
 
-// 06-12-1-4. 타이머 리셋
 function resetTimer() {
     timerRunning = false;
     timerSeconds = 0;
     clearInterval(timerInterval);
     updateTimerDisplay();
-    
-    // 버튼 상태 업데이트
     document.getElementById('start-timer-btn').disabled = false;
     document.getElementById('pause-timer-btn').disabled = true;
 }
 
-// 06-12-1-5. 타이머 디스플레이 업데이트
 function updateTimerDisplay() {
     const hours = Math.floor(timerSeconds / 3600);
     const minutes = Math.floor((timerSeconds % 3600) / 60);
     const seconds = timerSeconds % 60;
-    
     const timeString = 
         String(hours).padStart(2, '0') + ':' +
         String(minutes).padStart(2, '0') + ':' +
         String(seconds).padStart(2, '0');
-    
     const timerElement = document.getElementById('timer');
     if (timerElement) {
         timerElement.textContent = timeString;
     }
 }
 
-// 06-12-1-6. 타이머 자동 시작 (문제 로딩시)
 function autoStartTimer() {
     if (!timerRunning && timerSeconds === 0) {
         startTimer();
     }
 }
-/* ===== 06-12-1. 타이머 기능 함수들 끝 ===== */
+/* ===== 06-13. 타이머 기능 함수들 끝 ===== */
 
-
-        /* ===== 06-13. 초기화 함수 시작 ===== */
-/* ===== 06-13. 초기화 함수 시작 ===== */
-
-// 06-13-1. 페이지 로드 완료 시 초기화
-document.addEventListener('DOMContentLoaded', function() {
-    // 1. Back4App 서버와 연결을 설정합니다.
-    Parse.initialize("sRKpx71t2JwbatmvWe2SZi67cShfsk72HhyR1vqb", "fG2HXOiMWSlHuSmeOINADUyNU8rPxX5lku389GJV");
-    Parse.serverURL = "https://parseapi.back4app.com/";
-    
-    // 2. 서버 연결이 잘 되었는지 테스트하고 콘솔에 메시지를 표시합니다.
-    testBack4AppConnection();
-    
-    
-    // 4. 기타 UI 요소들을 초기화합니다.
-    updateHistoryDisplay();   // 계산기록 표시 초기화
-    updateBackButtonState();  // 뒤로가기 버튼 초기 상태 설정 (비활성화)
-    
-    console.log('✅ 세무사 시험 문제풀이 시스템 초기화 완료');
-});
-
-// 06-13-2. Back4App 연결 테스트 함수
-async function testBack4AppConnection() {
-    try {
-        await Parse.Cloud.run('health'); // 간단한 클라우드 함수를 호출하여 연결 확인
-        console.log("✅ Back4App 연결 성공!");
-        document.getElementById('question-text').textContent = "Back4App 연결이 완료되었습니다. 목차에서 문제를 선택해주세요.";
-    } catch (error) {
-        console.error("❌ Back4App 연결 실패:", error);
-        document.getElementById('question-text').textContent = "Back4App 서버 연결에 실패했습니다. 인터넷 연결을 확인해주세요.";
-    }
-}
-
-// 06-13-3. 더블탭 확대/스크롤 방지 JS 추가
-document.addEventListener('dblclick', function(e) {
-    e.preventDefault();
-}, { passive: false });
-
-
-/* ===== 06-13. 초기화 함수 끝 ===== */
 
 /* ===== 06-14. Back4App 연동 및 퀴즈 데이터 관리 시작 ===== */
 
-// 06-14-1. 퀴즈 전역 변수 선언
-let currentQuestionData = null;  // 현재 보여지는 문제의 데이터 객체
-let currentQuestionSet = [];     // 현재 진행 중인 퀴즈의 전체 문제 목록 배열
-let currentQuestionIndex = 0;    // 현재 문제의 배열 인덱스
-let userAnswers = {};            // 사용자의 최종 답안 (key: 문제ID, value: 선택번호)
-let selectedAnswers = {};        // 사용자가 '풀이완료' 전 임시 저장하는 답안
-let showingResults = false;      // 채점 후 결과 화면 표시 여부
-let quizCompleted = false;       // '풀이완료' 버튼 클릭 여부
 
-// [2번 교체 블록]
-// [2번 교체 블록]
-// 06-14-2. Back4App에서 문제 데이터 로딩 함수 (수정)
+
+// 06-14-2. Back4App에서 문제 데이터 로딩 함수 (정리된 버전)
 async function loadQuestionsFromBack4App(subject, chapter, originalSubject) {
     console.log(`🔍 Back4App 쿼리: 과목=${subject}, 챕터=${chapter}, 원본=${originalSubject}`);
     const QuestionBank = Parse.Object.extend("QuestionBank");
@@ -2766,7 +2860,6 @@ async function loadQuestionsFromBack4App(subject, chapter, originalSubject) {
                 'option3': result.get('explanation3'), 'option4': result.get('explanation4'),
                 'option5': result.get('explanation5')
             },
-            // 06-14-2-1. analystComment 필드 추가
             analystComment: result.get('analystComment')
         }));
     } catch (error) {
@@ -2774,18 +2867,15 @@ async function loadQuestionsFromBack4App(subject, chapter, originalSubject) {
         return [];
     }
 }
-
-
 /* ===== 06-14. Back4App 연동 및 퀴즈 데이터 관리 끝 ===== */
 
-/* ===== 06-15. 퀴즈 실행 및 상호작용 시작 ===== */
+
+/* ===== 06-15. 퀴즈 실행 및 상호작용 (통합된 단일 버전) 시작 ===== */
 
 // 06-15-1. 한 문제의 내용을 화면에 표시하는 함수
 function loadQuestion(questionData) {
     if (!questionData) return;
-
-    currentView = 'quiz';      // 현재 뷰 상태를 '퀴즈'로 설정
-    updateBackButtonState();   // 뒤로가기 버튼 활성화
+    
     currentQuestionData = questionData; 
 
     const questionTextEl = document.getElementById('question-text');
@@ -2821,7 +2911,7 @@ function loadQuestion(questionData) {
         <button class="nav-btn finish-btn" onclick="finishQuiz()">풀이완료</button>`;
     optionsContainer.appendChild(navDiv);
 
-    // 첫 문제일 경우 타이머 자동 시작
+    // ▼▼▼ (핵심 수정) 누락된 타이머 시작 코드를 여기에 추가합니다. ▼▼▼
     if (currentQuestionIndex === 0 && !quizCompleted) {
         autoStartTimer();
     }
@@ -2830,11 +2920,9 @@ function loadQuestion(questionData) {
 // 06-15-2. 선택지 선택 처리 함수
 function selectOption(questionId, optionNumber) {
     if (quizCompleted) return;
-
     document.querySelectorAll('.option-item').forEach(item => item.classList.remove('selected'));
     document.querySelectorAll('.option-item')[optionNumber - 1].classList.add('selected');
-
-    selectedAnswers[questionId] = optionNumber; // 문제 ID를 키로 답안 저장
+    selectedAnswers[questionId] = optionNumber;
 }
 
 // 06-15-3. 이전/다음 문제 이동 함수
@@ -2863,6 +2951,7 @@ function updateQuestionCounter() {
 }
 /* ===== 06-15. 퀴즈 실행 및 상호작용 끝 ===== */
 
+
 /* ===== 06-16. 퀴즈 채점 및 결과 기능 시작 ===== */
 
 // 06-16-1. '풀이완료' 버튼 기능
@@ -2873,20 +2962,18 @@ function finishQuiz() {
             return;
         }
     }
-    
     pauseTimer();
-    userAnswers = { ...selectedAnswers }; // 임시 답안을 최종 답안으로 확정
+    userAnswers = { ...selectedAnswers };
     quizCompleted = true;
-    showResults(); // 결과 화면 표시 함수 호출
+    showResults();
 }
 
 // 06-16-2. 최종 결과 화면 표시
 function showResults() {
     currentView = 'results';
-    updateBackButtonState();
-
-    const questionTextEl = document.getElementById('question-text');
-    const optionsContainer = document.getElementById('options-container');
+    pushToViewHistory({ view: 'results', data: null });
+    
+    const mainContent = document.querySelector('.main-content');
     
     let correctCount = 0;
     currentQuestionSet.forEach(q => {
@@ -2897,90 +2984,78 @@ function showResults() {
     const totalCount = currentQuestionSet.length;
     const percentage = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
 
-    // 점수 요약 UI
-    questionTextEl.innerHTML = `
-        <div class="quiz-results">
-            <h2>🎯 풀이 완료!</h2>
-            <div class="score-summary">
-                <div class="score-circle">
-                    <span class="score-number">${correctCount}</span>
-                    <span class="score-total">/ ${totalCount}</span>
+    mainContent.innerHTML = `
+        <div class="results-mode">
+            <div class="quiz-results">
+                <h2>🎯 풀이 완료!</h2>
+                <div class="score-summary">
+                    <div class="score-circle">
+                        <span class="score-number">${correctCount}</span>
+                        <span class="score-total">/ ${totalCount}</span>
+                    </div>
+                    <div class="score-percentage">${percentage}%</div>
                 </div>
-                <div class="score-percentage">${percentage}%</div>
+                <div class="score-details">
+                    <span class="correct">정답: ${correctCount}개</span>
+                    <span class="incorrect">오답: ${totalCount - correctCount}개</span>
+                </div>
             </div>
-            <div class="score-details">
-                <span class="correct">정답: ${correctCount}개</span>
-                <span class="incorrect">오답: ${totalCount - correctCount}개</span>
+            <div class="retry-section">
+                <button class="retry-btn" onclick="startQuiz()">다시 풀기</button>
+                <button class="review-btn" onclick="reviewIncorrect()">틀린 문제만</button>
+                <button class="review-btn" onclick="showAllExplanations()">전체 해설 보기</button>
             </div>
-        </div>`;
+            <div class="results-grid" id="results-grid-container"></div>
+        </div>
+    `;
 
-            // ▼▼▼ 06-16-2-1. (신규) 이 코드를 여기에 추가합니다. ▼▼▼
-    // =================================================================
-    const topActionDiv = document.createElement('div');
-    topActionDiv.className = 'retry-section';    // 06-16-2-1-1. 기존 버튼 스타일 재활용
-    topActionDiv.style.marginTop = '0px';        // 06-16-2-1-2. 상단 여백 제거
-    topActionDiv.style.marginBottom = '20px';    // 06-16-2-1-3. 하단 목록과 여백 추가
-    topActionDiv.innerHTML = `
-        <button class="retry-btn" onclick="startQuiz()">다시 풀기</button>
-        <button class="review-btn" onclick="reviewIncorrect()">틀린 문제만</button>
-        <button class="review-btn" onclick="showAllExplanations()">전체 해설 보기</button>`;
-    questionTextEl.appendChild(topActionDiv);    // 06-16-2-1-4. 점수 요약 UI 바로 다음에 버튼 영역을 추가
-    // =================================================================
-
-
-    // 문제별 정답/오답 목록 UI
-    optionsContainer.innerHTML = '';
+    const gridContainer = document.getElementById('results-grid-container');
     currentQuestionSet.forEach((question, index) => {
         const isCorrect = question.correctAnswer === userAnswers[question.questionId];
-        const resultItem = document.createElement('div');
-        resultItem.className = `result-item ${isCorrect ? 'correct' : 'incorrect'}`;
-        resultItem.onclick = () => showQuestionDetail(index);
-        resultItem.innerHTML = `
-            <div class="result-header">
-                <span class="question-num">문제 ${question.questionNumber}번</span>
-                <span class="result-status">${isCorrect ? '✓ 정답' : '✗ 오답'}</span>
-            </div>
-            <div class="result-info">
-                <span>내 답안: ${userAnswers[question.questionId] || '미선택'}번</span>
-                <span>정답: ${question.correctAnswer}번</span>
-            </div>`;
-        optionsContainer.appendChild(resultItem);
+        const gridItem = document.createElement('div');
+        
+        gridItem.className = `result-grid-item ${isCorrect ? 'correct' : 'incorrect'}`;
+        gridItem.textContent = `${question.questionNumber}번`;
+        gridItem.onclick = () => showQuestionDetail(index);
+        gridContainer.appendChild(gridItem);
     });
-
-    // 다시풀기, 오답노트 등 버튼 UI
-    const actionDiv = document.createElement('div');
-    actionDiv.className = 'retry-section';
-    actionDiv.innerHTML = `
-        <button class="retry-btn" onclick="startQuiz()">다시 풀기</button>
-        <button class="review-btn" onclick="reviewIncorrect()">틀린 문제만</button>
-        <button class="review-btn" onclick="showAllExplanations()">전체 해설 보기</button>`;
-    optionsContainer.appendChild(actionDiv);
 }
-
 /* ===== 06-16. 퀴즈 채점 및 결과 기능 끝 ===== */
+
 
 /* ===== 06-17. 해설 보기 기능 시작 ===== */
 
-// [3번 교체 블록]
 // 06-17-1. 개별 문제 상세 해설 표시
 function showQuestionDetail(questionIndex) {
     currentView = 'detail';
-    updateBackButtonState();
+    pushToViewHistory({ view: 'detail', data: questionIndex });
+
+    const mainContent = document.querySelector('.main-content');
+    mainContent.innerHTML = `
+        <div class="quiz-layout" id="quiz-layout">
+            <section class="quiz-section"></section>
+            <section class="calculator-section">
+                <div class="calculator-container"><div class="calc-brand">CASIO JS-40B</div><div class="calculator-display" id="calc-display"><div class="memory-indicator" id="memory-indicator"></div><div class="display-value" id="display-value">0</div></div><div class="calculator-buttons"><button class="calc-btn memory" onclick="memoryExchange()">M/EX</button><button class="calc-btn function" onclick="percentage()">%</button><button class="calc-btn function" onclick="squareRoot()">√</button><button class="calc-btn function" onclick="backspace()">⌫</button><button class="calc-btn memory" onclick="grandTotal()">GT</button><button class="calc-btn memory" onclick="memoryClear()">MC</button><button class="calc-btn memory" onclick="memoryRecall()">MR</button><button class="calc-btn memory" onclick="memorySubtract()">M-</button><button class="calc-btn memory" onclick="memoryAdd()">M+</button><button class="calc-btn operator" onclick="appendToDisplay('/')">÷</button><button class="calc-btn function" onclick="changeSign()">+/-</button><button class="calc-btn number" onclick="appendToDisplay('7')">7</button><button class="calc-btn number" onclick="appendToDisplay('8')">8</button><button class="calc-btn number" onclick="appendToDisplay('9')">9</button><button class="calc-btn operator" onclick="appendToDisplay('*')">×</button><button class="calc-btn function" onclick="clearEntry()">C</button><button class="calc-btn number" onclick="appendToDisplay('4')">4</button><button class="calc-btn number" onclick="appendToDisplay('5')">5</button><button class="calc-btn number" onclick="appendToDisplay('6')">6</button><button class="calc-btn operator" onclick="appendToDisplay('-')">-</button><button class="calc-btn function" onclick="clearAll()">AC</button><button class="calc-btn number" onclick="appendToDisplay('1')">1</button><button class="calc-btn number" onclick="appendToDisplay('2')">2</button><button class="calc-btn number" onclick="appendToDisplay('3')">3</button><button class="calc-btn plus-tall" onclick="appendToDisplay('+')">+</button><button class="calc-btn number" onclick="appendToDisplay('0')">0</button><button class="calc-btn number" onclick="appendToDisplay('00')">00</button><button class="calc-btn number" onclick="appendToDisplay('.')">.</button><button class="calc-btn equals" onclick="calculate()">=</button></div><div class="calculation-history"><div class="history-title">계산기록<button class="clear-history-btn" onclick="clearCalculationHistory()">지우기</button></div><div class="history-values" id="historyValues"></div></div></div>
+            </section>
+        </div>
+    `;
 
     const question = currentQuestionSet[questionIndex];
     const userAnswer = userAnswers[question.questionId];
-    const questionTextEl = document.getElementById('question-text');
-    const optionsContainer = document.getElementById('options-container');
+    const quizSection = document.querySelector('.quiz-section');
 
-    questionTextEl.innerHTML = `
-        <div class="question-header">
-            <span class="question-meta">${question.subject} | ${question.year}년 | ${question.examType} | 문제 ${question.questionNumber}번</span>
+    quizSection.innerHTML = `
+        <div class="quiz-header">
+            <span id="question-counter">문제 ${question.questionNumber} / ${currentQuestionSet.length}</span>
+            <span id="quiz-status">상세 해설</span>
         </div>
-        <div class="question-content">${question.questionText}</div>`;
+        <div class="question-container" id="question-container" style="overflow-y: auto; max-height: calc(100vh - 200px);">
+            <div id="question-text">${question.questionText}</div>
+            <div id="options-container"></div>
+        </div>`;
 
-    optionsContainer.innerHTML = '';
+    const optionsContainer = quizSection.querySelector('#options-container');
     
-    // 선택지와 해설 함께 표시
     question.options.forEach((option, index) => {
         const optionNumber = index + 1;
         const explanation = question.explanations[`option${optionNumber}`] || '해설이 준비되지 않았습니다.';
@@ -2989,63 +3064,40 @@ function showQuestionDetail(questionIndex) {
         
         const explanationDiv = document.createElement('div');
         explanationDiv.className = `explanation-item ${isCorrectOption ? 'correct' : 'incorrect'} ${isUserChoice ? 'user-choice' : ''}`;
-        
-        explanationDiv.innerHTML = `
-            <div class="option-header">
-                <span class="option-number">${optionNumber}</span>
-                <span class="option-text" style="flex: 1;">${option}</span>
-                <span class="option-status">${isCorrectOption ? '✓' : '✗'} ${isUserChoice ? '(내 답안)' : ''}</span>
-            </div>
-            <div class="explanation-text"><strong>해설:</strong> ${explanation}</div>`;
-            
+        explanationDiv.innerHTML = `<div class="option-header"><span class="option-number">${optionNumber}</span><span class="option-text" style="flex: 1;">${option}</span><span class="option-status">${isCorrectOption ? '✓' : '✗'} ${isUserChoice ? '(내 답안)' : ''}</span></div><div class="explanation-text"><strong>해설:</strong> ${explanation}</div>`;
         optionsContainer.appendChild(explanationDiv);
     });
 
-    // 06-17-2. 전체 문제에 대한 참고사항 표시 (analystComment 활용)
     const referenceNote = question.analystComment;
     if (referenceNote && referenceNote.trim() !== '') {
         const referenceDiv = document.createElement('div');
         referenceDiv.className = 'general-reference-note';
-        referenceDiv.innerHTML = `
-            <div class="reference-header">📌 참고사항</div>
-            <div class="reference-content">${referenceNote}</div>`;
+        referenceDiv.innerHTML = `<div class="reference-header">📌 참고사항</div><div class="reference-content">${referenceNote}</div>`;
         optionsContainer.appendChild(referenceDiv);
     }
 
     const navDiv = document.createElement('div');
     navDiv.className = 'detail-navigation';
-    navDiv.innerHTML = `
-        <button class="nav-btn" onclick="showResults()">목록으로</button>
-        <button class="nav-btn" onclick="showQuestionDetail(${questionIndex - 1})" ${questionIndex === 0 ? 'disabled' : ''}>← 이전</button>
-        <button class="nav-btn" onclick="showQuestionDetail(${questionIndex + 1})" ${questionIndex === currentQuestionSet.length - 1 ? 'disabled' : ''}>다음 →</button>`;
-    optionsContainer.appendChild(navDiv);
+    navDiv.innerHTML = `<button class="nav-btn" onclick="goBack()">결과 목록으로</button>`;
+    quizSection.appendChild(navDiv);
 }
-
 
 // 06-17-2. 전체 해설 모드 표시
 function showAllExplanations() {
     currentView = 'allExplanations';
-    updateBackButtonState();
+    pushToViewHistory({ view: 'allExplanations', data: null });
     
     const mainContent = document.querySelector('.main-content');
     
-    // 해설 모드 레이아웃으로 변경
     mainContent.innerHTML = `
         <div class="explanation-mode">
             <div class="explanation-content" id="all-explanations-container">
                 <div class="explanation-header">
                     <h2>📋 전체 문제 해설</h2>
                     <div class="explanation-controls">
-                        <button class="nav-btn" onclick="goBackToQuiz()">결과 화면으로 돌아가기</button>
+                        <button class="nav-btn" onclick="goBack()">결과 화면으로 돌아가기</button>
                     </div>
                 </div>
-            </div>
-            <div class="memo-section">
-                <div class="memo-header">
-                    <h3>📝 학습 메모</h3>
-                    <button class="clear-btn" onclick="clearMemo()">지우기</button>
-                </div>
-                <textarea class="memo-textarea" id="study-memo" placeholder="문제를 풀면서 중요한 내용이나 틀린 이유를 메모해보세요..."></textarea>
             </div>
         </div>
     `;
@@ -3056,7 +3108,6 @@ function showAllExplanations() {
         return;
     }
 
-    // 모든 문제와 해설을 순차적으로 표시
     currentQuestionSet.forEach((question, index) => {
         const userAnswer = userAnswers[question.questionId];
         const isCorrect = userAnswer === question.correctAnswer;
@@ -3081,19 +3132,14 @@ function showAllExplanations() {
             question.options.forEach((option, optionIndex) => {
                 const optionNumber = optionIndex + 1;
                 const explanation = question.explanations[`option${optionNumber}`] || '해설이 준비되지 않았습니다.';
-                const isCorrectOption = optionNumber === question.correctAnswer;
-                const isUserChoice = optionNumber === userAnswer;
                 
                 const explanationDiv = document.createElement('div');
-                const expLength = explanation.length;
-                let sizeClass = expLength > 200 ? 'long' : expLength > 100 ? 'medium' : 'short';
-                
-                explanationDiv.className = `explanation-item ${sizeClass} ${isCorrectOption ? 'correct' : 'incorrect'} ${isUserChoice ? 'user-choice' : ''}`;
+                explanationDiv.className = `explanation-item ${optionNumber === question.correctAnswer ? 'correct' : 'incorrect'}`;
                 explanationDiv.innerHTML = `
                     <div class="option-header">
                         <span class="option-number">${optionNumber}</span>
                         <span style="flex: 1;">${option}</span>
-                        <span class="option-status">${isCorrectOption ? '✅' : '❌'}</span>
+                        <span class="option-status">${optionNumber === question.correctAnswer ? '✅' : '❌'}</span>
                     </div>
                     <div class="explanation-text">${explanation}</div>`;
                 questionDiv.appendChild(explanationDiv);
@@ -3102,121 +3148,22 @@ function showAllExplanations() {
         container.appendChild(questionDiv);
     });
 }
-
-// 06-17-3. 전체 해설 모드에서 원래 퀴즈 레이아웃으로 복귀 (수정본)
-function goBackToQuiz() {
-    // 06-17-3-1. 메인 콘텐츠 영역의 DOM 요소를 가져옵니다.
-    const mainContent = document.querySelector('.main-content');
-    
-    // 06-17-3-2. (핵심 수정) 계산기, 연습장 등 모든 구성요소를 포함한 전체 3단 레이아웃 HTML로 복원합니다.
-    mainContent.innerHTML = `
-        <div class="quiz-layout" id="quiz-layout">
-            <section class="quiz-section">
-                <div class="quiz-header">
-                    <span id="question-counter">문제 준비중</span>
-                    <span id="quiz-status">대기</span>
-                </div>
-                <div class="question-container" id="question-container">
-                    <h3 id="question-text">결과 화면을 불러오는 중...</h3>
-                    <div class="options-container" id="options-container"></div>
-                </div>
-            </section>
-            <section class="workspace-section">
-                <div class="workspace-header">
-                    <h3>연습장</h3>
-                    <div class="workspace-controls">
-                        <button class="import-btn" onclick="toggleImportPanel()">📊 계산기록</button>
-                        <button class="clear-btn" onclick="clearCanvas()">🗑️ 지우기</button>
-                        <button class="clear-btn" onclick="undoLastStroke()">↶ 되돌리기</button>
-                    </div>
-                    <div class="import-panel" id="importPanel">
-                        <div class="import-panel-header">계산기록 불러오기</div>
-                        <div id="importValuesList"></div>
-                    </div>
-                </div>
-                <div class="canvas-container">
-                    <canvas id="handwriting-canvas" class="paper-workspace"></canvas>
-                    <textarea id="notepad-text" class="notepad-text" placeholder="여기에 텍스트를 입력하거나 계산기록을 불러오세요..."></textarea>
-                </div>
-            </section>
-            <section class="calculator-section">
-                <div class="calculator-container">
-                    <div class="calc-brand">CASIO JS-40B</div>
-                    <div class="calculator-display" id="calc-display">
-                        <div class="memory-indicator" id="memory-indicator"></div>
-                        <div class="display-value" id="display-value">0</div>
-                    </div>
-                    <div class="calculator-buttons">
-                        <button class="calc-btn memory" onclick="memoryExchange()">M/EX</button><button class="calc-btn function" onclick="percentage()">%</button><button class="calc-btn function" onclick="squareRoot()">√</button><button class="calc-btn function" onclick="backspace()">⌫</button><button class="calc-btn memory" onclick="grandTotal()">GT</button><button class="calc-btn memory" onclick="memoryClear()">MC</button><button class="calc-btn memory" onclick="memoryRecall()">MR</button><button class="calc-btn memory" onclick="memorySubtract()">M-</button><button class="calc-btn memory" onclick="memoryAdd()">M+</button><button class="calc-btn operator" onclick="appendToDisplay('/')">÷</button><button class="calc-btn function" onclick="changeSign()">+/-</button><button class="calc-btn number" onclick="appendToDisplay('7')">7</button><button class="calc-btn number" onclick="appendToDisplay('8')">8</button><button class="calc-btn number" onclick="appendToDisplay('9')">9</button><button class="calc-btn operator" onclick="appendToDisplay('*')">×</button><button class="calc-btn function" onclick="clearEntry()">C</button><button class="calc-btn number" onclick="appendToDisplay('4')">4</button><button class="calc-btn number" onclick="appendToDisplay('5')">5</button><button class="calc-btn number" onclick="appendToDisplay('6')">6</button><button class="calc-btn operator" onclick="appendToDisplay('-')">-</button><button class="calc-btn function" onclick="clearAll()">AC</button><button class="calc-btn number" onclick="appendToDisplay('1')">1</button><button class="calc-btn number" onclick="appendToDisplay('2')">2</button><button class="calc-btn number" onclick="appendToDisplay('3')">3</button><button class="calc-btn plus-tall" onclick="appendToDisplay('+')">+</button><button class="calc-btn number" onclick="appendToDisplay('0')">0</button><button class="calc-btn number" onclick="appendToDisplay('00')">00</button><button class="calc-btn number" onclick="appendToDisplay('.')">.</button><button class="calc-btn equals" onclick="calculate()">=</button>
-                    </div>
-                    <div class="calculation-history">
-                        <div class="history-title">
-                            계산기록
-                            <button class="clear-history-btn" onclick="clearCalculationHistory()">지우기</button>
-                        </div>
-                        <div class="history-values" id="historyValues"></div>
-                    </div>
-                </div>
-            </section>
-            </div>`;
-
-    // 06-17-3-3. 레이아웃 복원 후, 기능들을 다시 연결하고 초기화합니다.
-    setTimeout(() => {
-        // 06-17-3-3-1. 캔버스 기능 재초기화
-        canvas = document.getElementById('handwriting-canvas');
-        if (canvas) {
-            ctx = canvas.getContext('2d');
-            resizeCanvas();
-            // 캔버스 이벤트 리스너 재등록
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseout', stopDrawing);
-            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); });
-            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
-            canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); });
-        }
-        
-        // 06-17-3-3-2. 계산기 관련 UI 재초기화
-        updateHistoryDisplay();
-        updateMemoryIndicator();
-        updateDisplay('0');
-
-        // 06-17-3-3-3. 퀴즈 결과 화면 다시 표시
-        if (quizCompleted) {
-            showResults();
-        }
-    }, 100); // DOM이 그려질 시간을 줍니다.
-}
-
-// 06-17-4. 메모장 내용 지우기
-function clearMemo() {
-    const memo = document.getElementById('study-memo');
-    if (memo) memo.value = '';
-}
-
 /* ===== 06-17. 해설 보기 기능 끝 ===== */
+
 
 /* ===== 06-18. 다시 풀기 기능 시작 ===== */
 
 // 06-18-1. 현재 퀴즈 다시 풀기
 function startQuiz() {
     if (!confirm("현재 퀴즈를 처음부터 다시 푸시겠습니까?")) return;
-
-    // 답안 기록만 초기화
-    selectedAnswers = {};
-    userAnswers = {};
-    quizCompleted = false;
-    currentQuestionIndex = 0;
     
-    resetTimer(); // 타이머 리셋
-    
-    // 현재 문제 세트의 첫 번째 문제부터 다시 로드
-    loadQuestion(currentQuestionSet[0]);
-    updateQuestionCounter();
+    const firstQuestionInfo = viewHistory.find(h => h.view === 'quiz');
+    if (firstQuestionInfo) {
+        selectChapter(firstQuestionInfo.data.subject, firstQuestionInfo.data.chapter);
+    }
 }
 
-// 06-18-2. 틀린 문제만 다시 풀기 (기존 코드 유지)
+// 06-18-2. 틀린 문제만 다시 풀기
 function reviewIncorrect() {
     const incorrectQuestions = currentQuestionSet.filter(q => q.correctAnswer !== userAnswers[q.questionId]);
     if (incorrectQuestions.length === 0) {
@@ -3224,16 +3171,59 @@ function reviewIncorrect() {
         return;
     }
     
-    // 답안 기록만 초기화하고, 문제 세트를 '틀린 문제'로 교체
+    const mainContent = document.querySelector('.main-content');
+    mainContent.innerHTML = `
+        <div class="quiz-layout" id="quiz-layout">
+            <section class="quiz-section">
+                <div class="quiz-header"><span id="question-counter"></span><span id="quiz-status"></span></div>
+                <div class="question-container" id="question-container"><h3 id="question-text"></h3><div class="options-container" id="options-container"></div></div>
+            </section>
+            <section class="calculator-section">
+                <div class="calculator-container"><div class="calc-brand">CASIO JS-40B</div><div class="calculator-display" id="calc-display"><div class="memory-indicator" id="memory-indicator"></div><div class="display-value" id="display-value">0</div></div><div class="calculator-buttons"><button class="calc-btn memory" onclick="memoryExchange()">M/EX</button><button class="calc-btn function" onclick="percentage()">%</button><button class="calc-btn function" onclick="squareRoot()">√</button><button class="calc-btn function" onclick="backspace()">⌫</button><button class="calc-btn memory" onclick="grandTotal()">GT</button><button class="calc-btn memory" onclick="memoryClear()">MC</button><button class="calc-btn memory" onclick="memoryRecall()">MR</button><button class="calc-btn memory" onclick="memorySubtract()">M-</button><button class="calc-btn memory" onclick="memoryAdd()">M+</button><button class="calc-btn operator" onclick="appendToDisplay('/')">÷</button><button class="calc-btn function" onclick="changeSign()">+/-</button><button class="calc-btn number" onclick="appendToDisplay('7')">7</button><button class="calc-btn number" onclick="appendToDisplay('8')">8</button><button class="calc-btn number" onclick="appendToDisplay('9')">9</button><button class="calc-btn operator" onclick="appendToDisplay('*')">×</button><button class="calc-btn function" onclick="clearEntry()">C</button><button class="calc-btn number" onclick="appendToDisplay('4')">4</button><button class="calc-btn number" onclick="appendToDisplay('5')">5</button><button class="calc-btn number" onclick="appendToDisplay('6')">6</button><button class="calc-btn operator" onclick="appendToDisplay('-')">-</button><button class="calc-btn function" onclick="clearAll()">AC</button><button class="calc-btn number" onclick="appendToDisplay('1')">1</button><button class="calc-btn number" onclick="appendToDisplay('2')">2</button><button class="calc-btn number" onclick="appendToDisplay('3')">3</button><button class="calc-btn plus-tall" onclick="appendToDisplay('+')">+</button><button class="calc-btn number" onclick="appendToDisplay('0')">0</button><button class="calc-btn number" onclick="appendToDisplay('00')">00</button><button class="calc-btn number" onclick="appendToDisplay('.')">.</button><button class="calc-btn equals" onclick="calculate()">=</button></div><div class="calculation-history"><div class="history-title">계산기록<button class="clear-history-btn" onclick="clearCalculationHistory()">지우기</button></div><div class="history-values" id="historyValues"></div></div></div>
+            </section>
+        </div>
+    `;
+
     resetQuizState();
     currentQuestionSet = incorrectQuestions;
     
-    // 틀린 문제의 첫 번째부터 시작
+    pushToViewHistory({
+        view: 'quiz',
+        data: { subject: '틀린 문제', chapter: '다시 풀기' }
+    });
+
     loadQuestion(currentQuestionSet[0]);
     updateQuestionCounter();
 }
-
 /* ===== 06-18. 다시 풀기 기능 끝 ===== */
+
+
+/* ===== 06-19. 초기화 함수 시작 ===== */
+document.addEventListener('DOMContentLoaded', function() {
+    Parse.initialize("sRKpx71t2JwbatmvWe2SZi67cShfsk72HhyR1vqb", "fG2HXOiMWSlHuSmeOINADUyNU8rPxX5lku389GJV");
+    Parse.serverURL = "https://parseapi.back4app.com/";
+    
+    testBack4AppConnection();
+    updateHistoryDisplay();
+    goHome(); // 초기 화면으로 시작
+});
+
+async function testBack4AppConnection() {
+    try {
+        await Parse.Cloud.run('health');
+        console.log("✅ Back4App 연결 성공!");
+        document.getElementById('question-text').textContent = "Back4App 연결이 완료되었습니다. 목차에서 문제를 선택해주세요.";
+    } catch (error) {
+        console.error("❌ Back4App 연결 실패:", error);
+        document.getElementById('question-text').textContent = "Back4App 서버 연결에 실패했습니다. 인터넷 연결을 확인해주세요.";
+    }
+}
+
+document.addEventListener('dblclick', function(e) {
+    e.preventDefault();
+}, { passive: false });
+/* ===== 06-19. 초기화 함수 끝 ===== */
+
 
     </script>
 </body>
