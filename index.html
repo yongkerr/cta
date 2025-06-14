@@ -277,13 +277,18 @@
     flex: 1;
     margin-bottom: 20px;
     overflow-y: auto; /* 스크롤 추가 */
+    display: flex; /* (추가) 자식 요소 배치를 위해 플렉스 컨테이너로 설정 */
+    flex-direction: column; /* (추가) 자식 요소를 세로로 배치 */
 }
 
 #options-container {
     overflow-y: auto; /* 선택지 영역에도 스크롤 추가 */
-    max-height: 60vh; /* 최대 높이 설정 */
     padding-right: 10px; /* 스크롤바 여백 */
+    flex: 1; /* (추가) 부모(.question-container)의 남은 공간을 모두 채움 */
+    display: flex; /* (추가) 내부의 이전/다음 버튼을 바닥에 붙이기 위해 플렉스 컨테이너로 설정 */
+    flex-direction: column; /* (추가) 내부 요소들을 세로로 배치 */
 }
+
 /* ===== 01-5. 메인 콘텐츠 영역 스타일 끝 ===== */
 
         
@@ -1271,6 +1276,7 @@
     background: #fdfdfd;
     border: 1px dashed #ccc;
     border-radius: 4px;
+    touch-action: none; /* (추가) 아이패드 등 터치기기에서 필기 시 화면 스크롤 방지 */
 }
 
 /* 01-23-6. 크기 조절 바(Resizer) 스타일 */
@@ -3421,6 +3427,7 @@ function loadAnnotationState(index) {
     }
 }
 
+
 // 06-20-10. 수직 리사이저 초기화
 function initializeVerticalResizer() {
     const resizer = document.getElementById('vertical-resizer');
@@ -3430,29 +3437,52 @@ function initializeVerticalResizer() {
     if (!resizer || !mainColumn || !quizSection) return;
 
     let isResizing = false;
-    resizer.addEventListener('mousedown', (e) => {
+
+    // 06-20-10-1. (수정) 리사이징 시작 이벤트 핸들러
+    const startResizing = (e) => {
         isResizing = true;
         document.body.style.cursor = 'row-resize';
         document.body.style.userSelect = 'none';
-    });
-    document.addEventListener('mousemove', (e) => {
+        // 터치 이벤트의 기본 스크롤 동작 방지
+        e.preventDefault(); 
+    };
+
+    // 06-20-10-2. (수정) 리사이징 진행 이벤트 핸들러
+    const doResize = (e) => {
         if (!isResizing) return;
         const mainRect = mainColumn.getBoundingClientRect();
-        const newQuizHeight = e.clientY - mainRect.top;
+        // 마우스와 터치 이벤트의 Y좌표를 모두 처리
+        const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+        if (clientY === 0) return; // 좌표가 없으면 중단
+
+        const newQuizHeight = clientY - mainRect.top;
         if (newQuizHeight > 100 && (mainRect.height - newQuizHeight) > 80) {
             quizSection.style.height = `${newQuizHeight}px`;
             quizSection.style.flex = 'none';
         }
-    });
-    document.addEventListener('mouseup', () => {
+    };
+
+    // 06-20-10-3. (수정) 리사이징 종료 이벤트 핸들러
+    const stopResizing = () => {
         if (isResizing) {
             isResizing = false;
             document.body.style.cursor = 'default';
             document.body.style.userSelect = 'auto';
-            
         }
-    });
+    };
+
+    // 06-20-10-4. (수정) 마우스 및 터치 이벤트 리스너 등록
+    // 데스크탑 마우스 이벤트
+    resizer.addEventListener('mousedown', startResizing);
+    document.addEventListener('mousemove', doResize);
+    document.addEventListener('mouseup', stopResizing);
+
+    // 모바일/태블릿 터치 이벤트
+    resizer.addEventListener('touchstart', startResizing, { passive: false });
+    document.addEventListener('touchmove', doResize);
+    document.addEventListener('touchend', stopResizing);
 }
+
 /* ===== 06-20. 스마트 캔버스 및 UI 기능 (최종 완성본) 끝 ===== */
 
 /* ===== 06-21. UI 템플릿 함수 시작 ===== */
