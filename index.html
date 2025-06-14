@@ -1264,7 +1264,7 @@
     pointer-events: none; /* 힌트가 클릭되지 않도록 설정 */
 }
 
-/* (신규) 01-25. 이론학습 페이지 스타일 시작 */
+        /* (신규) 01-25. 이론학습 페이지 스타일 시작 */
         .theory-layout {
             display: none; /* 기본적으로 숨김 */
             height: 100%;
@@ -1275,6 +1275,7 @@
             flex: 1;
             padding: 20px;
             overflow: hidden;
+            /* justify-content: center; 이 한 줄만 제거하여 정렬 문제 해결 */
         }
 
         .theory-book {
@@ -1282,7 +1283,7 @@
             height: 100%;
             max-width: 1200px;
             max-height: 800px;
-            margin: auto; /* (핵심) 이것이 책을 항상 수직/수평 중앙에 위치시킵니다. */
+            margin: auto; /* 책을 중앙에 위치시킴 */
             transition: transform 0.3s ease-out;
             cursor: grab;
         }
@@ -1302,8 +1303,8 @@
             padding: 30px 40px;
             overflow-y: auto;
             position: relative;
-            min-width: 0; /* (핵심 추가) Flexbox 아이템이 자신의 콘텐츠보다 작아질 수 있도록 허용 */
         }
+
         .theory-left-page {
             border-top-left-radius: 6px;
             border-bottom-left-radius: 6px;
@@ -1324,23 +1325,10 @@
         .theory-right-page .theory-page-number { right: 40px; }
 
         .theory-content-wrapper h1, .theory-content-wrapper h2, .theory-content-wrapper h3 {
-            /* (핵심 변경) display: inline 대신, inline-block을 사용합니다. */
-            display: inline-block;
-            
+            display: inline;
             line-height: 1.9;
             padding: 3px 8px;
             border-radius: 4px;
-            
-            /* display: inline-block은 줄바꿈 시 요소가 분리되지 않으므로, 
-               box-decoration-break 속성은 더 이상 필요하지 않습니다. */
-        }
-
-
-                .theory-content-wrapper {
-            /* (핵심) 모든 종류의 텍스트 오버플로우를 확실하게 방지하는 3종 세트 */
-            overflow-wrap: break-word;   /* 표준 속성: 긴 단어를 강제로 줄바꿈 */
-            word-wrap: break-word;       /* 구형 브라우저 호환성을 위한 속성 */
-            word-break: break-all;       /* CJK 텍스트 외의 단어도 글자 단위로 강제 줄바꿈 (가장 강력) */
         }
 
         .theory-content-wrapper h1 { background-color: #dad4ff; }
@@ -1354,6 +1342,7 @@
         .theory-content-wrapper a:hover { text-decoration: underline; }
 
         /* ===== 01-25. 이론학습 페이지 스타일 끝 ===== */
+
 
         /* ========================================
              (신규) 01-26. 플로팅 목차(TOC) 스타일 시작
