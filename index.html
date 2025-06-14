@@ -1231,19 +1231,20 @@
 
 /* 01-23-4. 하단 연습장 섹션 */
 .workspace-section-new {
-    flex-basis: 200px; /* 초기 높이 지정 */
-    min-height: 50px; /* 최소 높이 보장 */
+    flex-basis: 200px;
+    min-height: 50px;
     background: white;
     border-radius: 8px;
     padding: 15px;
+    padding-right: 25px; /* (수정) 오른쪽 여백을 늘려 힌트 공간 확보 */
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    border: 1px solid #0b0c0c;
+    border: 1px solid #e9ecef;
     display: flex;
     flex-direction: column;
-    overflow-y: auto; /* (핵심 추가) 내용이 길어지면 이 영역 내부에 세로 스크롤바 생성 */
-    -webkit-overflow-scrolling: touch; /* (추가) 아이패드에서 부드러운 스크롤 지원 */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    position: relative; /* (추가) ::after 유사 요소를 위한 기준점 */
 }
-
 
 .workspace-header {
     display: flex;
@@ -1319,6 +1320,21 @@
     font-size: 14px;
 }
 /* ===== 01-23. 주석(Annotation) 및 연습장(Workspace) 스타일 끝 ===== */
+
+/* (신규) 01-24. 스크롤 가능 영역을 위한 시각적 힌트 스타일 */
+.quiz-section::after,
+.workspace-section-new::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    bottom: 8px;
+    width: 6px;
+    background-color: #e0e0e0;
+    border-radius: 3px;
+    opacity: 0.8;
+    pointer-events: none; /* 힌트가 클릭되지 않도록 설정 */
+}
 
     </style>
 
@@ -2958,6 +2974,10 @@ function updateQuestionCounter() {
 
 // 06-16-1. '풀이완료' 버튼 기능
 function finishQuiz() {
+    // (핵심 추가) 채점 전, 현재 문제의 필기 내용을 먼저 저장합니다.
+    saveWorkspaceState(currentQuestionIndex);
+    saveAnnotationState(currentQuestionIndex);
+
     const unansweredCount = currentQuestionSet.length - Object.keys(selectedAnswers).length;
     if (unansweredCount > 0) {
         if (!confirm(`${unansweredCount}개의 문제를 풀지 않았습니다. 정말 채점하시겠습니까?`)) {
