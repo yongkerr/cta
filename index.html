@@ -3002,20 +3002,29 @@ function showResults() {
 
 /* ===== 06-17. 해설 보기 기능 시작 ===== */
 
-// 06-17-1. 개별 문제 상세 해설 표시
+// (신규) 06-17-0. 캔버스 이미지에서 마지막 필기 위치를 찾는 도우미 함수
+function findLastY(imageData) {
+    const data = imageData.data;
+    const width = imageData.width;
+    // RGBA 4개 채널을 고려하여 마지막 픽셀부터 거꾸로 탐색
+    for (let y = imageData.height - 1; y >= 0; y--) {
+        for (let x = 0; x < width; x++) {
+            // 알파 채널(투명도) 값이 0이 아닌 첫 픽셀을 찾음
+            if (data[(y * width + x) * 4 + 3] > 0) {
+                return y; // 마지막으로 그려진 픽셀의 Y 좌표 반환
+            }
+        }
+    }
+    return 0; // 아무것도 그려지지 않았으면 0 반환
+}
+
+// 06-17-1. 개별 문제 상세 해설 표시 (연습장 필기 표시 기능 추가)
 function showQuestionDetail(questionIndex) {
     currentView = 'detail';
     pushToViewHistory({ view: 'detail', data: questionIndex });
 
     const mainContent = document.querySelector('.main-content');
-    mainContent.innerHTML = `
-        <div class="quiz-layout" id="quiz-layout">
-            <section class="quiz-section"></section>
-            <section class="calculator-section">
-                <div class="calculator-container"><div class="calc-brand">CASIO JS-40B</div><div class="calculator-display" id="calc-display"><div class="memory-indicator" id="memory-indicator"></div><div class="display-value" id="display-value">0</div></div><div class="calculator-buttons"><button class="calc-btn memory" onclick="memoryExchange()">M/EX</button><button class="calc-btn function" onclick="percentage()">%</button><button class="calc-btn function" onclick="squareRoot()">√</button><button class="calc-btn function" onclick="backspace()">⌫</button><button class="calc-btn memory" onclick="grandTotal()">GT</button><button class="calc-btn memory" onclick="memoryClear()">MC</button><button class="calc-btn memory" onclick="memoryRecall()">MR</button><button class="calc-btn memory" onclick="memorySubtract()">M-</button><button class="calc-btn memory" onclick="memoryAdd()">M+</button><button class="calc-btn operator" onclick="appendToDisplay('/')">÷</button><button class="calc-btn function" onclick="changeSign()">+/-</button><button class="calc-btn number" onclick="appendToDisplay('7')">7</button><button class="calc-btn number" onclick="appendToDisplay('8')">8</button><button class="calc-btn number" onclick="appendToDisplay('9')">9</button><button class="calc-btn operator" onclick="appendToDisplay('*')">×</button><button class="calc-btn function" onclick="clearEntry()">C</button><button class="calc-btn number" onclick="appendToDisplay('4')">4</button><button class="calc-btn number" onclick="appendToDisplay('5')">5</button><button class="calc-btn number" onclick="appendToDisplay('6')">6</button><button class="calc-btn operator" onclick="appendToDisplay('-')">-</button><button class="calc-btn function" onclick="clearAll()">AC</button><button class="calc-btn number" onclick="appendToDisplay('1')">1</button><button class="calc-btn number" onclick="appendToDisplay('2')">2</button><button class="calc-btn number" onclick="appendToDisplay('3')">3</button><button class="calc-btn plus-tall" onclick="appendToDisplay('+')">+</button><button class="calc-btn number" onclick="appendToDisplay('0')">0</button><button class="calc-btn number" onclick="appendToDisplay('00')">00</button><button class="calc-btn number" onclick="appendToDisplay('.')">.</button><button class="calc-btn equals" onclick="calculate()">=</button></div><div class="calculation-history"><div class="history-title">계산기록<button class="clear-history-btn" onclick="clearCalculationHistory()">지우기</button></div><div class="history-values" id="historyValues"></div></div></div>
-            </section>
-        </div>
-    `;
+    mainContent.innerHTML = getQuizLayoutHTML(); // 레이아웃을 새로 그림
 
     const question = currentQuestionSet[questionIndex];
     const userAnswer = userAnswers[question.questionId];
@@ -3026,13 +3035,47 @@ function showQuestionDetail(questionIndex) {
             <span id="question-counter">문제 ${question.questionNumber} / ${currentQuestionSet.length}</span>
             <span id="quiz-status">상세 해설</span>
         </div>
-        <div class="question-container" id="question-container" style="overflow-y: auto; max-height: calc(100vh - 200px);">
+        <div class="question-container" id="question-container" style="overflow-y: auto; max-height: calc(100vh - 120px);">
             <div id="question-text">${question.questionText}</div>
             <div id="options-container"></div>
         </div>`;
-
+    
     const optionsContainer = quizSection.querySelector('#options-container');
     
+    // (신규) 연습장 필기 내용 표시 로직
+    const workspaceDataUrl = workspaceStates[questionIndex];
+    if (workspaceDataUrl) {
+        const img = new Image();
+        img.onload = () => {
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = img.width;
+            tempCanvas.height = img.height;
+            tempCtx.drawImage(img, 0, 0);
+            
+            const imageData = tempCtx.getImageData(0, 0, img.width, img.height);
+            const lastY = findLastY(imageData);
+
+            if (lastY > 0) {
+                const cropHeight = lastY + 20; // 하단에 20px 여백 추가
+                const cropCanvas = document.createElement('canvas');
+                const cropCtx = cropCanvas.getContext('2d');
+                cropCanvas.width = img.width;
+                cropCanvas.height = cropHeight;
+                cropCtx.drawImage(tempCanvas, 0, 0, img.width, cropHeight, 0, 0, img.width, cropHeight);
+
+                const snapshotDiv = document.createElement('div');
+                snapshotDiv.innerHTML = `
+                    <div class="workspace-snapshot-header" style="margin-top: 20px;">📝 연습장 필기</div>
+                    <img src="${cropCanvas.toDataURL()}" class="workspace-snapshot">
+                `;
+                optionsContainer.appendChild(snapshotDiv);
+            }
+        };
+        img.src = workspaceDataUrl;
+    }
+
+    // 기존 해설 표시 로직
     question.options.forEach((option, index) => {
         const optionNumber = index + 1;
         const explanation = question.explanations[`option${optionNumber}`] || '해설이 준비되지 않았습니다.';
@@ -3208,7 +3251,7 @@ function setupQuizInterface() {
     initializeVerticalResizer();
 }
 
-// 06-20-2. (전면 교체) 캔버스 초기화 및 리사이즈 (모든 문제 최종 해결)
+// 06-20-2. (전면 교체) 캔버스 초기화 (모든 문제 해결 최종본)
 function initializeCanvases() {
     const quizSection = document.getElementById('quiz-section');
     const workspaceSection = document.getElementById('workspace-section');
@@ -3235,25 +3278,20 @@ function initializeCanvases() {
             let newWidth, newHeight;
 
             if (container.id === 'quiz-section') {
-                // (핵심 수정) 캔버스(자식)가 아닌 컨테이너(부모)의 크기를 직접 참조하여 타이밍 문제를 해결합니다.
                 newWidth = entry.contentRect.width;
                 newHeight = entry.contentRect.height;
             } else { // workspace-section
-                // 연습장은 보이는 너비(clientWidth)와 고정된 높이를 사용합니다. (이전과 동일)
                 newWidth = canvas.clientWidth;
                 newHeight = 1000;
             }
 
             if (newWidth <= 0) continue;
             if (canvas.id === 'annotation-canvas' && newHeight <= 0) continue;
-
+            
             if (canvas.width !== newWidth || canvas.height !== newHeight) {
                 canvas.width = newWidth;
                 canvas.height = newHeight;
-
-                if (oldDrawing) {
-                    ctx.putImageData(oldDrawing, 0, 0);
-                }
+                if (oldDrawing) ctx.putImageData(oldDrawing, 0, 0);
             }
         }
     });
@@ -3261,7 +3299,6 @@ function initializeCanvases() {
     window.canvasResizeObserver.observe(quizSection);
     window.canvasResizeObserver.observe(workspaceSection);
 
-    // --- 이하 이벤트 리스너 설정은 기존과 동일 ---
     [annotationCanvas, workspaceCanvas].forEach(canvas => {
         if (canvas) {
             canvas.removeEventListener('pointerdown', handlePointerDown);
@@ -3399,7 +3436,7 @@ function loadAnnotationState(index) {
 }
 
 
-// 06-20-10. 수직 리사이저 초기화
+// 06-20-10. 수직 리사이저 초기화 (양쪽 영역 높이 동시 조절 최종본)
 function initializeVerticalResizer() {
     const resizer = document.getElementById('vertical-resizer');
     const mainColumn = document.querySelector('.main-column');
@@ -3421,7 +3458,7 @@ function initializeVerticalResizer() {
         if (!isResizing) return;
         
         const mainRect = mainColumn.getBoundingClientRect();
-        if (mainRect.height === 0) return; // 아직 레이아웃이 잡히지 않았으면 실행하지 않음
+        if (mainRect.height === 0) return;
 
         const resizerHeight = resizer.offsetHeight;
         const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
@@ -3430,8 +3467,7 @@ function initializeVerticalResizer() {
         let newQuizHeight = clientY - mainRect.top;
         let newWorkspaceHeight = mainRect.height - newQuizHeight - resizerHeight;
 
-        // 높이가 최소/최대치를 벗어나지 않도록 제한
-        const minHeight = 80; // 영역의 최소 높이
+        const minHeight = 80;
         if (newQuizHeight < minHeight) {
             newQuizHeight = minHeight;
             newWorkspaceHeight = mainRect.height - newQuizHeight - resizerHeight;
@@ -3441,11 +3477,9 @@ function initializeVerticalResizer() {
             newQuizHeight = mainRect.height - newWorkspaceHeight - resizerHeight;
         }
 
-        // flex 속성을 'none'으로 바꿔야 JS로 지정한 height가 제대로 적용됨
         quizSection.style.flex = 'none';
         workspaceSection.style.flex = 'none';
 
-        // 계산된 높이를 스타일에 직접 적용
         quizSection.style.height = `${newQuizHeight}px`;
         workspaceSection.style.height = `${newWorkspaceHeight}px`;
     };
