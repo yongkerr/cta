@@ -245,36 +245,6 @@
     height: calc(100vh - 120px); /* 네비게이션 바 높이 제외 */
 }
 
-.quiz-section {
-    flex: 1;
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    border: 1px solid #e9ecef;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    position: relative;
-    /* (추가) 스크롤바 트랙 배경색을 지정하여 넓어보이게 함 */
-    scrollbar-color: #ced4da #f1f3f4;
-    min-height: 0; /* (핵심 추가 1) 아이패드에서 영역이 강제로 줄어들 때 스크롤바가 생기도록 하는 설정 */
-    -webkit-overflow-scrolling: touch; /* (핵심 추가 2) 아이패드에서 부드러운 관성 스크롤을 가능하게 하는 설정 */
-}
-
-/* 스크롤바 웹킷 브라우저(크롬, 사파리 등)용 스타일 */
-.quiz-section::-webkit-scrollbar {
-    width: 150px; /* 스크롤바 너비 */
-}
-.quiz-section::-webkit-scrollbar-track {
-    background: #f1f3f4; /* 트랙 배경색 */
-    border-radius: 10px;
-}
-.quiz-section::-webkit-scrollbar-thumb {
-    background: #83a4c4; /* 스크롤바 색상 */
-    border-radius: 10px;
-    border: 3px solid #f1f3f4;
-}
 .question-container {
     flex: 1; /* (수정) 이 영역이 부모의 남은 공간을 모두 차지하도록 설정 */
     margin-bottom: 20px;
@@ -414,17 +384,6 @@
     padding: 8px;
 }
 
-.quiz-section {
-    flex: 2.2;
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    border: 1px solid #e9ecef;
-    display: flex;
-    flex-direction: column;
-}
-
 .calculator-section {
     flex: none;
     width: 450px;
@@ -444,6 +403,24 @@
         /* ▲▲▲ (추가) 계산기 위치 고정을 위한 코드 ▲▲▲ */
 }
 /* ===== 01-8. 문제풀이 화면 레이아웃 스타일 끝 ===== */
+
+/* (신규) 01-8-1. 문제 영역 스타일 (통합 수정안) */
+.quiz-section {
+    flex: 1; /* (수정) 영역이 유연하게 늘어나고 줄어들도록 설정 */
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    position: relative; /* 주석 캔버스의 기준점 */
+    
+    /* ▼▼▼ 스크롤 문제 해결을 위한 핵심 속성들 ▼▼▼ */
+    overflow-y: auto; /* 내용이 넘치면 스크롤바 생성 */
+    min-height: 0; /* flex 자식요소가 부모보다 작아질 수 있도록 허용 (iOS 스크롤바 미생성 버그 해결) */
+    -webkit-overflow-scrolling: touch; /* iOS에서 부드러운 관성 스크롤 활성화 */
+}
         
         /* ===== 01-9. 계산기 컨테이너 스타일 (CASIO JS-40B 디자인) 시작 ===== */
         .calculator-container {
@@ -1218,11 +1195,6 @@
 }
 
 
-/* 01-23-2. 퀴즈 섹션의 상대 위치 설정 (주석 캔버스의 기준점) */
-.quiz-section {
-    position: relative; /* 자식 absolute 요소의 기준이 됨 */
-}
-
 /* 01-23-3. 퀴즈 영역과 연습장을 감싸는 세로 컨테이너 */
 .main-column {
     display: flex;
@@ -1240,10 +1212,13 @@
     border-radius: 8px;
     padding: 15px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    border: 1px solid #e9ecef;
+    border: 1px solid #0b0c0c;
     display: flex;
     flex-direction: column;
+    overflow-y: auto; /* (핵심 추가) 내용이 길어지면 이 영역 내부에 세로 스크롤바 생성 */
+    -webkit-overflow-scrolling: touch; /* (추가) 아이패드에서 부드러운 스크롤 지원 */
 }
+
 
 .workspace-header {
     display: flex;
@@ -1272,11 +1247,11 @@
 /* 01-23-5. 연습장 캔버스 */
 .workspace-canvas {
     width: 100%;
-    flex-grow: 1; /* 남은 공간을 모두 차지 */
+    height: 1000px; /* (핵심 수정) 캔버스의 실제 높이를 1000px로 고정 */
     background: #fdfdfd;
     border: 1px dashed #ccc;
     border-radius: 4px;
-    touch-action: none; /* (추가) 아이패드 등 터치기기에서 필기 시 화면 스크롤 방지 */
+    touch-action: none;
 }
 
 /* 01-23-6. 크기 조절 바(Resizer) 스타일 */
@@ -3233,74 +3208,70 @@ function setupQuizInterface() {
     initializeVerticalResizer();
 }
 
-// 06-20-2. (전면 교체) ResizeObserver를 사용한 캔버스 초기화 및 자동 리사이징
-// 전역에 Observer 변수 선언
-let canvasResizeObserver = null;
-
+// 06-20-2. (전면 교체) 캔버스 초기화 및 리사이즈 (모든 문제 최종 해결)
 function initializeCanvases() {
-    // 감시할 컨테이너 요소들을 가져옵니다.
     const quizSection = document.getElementById('quiz-section');
     const workspaceSection = document.getElementById('workspace-section');
-
-    // 캔버스 요소들을 가져옵니다.
     annotationCanvas = document.getElementById('annotation-canvas');
     workspaceCanvas = document.getElementById('workspace-canvas');
 
     if (!quizSection || !workspaceSection || !annotationCanvas || !workspaceCanvas) return;
 
-    // 만약 기존 Observer가 있다면 연결을 끊어 중복을 방지합니다.
-    if (canvasResizeObserver) canvasResizeObserver.disconnect();
+    if (window.canvasResizeObserver) window.canvasResizeObserver.disconnect();
     
-    // ResizeObserver를 생성합니다. 이 함수는 컨테이너 크기가 변경될 때마다 실행됩니다.
-    canvasResizeObserver = new ResizeObserver(entries => {
+    window.canvasResizeObserver = new ResizeObserver(entries => {
         for (const entry of entries) {
             const container = entry.target;
             const canvas = container.querySelector('canvas');
-            if (canvas) {
-                let newWidth = container.clientWidth;
-                const newHeight = container.clientHeight;
+            if (!canvas) continue;
 
-                // [핵심 수정] 주석 캔버스(annotation-canvas)인 경우, 스크롤바와 겹치지 않도록 너비를 17px 강제로 줄입니다.
-                // 이렇게 하면 스크롤바를 위한 공간이 확실하게 확보됩니다.
-                if (canvas.id === 'annotation-canvas') {
-                    newWidth -= 35;
-                }
+            const ctx = canvas.getContext('2d');
+            
+            let oldDrawing = null;
+            if (canvas.width > 0 && canvas.height > 0) {
+                oldDrawing = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            }
 
-                // 크기가 실제로 변경되었을 때만 캔버스 해상도를 재설정하여 불필요한 다시 그리기를 방지합니다.
-                if ((canvas.width !== newWidth || canvas.height !== newHeight) && newWidth > 0 && newHeight > 0) {
-                    canvas.width = newWidth;
-                    canvas.height = newHeight;
-                    console.log(`${canvas.id}가 리사이즈됨: ${canvas.width}x${canvas.height}`);
+            let newWidth, newHeight;
 
-                    // 크기가 재조정된 후에는 저장된 필기 내용을 다시 그려줍니다.
-                    if (canvas.id === 'annotation-canvas') {
-                        loadAnnotationState(currentQuestionIndex);
-                    } else if (canvas.id === 'workspace-canvas') {
-                        loadWorkspaceState(currentQuestionIndex);
-                    }
+            if (container.id === 'quiz-section') {
+                // (핵심 수정) 캔버스(자식)가 아닌 컨테이너(부모)의 크기를 직접 참조하여 타이밍 문제를 해결합니다.
+                newWidth = entry.contentRect.width;
+                newHeight = entry.contentRect.height;
+            } else { // workspace-section
+                // 연습장은 보이는 너비(clientWidth)와 고정된 높이를 사용합니다. (이전과 동일)
+                newWidth = canvas.clientWidth;
+                newHeight = 1000;
+            }
+
+            if (newWidth <= 0) continue;
+            if (canvas.id === 'annotation-canvas' && newHeight <= 0) continue;
+
+            if (canvas.width !== newWidth || canvas.height !== newHeight) {
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+
+                if (oldDrawing) {
+                    ctx.putImageData(oldDrawing, 0, 0);
                 }
             }
         }
     });
 
-    // 두 컨테이너의 크기 변경을 감시 시작합니다.
-    canvasResizeObserver.observe(quizSection);
-    canvasResizeObserver.observe(workspaceSection);
+    window.canvasResizeObserver.observe(quizSection);
+    window.canvasResizeObserver.observe(workspaceSection);
 
-    // 각 캔버스에 이벤트 리스너를 설정합니다. (기존과 동일)
+    // --- 이하 이벤트 리스너 설정은 기존과 동일 ---
     [annotationCanvas, workspaceCanvas].forEach(canvas => {
         if (canvas) {
-            canvas.addEventListener('wheel', e => {}, { passive: true });
             canvas.removeEventListener('pointerdown', handlePointerDown);
             canvas.addEventListener('pointerdown', handlePointerDown);
         }
     });
 
-    // 전역 컨텍스트 변수를 할당합니다. (기존과 동일)
     annotationCtx = annotationCanvas.getContext('2d');
     workspaceCtx = workspaceCanvas.getContext('2d');
     
-    // 문서 전체에 대한 이벤트 리스너를 설정합니다. (기존과 동일)
     document.removeEventListener('pointermove', handlePointerMove);
     document.addEventListener('pointermove', handlePointerMove);
     document.removeEventListener('pointerup', handlePointerUp);
@@ -3433,36 +3404,52 @@ function initializeVerticalResizer() {
     const resizer = document.getElementById('vertical-resizer');
     const mainColumn = document.querySelector('.main-column');
     const quizSection = document.getElementById('quiz-section');
-    
-    if (!resizer || !mainColumn || !quizSection) return;
+    const workspaceSection = document.getElementById('workspace-section');
+
+    if (!resizer || !mainColumn || !quizSection || !workspaceSection) return;
 
     let isResizing = false;
 
-    // 06-20-10-1. (수정) 리사이징 시작 이벤트 핸들러
     const startResizing = (e) => {
         isResizing = true;
         document.body.style.cursor = 'row-resize';
         document.body.style.userSelect = 'none';
-        // 터치 이벤트의 기본 스크롤 동작 방지
-        e.preventDefault(); 
+        e.preventDefault();
     };
 
-    // 06-20-10-2. (수정) 리사이징 진행 이벤트 핸들러
     const doResize = (e) => {
         if (!isResizing) return;
+        
         const mainRect = mainColumn.getBoundingClientRect();
-        // 마우스와 터치 이벤트의 Y좌표를 모두 처리
-        const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-        if (clientY === 0) return; // 좌표가 없으면 중단
+        if (mainRect.height === 0) return; // 아직 레이아웃이 잡히지 않았으면 실행하지 않음
 
-        const newQuizHeight = clientY - mainRect.top;
-        if (newQuizHeight > 100 && (mainRect.height - newQuizHeight) > 80) {
-            quizSection.style.height = `${newQuizHeight}px`;
-            quizSection.style.flex = 'none';
+        const resizerHeight = resizer.offsetHeight;
+        const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+        if (clientY === 0) return;
+
+        let newQuizHeight = clientY - mainRect.top;
+        let newWorkspaceHeight = mainRect.height - newQuizHeight - resizerHeight;
+
+        // 높이가 최소/최대치를 벗어나지 않도록 제한
+        const minHeight = 80; // 영역의 최소 높이
+        if (newQuizHeight < minHeight) {
+            newQuizHeight = minHeight;
+            newWorkspaceHeight = mainRect.height - newQuizHeight - resizerHeight;
         }
+        if (newWorkspaceHeight < minHeight) {
+            newWorkspaceHeight = minHeight;
+            newQuizHeight = mainRect.height - newWorkspaceHeight - resizerHeight;
+        }
+
+        // flex 속성을 'none'으로 바꿔야 JS로 지정한 height가 제대로 적용됨
+        quizSection.style.flex = 'none';
+        workspaceSection.style.flex = 'none';
+
+        // 계산된 높이를 스타일에 직접 적용
+        quizSection.style.height = `${newQuizHeight}px`;
+        workspaceSection.style.height = `${newWorkspaceHeight}px`;
     };
 
-    // 06-20-10-3. (수정) 리사이징 종료 이벤트 핸들러
     const stopResizing = () => {
         if (isResizing) {
             isResizing = false;
@@ -3471,13 +3458,9 @@ function initializeVerticalResizer() {
         }
     };
 
-    // 06-20-10-4. (수정) 마우스 및 터치 이벤트 리스너 등록
-    // 데스크탑 마우스 이벤트
     resizer.addEventListener('mousedown', startResizing);
     document.addEventListener('mousemove', doResize);
     document.addEventListener('mouseup', stopResizing);
-
-    // 모바일/태블릿 터치 이벤트
     resizer.addEventListener('touchstart', startResizing, { passive: false });
     document.addEventListener('touchmove', doResize);
     document.addEventListener('touchend', stopResizing);
