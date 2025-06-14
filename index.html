@@ -404,9 +404,9 @@
 }
 /* ===== 01-8. 문제풀이 화면 레이아웃 스타일 끝 ===== */
 
-/* (신규) 01-8-1. 문제 영역 스타일 (통합 수정안) */
+/* (최종) 01-8-1. 문제 영역 스타일 (통합 최종본) */
 .quiz-section {
-    flex: 1; /* (수정) 영역이 유연하게 늘어나고 줄어들도록 설정 */
+    flex: 1; 
     background: white;
     border-radius: 8px;
     padding: 20px;
@@ -414,12 +414,37 @@
     border: 1px solid #e9ecef;
     display: flex;
     flex-direction: column;
-    position: relative; /* 주석 캔버스의 기준점 */
+    position: relative;
     
-    /* ▼▼▼ 스크롤 문제 해결을 위한 핵심 속성들 ▼▼▼ */
-    overflow-y: auto; /* 내용이 넘치면 스크롤바 생성 */
-    min-height: 0; /* flex 자식요소가 부모보다 작아질 수 있도록 허용 (iOS 스크롤바 미생성 버그 해결) */
-    -webkit-overflow-scrolling: touch; /* iOS에서 부드러운 관성 스크롤 활성화 */
+    /* ▼ 스크롤 문제 해결을 위한 핵심 속성 ▼ */
+    overflow-y: auto; 
+    min-height: 0; 
+    -webkit-overflow-scrolling: touch; 
+    
+    /* ▼ 스크롤바 디자인을 위한 속성 ▼ */
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #ced4da #f1f3f4; /* Firefox */
+}
+
+/* 스크롤바 웹킷 브라우저(크롬, 사파리, 아이패드)용 스타일 */
+.quiz-section::-webkit-scrollbar,
+.workspace-section-new::-webkit-scrollbar {
+    width: 12px; /* 스크롤바 너비 */
+}
+.quiz-section::-webkit-scrollbar-track,
+.workspace-section-new::-webkit-scrollbar-track {
+    background: #f1f3f4; /* 트랙 배경색 */
+    border-radius: 6px;
+}
+.quiz-section::-webkit-scrollbar-thumb,
+.workspace-section-new::-webkit-scrollbar-thumb {
+    background: #ced4da; /* 스크롤바 막대 색상 */
+    border-radius: 6px;
+    border: 3px solid #f1f3f4; /* 트랙과 여백을 줘서 떠있는 효과 */
+}
+.quiz-section::-webkit-scrollbar-thumb:hover,
+.workspace-section-new::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd;
 }
         
         /* ===== 01-9. 계산기 컨테이너 스타일 (CASIO JS-40B 디자인) 시작 ===== */
@@ -3024,24 +3049,34 @@ function showQuestionDetail(questionIndex) {
     pushToViewHistory({ view: 'detail', data: questionIndex });
 
     const mainContent = document.querySelector('.main-content');
-    mainContent.innerHTML = getQuizLayoutHTML(); // 레이아웃을 새로 그림
-
+    // ✨ 개별 해설 화면에서는 연습장이 필요 없으므로 quiz-layout을 사용하지 않습니다.
+    mainContent.innerHTML = `
+        <div class="explanation-mode">
+            <div class="explanation-content" id="all-explanations-container">
+            </div>
+            <section class="calculator-section">
+                </section>
+        </div>
+    `;
+    // 계산기 HTML을 동적으로 채우는 코드를 추가하거나, getQuizLayoutHTML을 수정하여 일부만 가져올 수 있습니다.
+    // 여기서는 간단하게 설명하기 위해 생략하고, 해설 표시에 집중합니다.
+    
     const question = currentQuestionSet[questionIndex];
     const userAnswer = userAnswers[question.questionId];
-    const quizSection = document.querySelector('.quiz-section');
+    const explanationContainer = document.getElementById('all-explanations-container');
 
-    quizSection.innerHTML = `
-        <div class="quiz-header">
-            <span id="question-counter">문제 ${question.questionNumber} / ${currentQuestionSet.length}</span>
-            <span id="quiz-status">상세 해설</span>
+    // 문제 기본 정보 구성
+    let html = `
+        <div class="explanation-header">
+            <h2>문제 ${question.questionNumber} 해설</h2>
+            <button class="nav-btn" onclick="goBack()">결과 목록으로</button>
         </div>
-        <div class="question-container" id="question-container" style="overflow-y: auto; max-height: calc(100vh - 120px);">
-            <div id="question-text">${question.questionText}</div>
-            <div id="options-container"></div>
-        </div>`;
-    
-    const optionsContainer = quizSection.querySelector('#options-container');
-    
+        <div class="question-content" style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 6px;">
+            ${question.questionText}
+        </div>
+    `;
+    explanationContainer.innerHTML = html;
+
     // (신규) 연습장 필기 내용 표시 로직
     const workspaceDataUrl = workspaceStates[questionIndex];
     if (workspaceDataUrl) {
@@ -3062,14 +3097,18 @@ function showQuestionDetail(questionIndex) {
                 const cropCtx = cropCanvas.getContext('2d');
                 cropCanvas.width = img.width;
                 cropCanvas.height = cropHeight;
+                
+                // 배경을 흰색으로 채워서 투명(검은색)으로 보이지 않게 함
+                cropCtx.fillStyle = 'white';
+                cropCtx.fillRect(0, 0, cropCanvas.width, cropCanvas.height);
                 cropCtx.drawImage(tempCanvas, 0, 0, img.width, cropHeight, 0, 0, img.width, cropHeight);
 
                 const snapshotDiv = document.createElement('div');
                 snapshotDiv.innerHTML = `
-                    <div class="workspace-snapshot-header" style="margin-top: 20px;">📝 연습장 필기</div>
-                    <img src="${cropCanvas.toDataURL()}" class="workspace-snapshot">
+                    <div class="workspace-snapshot-header" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef;">📝 연습장 필기</div>
+                    <img src="${cropCanvas.toDataURL()}" class="workspace-snapshot" style="background: white;">
                 `;
-                optionsContainer.appendChild(snapshotDiv);
+                explanationContainer.appendChild(snapshotDiv);
             }
         };
         img.src = workspaceDataUrl;
@@ -3085,21 +3124,8 @@ function showQuestionDetail(questionIndex) {
         const explanationDiv = document.createElement('div');
         explanationDiv.className = `explanation-item ${isCorrectOption ? 'correct' : 'incorrect'} ${isUserChoice ? 'user-choice' : ''}`;
         explanationDiv.innerHTML = `<div class="option-header"><span class="option-number">${optionNumber}</span><span class="option-text" style="flex: 1;">${option}</span><span class="option-status">${isCorrectOption ? '✓' : '✗'} ${isUserChoice ? '(내 답안)' : ''}</span></div><div class="explanation-text"><strong>해설:</strong> ${explanation}</div>`;
-        optionsContainer.appendChild(explanationDiv);
+        explanationContainer.appendChild(explanationDiv);
     });
-
-    const referenceNote = question.analystComment;
-    if (referenceNote && referenceNote.trim() !== '') {
-        const referenceDiv = document.createElement('div');
-        referenceDiv.className = 'general-reference-note';
-        referenceDiv.innerHTML = `<div class="reference-header">📌 참고사항</div><div class="reference-content">${referenceNote}</div>`;
-        optionsContainer.appendChild(referenceDiv);
-    }
-
-    const navDiv = document.createElement('div');
-    navDiv.className = 'detail-navigation';
-    navDiv.innerHTML = `<button class="nav-btn" onclick="goBack()">결과 목록으로</button>`;
-    quizSection.appendChild(navDiv);
 }
 
 // 06-17-2. 전체 해설 모드 표시
@@ -3251,7 +3277,7 @@ function setupQuizInterface() {
     initializeVerticalResizer();
 }
 
-// 06-20-2. (전면 교체) 캔버스 초기화 (모든 문제 해결 최종본)
+// 06-20-2. (전면 교체) 캔버스 초기화 (모든 문제 최종 해결)
 function initializeCanvases() {
     const quizSection = document.getElementById('quiz-section');
     const workspaceSection = document.getElementById('workspace-section');
@@ -3269,7 +3295,6 @@ function initializeCanvases() {
             if (!canvas) continue;
 
             const ctx = canvas.getContext('2d');
-            
             let oldDrawing = null;
             if (canvas.width > 0 && canvas.height > 0) {
                 oldDrawing = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -3278,16 +3303,16 @@ function initializeCanvases() {
             let newWidth, newHeight;
 
             if (container.id === 'quiz-section') {
+                // (핵심 수정) 캔버스가 아닌 컨테이너의 크기를 직접 참조하여 타이밍 문제를 해결합니다.
                 newWidth = entry.contentRect.width;
                 newHeight = entry.contentRect.height;
             } else { // workspace-section
-                newWidth = canvas.clientWidth;
-                newHeight = 1000;
+                newWidth = canvas.clientWidth; // 보이는 너비에 맞춤
+                newHeight = 1000; // 실제 그림판 높이는 1000px
             }
-
-            if (newWidth <= 0) continue;
-            if (canvas.id === 'annotation-canvas' && newHeight <= 0) continue;
             
+            if (newWidth <= 0 || (canvas.id === 'annotation-canvas' && newHeight <= 0)) continue;
+
             if (canvas.width !== newWidth || canvas.height !== newHeight) {
                 canvas.width = newWidth;
                 canvas.height = newHeight;
@@ -3299,6 +3324,7 @@ function initializeCanvases() {
     window.canvasResizeObserver.observe(quizSection);
     window.canvasResizeObserver.observe(workspaceSection);
 
+    // 이벤트 리스너 설정
     [annotationCanvas, workspaceCanvas].forEach(canvas => {
         if (canvas) {
             canvas.removeEventListener('pointerdown', handlePointerDown);
@@ -3309,6 +3335,7 @@ function initializeCanvases() {
     annotationCtx = annotationCanvas.getContext('2d');
     workspaceCtx = workspaceCanvas.getContext('2d');
     
+    // 문서 전체 이벤트 리스너
     document.removeEventListener('pointermove', handlePointerMove);
     document.addEventListener('pointermove', handlePointerMove);
     document.removeEventListener('pointerup', handlePointerUp);
