@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <!-- Parse SDK 추가 -->
-<script src="https://unpkg.com/parse@4.0.1/dist/parse.min.js"></script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>세무사 시험 문제풀이 시스템</title>
@@ -64,176 +64,106 @@
 
         /* ===== 01-2. 전역 리셋 및 기본 설정 끝 ===== */
         
-        /* ===== 01-3. 상단 네비게이션 바 스타일 시작 ===== */
-        .top-nav {
-            background: #ffffff;
-            border-bottom: 1px solid #e9ecef;
-            padding: 10px 20px;
+        /* ========================================
+             (수정) 01-3. 통합 헤더 스타일 시작
+             ======================================== */
+        .unified-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            z-index: 100;
+            padding: 0 15px;
+            height: 35px;
+            background: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            flex-shrink: 0; /* 헤더 높이가 줄어들지 않도록 고정 */
+            z-index: 200;
         }
-        
-        .nav-left {
+
+        .header-left, .header-center, .header-right {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
         }
         
-        .back-btn, .menu-btn {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
+        .header-left { flex: 1; justify-content: flex-start; }
+        .header-center { flex: 1.5; justify-content: center; }
+        .header-right { flex: 1; justify-content: flex-end; }
+
+        .header-btn {
+            background: none;
+            border: none;
             padding: 8px 12px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
-            transition: all 0.2s;
+            font-weight: 500;
+            transition: background-color 0.2s;
         }
-        
-        .back-btn:hover, .menu-btn:hover {
-            background: #e9ecef;
-        }
+        .header-btn:hover { background-color: #f1f3f4; }
         
         .breadcrumb {
             font-size: 14px;
             color: #6c757d;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        
-        .breadcrumb .current {
-            color: #495057;
-            font-weight: 500;
-        }
-        
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .timer-display {
-            font-size: 16px;
-            font-weight: 500;
-            background: #f8f9fa;
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: 1px solid #dee2e6;
-        }
+        .breadcrumb .current { font-weight: 500; color: #343a40; }
 
-        /* ===== 01-3. 상단 네비게이션 바 스타일에 추가 ===== */
-.timer-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-}
-
-.timer-display {
-    font-size: 18px;
-    font-weight: 600;
-    background: #f8f9fa;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: 1px solid #dee2e6;
-    font-family: 'digital-7-mono-italic', 'Orbitron', monospace;
-    min-width: 100px;
-    text-align: center;
-}
-
-.timer-controls {
-    display: flex;
-    gap: 4px;
-}
-
-.timer-btn {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    padding: 4px 8px;
-    cursor: pointer;
-    font-size: 12px;
-    transition: all 0.2s;
-    min-width: 32px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.timer-btn:hover {
-    background: #e9ecef;
-}
-
-.timer-btn.start {
-    background: #28a745;
-    color: white;
-    border-color: #28a745;
-}
-
-.timer-btn.start:hover {
-    background: #218838;
-}
-
-.timer-btn.pause {
-    background: #ffc107;
-    color: #212529;
-    border-color: #ffc107;
-}
-
-.timer-btn.pause:hover {
-    background: #e0a800;
-}
-
-.timer-btn.reset {
-    background: #dc3545;
-    color: white;
-    border-color: #dc3545;
-}
-
-.timer-btn.reset:hover {
-    background: #c82333;
-}
-
-.timer-btn:disabled {
-    background: #6c757d;
-    color: #fff;
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-        /* ===== 01-3. 상단 네비게이션 바 스타일 끝 ===== */
-        
-        /* ===== 01-4. 탭 네비게이션 스타일 시작 ===== */
-        .tab-navigation {
-            background: white;
-            border-bottom: 1px solid #e9ecef;
-            display: flex;
-            padding: 0 20px;
-        }
-        
         .tab-btn {
             background: none;
             border: none;
-            padding: 15px 20px;
+            padding: 8px 16px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 500;
-            color: #6c757d;
-            border-bottom: 3px solid transparent;
+            color: #868e96;
+            border-radius: 6px;
             transition: all 0.2s;
         }
-        
         .tab-btn.active {
-            color: #495057;
-            border-bottom-color: #007bff;
+            color: #212529;
+            background-color: #e9ecef;
         }
-        
-        .tab-btn:hover {
-            color: #495057;
-            background: #f8f9fa;
+        .tab-btn:hover:not(.active) {
+            background-color: #f8f9fa;
         }
-        /* ===== 01-4. 탭 네비게이션 스타일 끝 ===== */
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timer-display {
+            font-family: 'digital-7-mono-italic', 'Orbitron', monospace;
+            font-size: 16px;
+            background: #f1f3f4;
+            padding: 6px 10px;
+            border-radius: 4px;
+            min-width: 80px;
+            text-align: center;
+        }
+        .timer-controls { display: flex; gap: 2px; }
+        .timer-btn {
+            background: none;
+            border: 1px solid #ced4da;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        .timer-btn:hover { background-color: #e9ecef; }
+        /* ========================================
+             (수정) 01-3. 통합 헤더 스타일 끝
+             ======================================== */
+
         
 /* ===== 01-5. 메인 콘텐츠 영역 스타일 시작 ===== */
 .main-content {
@@ -1412,6 +1342,77 @@
 
         /* ===== 01-25. 이론학습 페이지 스타일 끝 ===== */
 
+        /* ========================================
+             (신규) 01-26. 플로팅 목차(TOC) 스타일 시작
+             ======================================== */
+        .floating-toc {
+            position: fixed;
+            top: 0;
+            right: -320px; /* 기본적으로 화면 밖에 숨겨 둠 */
+            width: 300px;
+            height: 100%;
+            background: #fff;
+            border-left: 1px solid #e9ecef;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.08);
+            z-index: 900;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .floating-toc.open {
+            right: 0; /* open 클래스가 붙으면 화면 안으로 나타남 */
+        }
+
+        .floating-toc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
+        }
+        .floating-toc-header h3 {
+            font-size: 16px;
+            margin: 0;
+        }
+        .floating-toc-header .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6c757d;
+        }
+
+        .floating-toc-list {
+            list-style: none;
+            padding: 10px 0;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .floating-toc-list li a {
+            display: block;
+            padding: 8px 20px;
+            font-size: 14px;
+            color: #495057;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .floating-toc-list li a:hover {
+            background-color: #f8f9fa;
+        }
+        .floating-toc-list li a.active {
+            color: #007bff;
+            font-weight: 600;
+            background-color: #e3f2fd;
+            border-left-color: #007bff;
+        }
+        .floating-toc-list li a[data-level="h2"] { padding-left: 35px; }
+        .floating-toc-list li a[data-level="h3"] { padding-left: 50px; }
+        /* ========================================
+             (신규) 01-26. 플로팅 목차(TOC) 스타일 끝
+             ======================================== */
+
 
     </style>
 
@@ -1437,488 +1438,473 @@
         <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
         <!-- 02-1. 사이드바 배경 오버레이 끝 -->
         
-        <!-- 02-2. 사이드바 네비게이션 메뉴 (목차 구조) 시작 -->
+                <!-- ========================================
+             02-2. 사이드바 네비게이션 메뉴 (목차 구조) 시작 (수정됨)
+             ======================================== -->
         <div class="sidebar" id="sidebar">
             <!-- 02-2-0. 사이드바 헤더 시작 -->
             <div class="sidebar-header">
-                <div class="sidebar-title">📚 세무사 시험 목차</div>
+                <!-- 이 제목은 JavaScript에 의해 동적으로 변경됩니다 -->
+                <div class="sidebar-title" id="sidebar-title">📚 문제풀이 목차</div>
             </div>
             <!-- 02-2-0. 사이드바 헤더 끝 -->
             
-            <!-- 02-2-1. 1차 시험 메뉴 섹션 시작 -->
-            <div class="menu-section">
-                <div class="menu-section-title">📝 1차 시험 문제풀이</div>
-                
-                <!-- 02-2-1-1. 회계학개론 메뉴 시작 -->
-                <div class="menu-item" onclick="toggleSubmenu('accounting')">
-    <div class="menu-item-title"> 회계학개론</div>
-    <div class="menu-item-desc">연도별 및 과목별 문제풀이</div>
-</div>
-<div class="submenu" id="accounting-submenu">
-
-    <div class="submenu-item" onclick="toggleSubmenu('accounting-years')">📅 연도별 기출 ▼</div>
-    <div class="submenu" id="accounting-years-submenu" style="padding-left: 20px; display: none;">
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2025년기출')">2025년 제62회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2024년기출')">2024년 제61회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2023년기출')">2023년 제60회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2022년기출')">2022년 제59회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2021년기출')">2021년 제58회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2020년기출')">2020년 제57회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2019년기출')">2019년 제56회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2018년기출')">2018년 제55회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2017년기출')">2017년 제54회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2016년기출')">2016년 제53회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2015년기출')">2015년 제52회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2014년기출')">2014년 제51회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2013년기출')">2013년 제50회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2012년기출')">2012년 제49회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2011년기출')">2011년 제48회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('회계학개론', '2010년기출')">2010년 제47회 기출</div>
-    </div>
-    <div class="submenu-item" onclick="toggleSubmenu('accounting-subjects')">📖 과목별 기출 ▼</div>
-    <div class="submenu" id="accounting-subjects-submenu" style="padding-left: 20px; display: none;">
-        
-        <div class="submenu-item" onclick="toggleSubmenu('financial-chapters')">📖 재무회계 ▼</div>
-        <div class="submenu" id="financial-chapters-submenu" style="padding-left: 40px; display: none;">
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제1장')">제1장 재무제표 표시</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제2장')">제2장 공정가치 측정과 현재가치 평가</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제3장')">제3장 수익</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제4장')">제4장 건설계약</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제5장')">제5장 재고자산과 농림어업</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제6장')">제6장 유형자산(Ⅰ): 최초인식과 후속측정</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제7장')">제7장 유형자산(Ⅱ): 취득형태별 원가</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제8장')">제8장 차입원가</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제9장')">제9장 무형자산</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제10장')">제10장 금융부채</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제11장')">제11장 충당부채와 보고기간후사건</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제12장')">제12장 자본</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제13장')">제13장 재무보고를 위한 개념체계</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제14장')">제14장 금융자산(Ⅰ): 채무상품과 지분상품</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제15장')">제15장 금융자산(Ⅱ): 현금과 매출채권</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제16장')">제16장 복합금융상품</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제17장')">제17장 종업원급여</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제18장')">제18장 주식기준보상</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제19장')">제19장 리스회계</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제20장')">제20장 투자부동산과 매각예정비유동자산</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제21장')">제21장 법인세회계</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제22장')">제22장 회계변경과 오류수정</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제23장')">제23장 주당이익</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제24장')">제24장 현금흐름표와 중간재무보고</div>
-            <div class="submenu-item" onclick="selectChapter('재무회계', '제25장')">제25장 고급회계</div>
-        </div>
-        <div class="submenu-item" onclick="toggleSubmenu('cost-chapters')">📖 원가관리회계 ▼</div>
-        <div class="submenu" id="cost-chapters-submenu" style="padding-left: 40px; display: none;">
-            <div class="submenu-item" onclick="selectChapter('원가관리회계', '제1장')">제1장 원가의 분류와 제조기업의 원가의 흐름</div>
-            <div class="submenu-item" onclick="selectChapter('원가관리회계', '제2장')">제2장 원가배분과 보조부문원가의 배분/개별원가계산</div>
-            <div class="submenu-item" onclick="selectChapter('원가관리회계', '제3장')">제3장 종합원가계산</div>
-            <div class="submenu-item" onclick="selectChapter('원가관리회계', '제4장')">제4장 연산품과 부산물의 원가계산</div>
-            <div class="submenu-item" onclick="selectChapter('원가관리회계', '제5장')">제5장 변동원가계산과 초변동원가계산</div>
-            <div class="submenu-item" onclick="selectChapter('원가관리회계', '제6장')">제6장 활동기준원가계산</div>
-            <div class="submenu-item" onclick="selectChapter('원가관리회계', '제7장')">제7장 원가추정</div>
-            <div class="submenu-item" onclick="selectChapter('원가관리회계', '제8장')">제8장 원가-조업도-이익분석</div>
-            <div class="submenu-item" onclick="selectChapter('원가관리회계', '제9장')">제9장 관련원가분석</div>
-            <div class="submenu-item" onclick="selectChapter('원가관리회계', '제11장')">제11장 불확실성하의 의사결정</div>
-            <div class="submenu-item" onclick="selectChapter('원가관리회계', '제12장')">제12장 종합예산</div>
-            <div class="submenu-item" onclick="selectChapter('원가관리회계', '제13장')">제13장 표준원가계산</div>
-            <div class="submenu-item" onclick="selectChapter('원가관리회계', '제14장')">제14장 판매부문과 투자중심점의 성과평가</div>
-            <div class="submenu-item" onclick="selectChapter('원가관리회계', '제15장')">제15장 대체가격결정</div>
-            <div class="submenu-item" onclick="selectChapter('원가관리회계', '제16장')">제16장 전략적 원가관리</div>
-        </div>
-        </div>
-    <div class="submenu-item" onclick="selectChapter('회계학개론', 'AI추천')">🤖 AI 추천문제</div>
-    </div>
-
-    
-                <!-- 02-2-1-1. 회계학개론 메뉴 끝 -->
-                
-                <!-- 02-2-1-2. 세법학개론 메뉴 시작 -->
-<div class="menu-item" onclick="toggleSubmenu('tax')">
-    <div class="menu-item-title">세법학개론</div>
-    <div class="menu-item-desc">법인세법, 소득세법, 부가가치세법 등</div>
-</div>
-<div class="submenu" id="tax-submenu">
-    <!-- 02-2-1-2-0. 세법학개론 상위 분류 시작 -->
-    <!-- 02-2-1-2-0-1. 연도별 기출 시작 -->
-    <div class="submenu-item" onclick="toggleSubmenu('tax-yearly')">📅 연도별 기출 ▼</div>
-    <div class="submenu" id="tax-yearly-submenu" style="padding-left: 40px; display: none;">
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2025년기출')">2025년 제62회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2024년기출')">2024년 제61회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2023년기출')">2023년 제60회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2022년기출')">2022년 제59회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2021년기출')">2021년 제58회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2020년기출')">2020년 제57회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2019년기출')">2019년 제56회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2018년기출')">2018년 제55회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2017년기출')">2017년 제54회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2016년기출')">2016년 제53회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2015년기출')">2015년 제52회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2014년기출')">2014년 제51회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2013년기출')">2013년 제50회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2012년기출')">2012년 제49회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2011년기출')">2011년 제48회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('세법학개론', '2010년기출')">2010년 제47회 기출</div>
-    </div>
-    <!-- 02-2-1-2-0-1. 연도별 기출 끝 -->
-    
-    <!-- 02-2-1-2-0-2. 세목별 기출 시작 -->
-    <div class="submenu-item" onclick="toggleSubmenu('tax-subject')">📖 세목별 기출 ▼</div>
-    <div class="submenu" id="tax-subject-submenu" style="padding-left: 40px; display: none;">
-        
-        <!-- 02-2-1-2-1. 법인세법 서브메뉴 시작 -->
-        <div class="submenu-item" onclick="toggleSubmenu('corporate-tax')">법인세법 ▼</div>
-        <div class="submenu" id="corporate-tax-submenu" style="padding-left: 40px; display: none;">
-            <div class="submenu-item" onclick="selectChapter('법인세법', '기출문제')">법인세법 기출문제</div>
-            <div class="submenu-item" onclick="toggleSubmenu('corporate-sections')">📖 단원별 기출 ▼</div>
-            <div class="submenu" id="corporate-sections-submenu" style="padding-left: 20px; display: none;">
-                <div class="submenu-item" onclick="selectChapter('법인세법', '제1절')">제1절 총설</div>
-                <div class="submenu-item" onclick="selectChapter('법인세법', '제2절')">제2절 법인세의 계산구조</div>
-                <div class="submenu-item" onclick="selectChapter('법인세법', '제3절')">제3절 익금</div>
-                <div class="submenu-item" onclick="selectChapter('법인세법', '제4절')">제4절 손금</div>
-                <div class="submenu-item" onclick="selectChapter('법인세법', '제5절')">제5절 손익의 귀속사업연도와 자산·부채의 평가</div>
-                <div class="submenu-item" onclick="selectChapter('법인세법', '제6절')">제6절 감가상각</div>
-                <div class="submenu-item" onclick="selectChapter('법인세법', '제7절')">제7절 충당금과 준비금</div>
-                <div class="submenu-item" onclick="selectChapter('법인세법', '제8절')">제8절 합병 및 분할 등에 대한 특례</div>
-                <div class="submenu-item" onclick="selectChapter('법인세법', '제9절')">제9절 부당행위계산의 부인</div>
-                <div class="submenu-item" onclick="selectChapter('법인세법', '제10절')">제10절 과세표준과 세액의 계산</div>
-                <div class="submenu-item" onclick="selectChapter('법인세법', '제11절')">제11절 법인세의 납세절차</div>
-                <div class="submenu-item" onclick="selectChapter('법인세법', '제12절')">제12절 그 밖의 법인세</div>
-            </div>
-        </div>
-        <!-- 02-2-1-2-1. 법인세법 서브메뉴 끝 -->
-        
-        <!-- 02-2-1-2-2. 소득세법 서브메뉴 시작 -->
-        <div class="submenu-item" onclick="toggleSubmenu('income-tax')">소득세법 ▼</div>
-        <div class="submenu" id="income-tax-submenu" style="padding-left: 40px; display: none;">
-            <div class="submenu-item" onclick="selectChapter('소득세법', '기출문제')">소득세법 기출문제</div>
-            <div class="submenu-item" onclick="toggleSubmenu('income-sections')">📖 단원별 기출 ▼</div>
-            <div class="submenu" id="income-sections-submenu" style="padding-left: 20px; display: none;">
-                <div class="submenu-item" onclick="selectChapter('소득세법', '제1절')">제1절 총설</div>
-                <div class="submenu-item" onclick="selectChapter('소득세법', '제2절')">제2절 이자소득과 배당소득</div>
-                <div class="submenu-item" onclick="selectChapter('소득세법', '제3절')">제3절 사업소득</div>
-                <div class="submenu-item" onclick="selectChapter('소득세법', '제4절')">제4절 근로소득·연금소득 및 기타소득</div>
-                <div class="submenu-item" onclick="selectChapter('소득세법', '제5절')">제5절 소득금액계산의 특례</div>
-                <div class="submenu-item" onclick="selectChapter('소득세법', '제6절')">제6절 종합소득과세표준의 계산</div>
-                <div class="submenu-item" onclick="selectChapter('소득세법', '제7절')">제7절 종합소득세액의 계산</div>
-                <div class="submenu-item" onclick="selectChapter('소득세법', '제8절')">제8절 퇴직소득세</div>
-                <div class="submenu-item" onclick="selectChapter('소득세법', '제9절')">제9절 종합·퇴직소득세의 납세절차</div>
-                <div class="submenu-item" onclick="selectChapter('소득세법', '제10절')">제10절 양도소득세</div>
-                <div class="submenu-item" onclick="selectChapter('소득세법', '제11절')">제11절 비거주자와 외국법인의 납세의무</div>
-            </div>
-        </div>
-        <!-- 02-2-1-2-2. 소득세법 서브메뉴 끝 -->
-        
-        <!-- 02-2-1-2-3. 부가가치세법 서브메뉴 시작 -->
-        <div class="submenu-item" onclick="toggleSubmenu('vat')">부가가치세법 ▼</div>
-        <div class="submenu" id="vat-submenu" style="padding-left: 40px; display: none;">
-            <div class="submenu-item" onclick="selectChapter('부가가치세법', '기출문제')">부가가치세법 기출문제</div>
-            <div class="submenu-item" onclick="toggleSubmenu('vat-sections')">📖 단원별 기출 ▼</div>
-            <div class="submenu" id="vat-sections-submenu" style="padding-left: 20px; display: none;">
-                <div class="submenu-item" onclick="selectChapter('부가가치세법', '제1절')">제1절 총설</div>
-                <div class="submenu-item" onclick="selectChapter('부가가치세법', '제2절')">제2절 납세의무자</div>
-                <div class="submenu-item" onclick="selectChapter('부가가치세법', '제3절')">제3절 과세거래</div>
-                <div class="submenu-item" onclick="selectChapter('부가가치세법', '제4절')">제4절 영세율과 면세</div>
-                <div class="submenu-item" onclick="selectChapter('부가가치세법', '제5절')">제5절 과세표준</div>
-                <div class="submenu-item" onclick="selectChapter('부가가치세법', '제6절')">제6절 거래징수와 세금계산서</div>
-                <div class="submenu-item" onclick="selectChapter('부가가치세법', '제7절')">제7절 납부세액의 계산</div>
-                <div class="submenu-item" onclick="selectChapter('부가가치세법', '제8절')">제8절 부가가치세의 납세절차</div>
-                <div class="submenu-item" onclick="selectChapter('부가가치세법', '제9절')">제9절 간이과세</div>
-            </div>
-        </div>
-        <!-- 02-2-1-2-3. 부가가치세법 서브메뉴 끝 -->
-        
-        <!-- 02-2-1-2-4. 기타 세법 시작 -->
-        <div class="submenu-item" onclick="selectChapter('국세기본법', '기출문제')">국세기본법 기출문제</div>
-        <div class="submenu-item" onclick="selectChapter('국세징수법', '기출문제')">국세징수법 기출문제</div>
-        <div class="submenu-item" onclick="selectChapter('조세범처벌법', '기출문제')">조세범처벌법 기출문제</div>
-        <!-- 02-2-1-2-4. 기타 세법 끝 -->
-    </div>
-    <!-- 02-2-1-2-0-2. 세목별 기출 끝 -->
-    
-    <!-- 02-2-1-2-5. AI 추천문제 시작 -->
-    <div class="submenu-item" onclick="selectChapter('세법학개론', 'AI추천')"> 생성문제</div>
-    <!-- 02-2-1-2-5. AI 추천문제 끝 -->
-</div>
-<!-- 02-2-1-2. 세법학개론 메뉴 끝 -->
-
-                
-                <!-- 02-2-1-3. 재정학 메뉴 시작 -->
-                <div class="menu-item" onclick="toggleSubmenu('finance')">
-                    <div class="menu-item-title"> 재정학</div>
-                    <div class="menu-item-desc">공공재, 조세이론, 재정정책</div>
-                </div>
-                <div class="submenu" id="finance-submenu">
-                    <!-- 02-2-1-3-1. 재정학 연도별 기출 시작 -->
-                    <div class="submenu-item" onclick="toggleSubmenu('finance-years')">📅 연도별 기출 ▼</div>
-                    <div class="submenu" id="finance-years-submenu" style="padding-left: 20px; display: none;">
-                        <!-- 02-2-1-3-1-1. 재정학 연도별 기출 목록 (2010-2025) 시작 -->
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2025년기출')">2025년 제62회 기출</div>
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2024년기출')">2024년 제61회 기출</div>
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2023년기출')">2023년 제60회 기출</div>
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2022년기출')">2022년 제59회 기출</div>
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2021년기출')">2021년 제58회 기출</div>
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2020년기출')">2020년 제57회 기출</div>
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2019년기출')">2019년 제56회 기출</div>
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2018년기출')">2018년 제55회 기출</div>
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2017년기출')">2017년 제54회 기출</div>
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2016년기출')">2016년 제53회 기출</div>
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2015년기출')">2015년 제52회 기출</div>
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2014년기출')">2014년 제51회 기출</div>
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2013년기출')">2013년 제50회 기출</div>
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2012년기출')">2012년 제49회 기출</div>
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2011년기출')">2011년 제48회 기출</div>
-                        <div class="submenu-item" onclick="selectChapter('재정학', '2010년기출')">2010년 제47회 기출</div>
-                        <!-- 02-2-1-3-1-1. 재정학 연도별 기출 목록 (2010-2025) 끝 -->
-                    </div>
-                    <!-- 02-2-1-3-1. 재정학 연도별 기출 끝 -->
+            <!-- ========================================
+                 (신규) 문제풀이 목차 컨테이너 시작
+                 ======================================== -->
+            <div id="quiz-menu-content">
+                <!-- 02-2-1. 1차 시험 메뉴 섹션 시작 -->
+                <div class="menu-section">
+                    <div class="menu-section-title">📝 1차 시험 문제풀이</div>
                     
-                                        <!-- 02-2-1-3-2. 재정학 단원별 기출 (24개 장) 시작 -->
-                    <div class="submenu-item" onclick="toggleSubmenu('finance-chapters')">📖 단원별 기출 ▼</div>
-                    <div class="submenu" id="finance-chapters-submenu" style="padding-left: 20px; display: none;">
-                        <!-- 02-2-1-3-2-1. 제1편 재정학의 기초 시작 -->
-                        <div class="submenu-item" onclick="toggleSubmenu('finance-part1')">제1편 재정학의 기초 ▼</div>
-                        <div class="submenu" id="finance-part1-submenu" style="padding-left: 20px; display: none;">
-                            <!-- 02-2-1-3-2-1-1. 제1편 장별 목록 시작 -->
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제1장')">제1장 재정학: 의의와 성격</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제2장')">제2장 우리나라의 재정</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제3장')">제3장 후생경제학</div>
-                            <!-- 02-2-1-3-2-1-1. 제1편 장별 목록 끝 -->
-                        </div>
-                        <!-- 02-2-1-3-2-1. 제1편 재정학의 기초 끝 -->
-                        
-                        <!-- 02-2-1-3-2-2. 제2편 자원배분의 문제 시작 -->
-                        <div class="submenu-item" onclick="toggleSubmenu('finance-part2')">제2편 자원배분의 문제 ▼</div>
-                        <div class="submenu" id="finance-part2-submenu" style="padding-left: 20px; display: none;">
-                            <!-- 02-2-1-3-2-2-1. 제2편 장별 목록 시작 -->
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제4장')">제4장 공공재의 문제</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제5장')">제5장 공공선택의 이론</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제6장')">제6장 외부성의 문제</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제7장')">제7장 환경정책</div>
-                            <!-- 02-2-1-3-2-2-1. 제2편 장별 목록 끝 -->
-                        </div>
-                        <!-- 02-2-1-3-2-2. 제2편 자원배분의 문제 끝 -->
-                        
-                        <!-- 02-2-1-3-2-3. 제3편 분배와 사회복지 시작 -->
-                        <div class="submenu-item" onclick="toggleSubmenu('finance-part3')">제3편 분배와 사회복지 ▼</div>
-                        <div class="submenu" id="finance-part3-submenu" style="padding-left: 20px; display: none;">
-                            <!-- 02-2-1-3-2-3-1. 제3편 장별 목록 시작 -->
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제8장')">제8장 소득분배이론</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제9장')">제9장 재분배정책</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제10장')">제10장 사회보험제도</div>
-                            <!-- 02-2-1-3-2-3-1. 제3편 장별 목록 끝 -->
-                        </div>
-                        <!-- 02-2-1-3-2-3. 제3편 분배와 사회복지 끝 -->
-                        
-                        <!-- 02-2-1-3-2-4. 제4편 공공지출이론 시작 -->
-                        <div class="submenu-item" onclick="toggleSubmenu('finance-part4')">제4편 공공지출이론 ▼</div>
-                        <div class="submenu" id="finance-part4-submenu" style="padding-left: 20px; display: none;">
-                            <!-- 02-2-1-3-2-4-1. 제4편 장별 목록 시작 -->
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제11장')">제11장 정부지출의 분석</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제12장')">제12장 비용편익분석</div>
-                            <!-- 02-2-1-3-2-4-1. 제4편 장별 목록 끝 -->
-                        </div>
-                        <!-- 02-2-1-3-2-4. 제4편 공공지출이론 끝 -->
-                        
-                        <!-- 02-2-1-3-2-5. 제5편 조세의 이론 시작 -->
-                        <div class="submenu-item" onclick="toggleSubmenu('finance-part5')">제5편 조세의 이론 ▼</div>
-                        <div class="submenu" id="finance-part5-submenu" style="padding-left: 20px; display: none;">
-                            <!-- 02-2-1-3-2-5-1. 제5편 장별 목록 시작 -->
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제13장')">제13장 조세의 기본원리</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제14장')">제14장 조세와 소득분배</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제15장')">제15장 조세와 효율성</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제16장')">제16장 바람직한 조세제도의 탐색</div>
-                            <!-- 02-2-1-3-2-5-1. 제5편 장별 목록 끝 -->
-                        </div>
-                        <!-- 02-2-1-3-2-5. 제5편 조세의 이론 끝 -->
-                        
-                        <!-- 02-2-1-3-2-6. 제6편 현실의 조세제도 시작 -->
-                        <div class="submenu-item" onclick="toggleSubmenu('finance-part6')">제6편 현실의 조세제도 ▼</div>
-                        <div class="submenu" id="finance-part6-submenu" style="padding-left: 20px; display: none;">
-                            <!-- 02-2-1-3-2-6-1. 제6편 장별 목록 시작 -->
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제17장')">제17장 소득세와 부가가치세</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제18장')">제18장 법인세</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제19장')">제19장 조세제도의 개혁</div>
-                            <!-- 02-2-1-3-2-6-1. 제6편 장별 목록 끝 -->
-                        </div>
-                        <!-- 02-2-1-3-2-6. 제6편 현실의 조세제도 끝 -->
-                        
-                        <!-- 02-2-1-3-2-7. 제7편 조세와 경제행위 시작 -->
-                        <div class="submenu-item" onclick="toggleSubmenu('finance-part7')">제7편 조세와 경제행위 ▼</div>
-                        <div class="submenu" id="finance-part7-submenu" style="padding-left: 20px; display: none;">
-                            <!-- 02-2-1-3-2-7-1. 제7편 장별 목록 시작 -->
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제20장')">제20장 조세와 경제행위: 개인의 선택</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제21장')">제21장 조세와 경제행위: 기업의 선택</div>
-                            <!-- 02-2-1-3-2-7-1. 제7편 장별 목록 끝 -->
-                        </div>
-                        <!-- 02-2-1-3-2-7. 제7편 조세와 경제행위 끝 -->
-                        
-                        <!-- 02-2-1-3-2-8. 제8편 재정학의 다른 문제들 시작 -->
-                        <div class="submenu-item" onclick="toggleSubmenu('finance-part8')">제8편 재정학의 다른 문제들 ▼</div>
-                        <div class="submenu" id="finance-part8-submenu" style="padding-left: 20px; display: none;">
-                            <!-- 02-2-1-3-2-8-1. 제8편 장별 목록 시작 -->
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제22장')">제22장 재정적자와 국채</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제23장')">제23장 공공요금의 이론</div>
-                            <div class="submenu-item" onclick="selectChapter('재정학', '제24장')">제24장 지방재정</div>
-                            <!-- 02-2-1-3-2-8-1. 제8편 장별 목록 끝 -->
-                        </div>
-                        <!-- 02-2-1-3-2-8. 제8편 재정학의 다른 문제들 끝 -->
+                    <!-- 02-2-1-1. 회계학개론 메뉴 시작 -->
+                    <div class="menu-item" onclick="toggleSubmenu('accounting')">
+                        <div class="menu-item-title"> 회계학개론</div>
+                        <div class="menu-item-desc">연도별 및 과목별 문제풀이</div>
                     </div>
-                    <!-- 02-2-1-3-2. 재정학 단원별 기출 (24개 장) 끝 -->
-
+                    <div class="submenu" id="accounting-submenu">
+                        <div class="submenu-item" onclick="toggleSubmenu('accounting-years')">📅 연도별 기출 ▼</div>
+                        <div class="submenu" id="accounting-years-submenu" style="padding-left: 20px; display: none;">
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2025년기출')">2025년 제62회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2024년기출')">2024년 제61회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2023년기출')">2023년 제60회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2022년기출')">2022년 제59회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2021년기출')">2021년 제58회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2020년기출')">2020년 제57회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2019년기출')">2019년 제56회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2018년기출')">2018년 제55회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2017년기출')">2017년 제54회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2016년기출')">2016년 제53회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2015년기출')">2015년 제52회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2014년기출')">2014년 제51회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2013년기출')">2013년 제50회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2012년기출')">2012년 제49회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2011년기출')">2011년 제48회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('회계학개론', '2010년기출')">2010년 제47회 기출</div>
+                        </div>
+                        <div class="submenu-item" onclick="toggleSubmenu('accounting-subjects')">📖 과목별 기출 ▼</div>
+                        <div class="submenu" id="accounting-subjects-submenu" style="padding-left: 20px; display: none;">
+                            
+                            <div class="submenu-item" onclick="toggleSubmenu('financial-chapters')">📖 재무회계 ▼</div>
+                            <div class="submenu" id="financial-chapters-submenu" style="padding-left: 40px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제1장')">제1장 재무제표 표시</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제2장')">제2장 공정가치 측정과 현재가치 평가</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제3장')">제3장 수익</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제4장')">제4장 건설계약</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제5장')">제5장 재고자산과 농림어업</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제6장')">제6장 유형자산(Ⅰ): 최초인식과 후속측정</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제7장')">제7장 유형자산(Ⅱ): 취득형태별 원가</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제8장')">제8장 차입원가</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제9장')">제9장 무형자산</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제10장')">제10장 금융부채</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제11장')">제11장 충당부채와 보고기간후사건</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제12장')">제12장 자본</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제13장')">제13장 재무보고를 위한 개념체계</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제14장')">제14장 금융자산(Ⅰ): 채무상품과 지분상품</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제15장')">제15장 금융자산(Ⅱ): 현금과 매출채권</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제16장')">제16장 복합금융상품</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제17장')">제17장 종업원급여</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제18장')">제18장 주식기준보상</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제19장')">제19장 리스회계</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제20장')">제20장 투자부동산과 매각예정비유동자산</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제21장')">제21장 법인세회계</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제22장')">제22장 회계변경과 오류수정</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제23장')">제23장 주당이익</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제24장')">제24장 현금흐름표와 중간재무보고</div>
+                                <div class="submenu-item" onclick="selectChapter('재무회계', '제25장')">제25장 고급회계</div>
+                            </div>
+                            <div class="submenu-item" onclick="toggleSubmenu('cost-chapters')">📖 원가관리회계 ▼</div>
+                            <div class="submenu" id="cost-chapters-submenu" style="padding-left: 40px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('원가관리회계', '제1장')">제1장 원가의 분류와 제조기업의 원가의 흐름</div>
+                                <div class="submenu-item" onclick="selectChapter('원가관리회계', '제2장')">제2장 원가배분과 보조부문원가의 배분/개별원가계산</div>
+                                <div class="submenu-item" onclick="selectChapter('원가관리회계', '제3장')">제3장 종합원가계산</div>
+                                <div class="submenu-item" onclick="selectChapter('원가관리회계', '제4장')">제4장 연산품과 부산물의 원가계산</div>
+                                <div class="submenu-item" onclick="selectChapter('원가관리회계', '제5장')">제5장 변동원가계산과 초변동원가계산</div>
+                                <div class="submenu-item" onclick="selectChapter('원가관리회계', '제6장')">제6장 활동기준원가계산</div>
+                                <div class="submenu-item" onclick="selectChapter('원가관리회계', '제7장')">제7장 원가추정</div>
+                                <div class="submenu-item" onclick="selectChapter('원가관리회계', '제8장')">제8장 원가-조업도-이익분석</div>
+                                <div class="submenu-item" onclick="selectChapter('원가관리회계', '제9장')">제9장 관련원가분석</div>
+                                <div class="submenu-item" onclick="selectChapter('원가관리회계', '제11장')">제11장 불확실성하의 의사결정</div>
+                                <div class="submenu-item" onclick="selectChapter('원가관리회계', '제12장')">제12장 종합예산</div>
+                                <div class="submenu-item" onclick="selectChapter('원가관리회계', '제13장')">제13장 표준원가계산</div>
+                                <div class="submenu-item" onclick="selectChapter('원가관리회계', '제14장')">제14장 판매부문과 투자중심점의 성과평가</div>
+                                <div class="submenu-item" onclick="selectChapter('원가관리회계', '제15장')">제15장 대체가격결정</div>
+                                <div class="submenu-item" onclick="selectChapter('원가관리회계', '제16장')">제16장 전략적 원가관리</div>
+                            </div>
+                        </div>
+                        <div class="submenu-item" onclick="selectChapter('회계학개론', 'AI추천')">🤖 AI 추천문제</div>
+                    </div>
+                    <!-- 02-2-1-1. 회계학개론 메뉴 끝 -->
                     
-                    <!-- 02-2-1-3-3. 재정학 AI 추천문제 시작 -->
-                    <div class="submenu-item" onclick="selectChapter('재정학', 'AI추천')">🤖 AI 추천문제</div>
-                    <!-- 02-2-1-3-3. 재정학 AI 추천문제 끝 -->
+                    <!-- 02-2-1-2. 세법학개론 메뉴 시작 -->
+                    <div class="menu-item" onclick="toggleSubmenu('tax')">
+                        <div class="menu-item-title">세법학개론</div>
+                        <div class="menu-item-desc">법인세법, 소득세법, 부가가치세법 등</div>
+                    </div>
+                    <div class="submenu" id="tax-submenu">
+                        <div class="submenu-item" onclick="toggleSubmenu('tax-yearly')">📅 연도별 기출 ▼</div>
+                        <div class="submenu" id="tax-yearly-submenu" style="padding-left: 40px; display: none;">
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2025년기출')">2025년 제62회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2024년기출')">2024년 제61회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2023년기출')">2023년 제60회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2022년기출')">2022년 제59회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2021년기출')">2021년 제58회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2020년기출')">2020년 제57회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2019년기출')">2019년 제56회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2018년기출')">2018년 제55회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2017년기출')">2017년 제54회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2016년기출')">2016년 제53회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2015년기출')">2015년 제52회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2014년기출')">2014년 제51회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2013년기출')">2013년 제50회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2012년기출')">2012년 제49회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2011년기출')">2011년 제48회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('세법학개론', '2010년기출')">2010년 제47회 기출</div>
+                        </div>
+                        
+                        <div class="submenu-item" onclick="toggleSubmenu('tax-subject')">📖 세목별 기출 ▼</div>
+                        <div class="submenu" id="tax-subject-submenu" style="padding-left: 40px; display: none;">
+                            <div class="submenu-item" onclick="toggleSubmenu('corporate-tax')">법인세법 ▼</div>
+                            <div class="submenu" id="corporate-tax-submenu" style="padding-left: 40px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('법인세법', '기출문제')">법인세법 기출문제</div>
+                                <div class="submenu-item" onclick="toggleSubmenu('corporate-sections')">📖 단원별 기출 ▼</div>
+                                <div class="submenu" id="corporate-sections-submenu" style="padding-left: 20px; display: none;">
+                                    <div class="submenu-item" onclick="selectChapter('법인세법', '제1절')">제1절 총설</div>
+                                    <div class="submenu-item" onclick="selectChapter('법인세법', '제2절')">제2절 법인세의 계산구조</div>
+                                    <div class="submenu-item" onclick="selectChapter('법인세법', '제3절')">제3절 익금</div>
+                                    <div class="submenu-item" onclick="selectChapter('법인세법', '제4절')">제4절 손금</div>
+                                    <div class="submenu-item" onclick="selectChapter('법인세법', '제5절')">제5절 손익의 귀속사업연도와 자산·부채의 평가</div>
+                                    <div class="submenu-item" onclick="selectChapter('법인세법', '제6절')">제6절 감가상각</div>
+                                    <div class="submenu-item" onclick="selectChapter('법인세법', '제7절')">제7절 충당금과 준비금</div>
+                                    <div class="submenu-item" onclick="selectChapter('법인세법', '제8절')">제8절 합병 및 분할 등에 대한 특례</div>
+                                    <div class="submenu-item" onclick="selectChapter('법인세법', '제9절')">제9절 부당행위계산의 부인</div>
+                                    <div class="submenu-item" onclick="selectChapter('법인세법', '제10절')">제10절 과세표준과 세액의 계산</div>
+                                    <div class="submenu-item" onclick="selectChapter('법인세법', '제11절')">제11절 법인세의 납세절차</div>
+                                    <div class="submenu-item" onclick="selectChapter('법인세법', '제12절')">제12절 그 밖의 법인세</div>
+                                </div>
+                            </div>
+                            
+                            <div class="submenu-item" onclick="toggleSubmenu('income-tax')">소득세법 ▼</div>
+                            <div class="submenu" id="income-tax-submenu" style="padding-left: 40px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('소득세법', '기출문제')">소득세법 기출문제</div>
+                                <div class="submenu-item" onclick="toggleSubmenu('income-sections')">📖 단원별 기출 ▼</div>
+                                <div class="submenu" id="income-sections-submenu" style="padding-left: 20px; display: none;">
+                                    <div class="submenu-item" onclick="selectChapter('소득세법', '제1절')">제1절 총설</div>
+                                    <div class="submenu-item" onclick="selectChapter('소득세법', '제2절')">제2절 이자소득과 배당소득</div>
+                                    <div class="submenu-item" onclick="selectChapter('소득세법', '제3절')">제3절 사업소득</div>
+                                    <div class="submenu-item" onclick="selectChapter('소득세법', '제4절')">제4절 근로소득·연금소득 및 기타소득</div>
+                                    <div class="submenu-item" onclick="selectChapter('소득세법', '제5절')">제5절 소득금액계산의 특례</div>
+                                    <div class="submenu-item" onclick="selectChapter('소득세법', '제6절')">제6절 종합소득과세표준의 계산</div>
+                                    <div class="submenu-item" onclick="selectChapter('소득세법', '제7절')">제7절 종합소득세액의 계산</div>
+                                    <div class="submenu-item" onclick="selectChapter('소득세법', '제8절')">제8절 퇴직소득세</div>
+                                    <div class="submenu-item" onclick="selectChapter('소득세법', '제9절')">제9절 종합·퇴직소득세의 납세절차</div>
+                                    <div class="submenu-item" onclick="selectChapter('소득세법', '제10절')">제10절 양도소득세</div>
+                                    <div class="submenu-item" onclick="selectChapter('소득세법', '제11절')">제11절 비거주자와 외국법인의 납세의무</div>
+                                </div>
+                            </div>
+                            
+                            <div class="submenu-item" onclick="toggleSubmenu('vat')">부가가치세법 ▼</div>
+                            <div class="submenu" id="vat-submenu" style="padding-left: 40px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('부가가치세법', '기출문제')">부가가치세법 기출문제</div>
+                                <div class="submenu-item" onclick="toggleSubmenu('vat-sections')">📖 단원별 기출 ▼</div>
+                                <div class="submenu" id="vat-sections-submenu" style="padding-left: 20px; display: none;">
+                                    <div class="submenu-item" onclick="selectChapter('부가가치세법', '제1절')">제1절 총설</div>
+                                    <div class="submenu-item" onclick="selectChapter('부가가치세법', '제2절')">제2절 납세의무자</div>
+                                    <div class="submenu-item" onclick="selectChapter('부가가치세법', '제3절')">제3절 과세거래</div>
+                                    <div class="submenu-item" onclick="selectChapter('부가가치세법', '제4절')">제4절 영세율과 면세</div>
+                                    <div class="submenu-item" onclick="selectChapter('부가가치세법', '제5절')">제5절 과세표준</div>
+                                    <div class="submenu-item" onclick="selectChapter('부가가치세법', '제6절')">제6절 거래징수와 세금계산서</div>
+                                    <div class="submenu-item" onclick="selectChapter('부가가치세법', '제7절')">제7절 납부세액의 계산</div>
+                                    <div class="submenu-item" onclick="selectChapter('부가가치세법', '제8절')">제8절 부가가치세의 납세절차</div>
+                                    <div class="submenu-item" onclick="selectChapter('부가가치세법', '제9절')">제9절 간이과세</div>
+                                </div>
+                            </div>
+                            
+                            <div class="submenu-item" onclick="selectChapter('국세기본법', '기출문제')">국세기본법 기출문제</div>
+                            <div class="submenu-item" onclick="selectChapter('국세징수법', '기출문제')">국세징수법 기출문제</div>
+                            <div class="submenu-item" onclick="selectChapter('조세범처벌법', '기출문제')">조세범처벌법 기출문제</div>
+                        </div>
+                        
+                        <div class="submenu-item" onclick="selectChapter('세법학개론', 'AI추천')"> 생성문제</div>
+                    </div>
+                    <!-- 02-2-1-2. 세법학개론 메뉴 끝 -->
+                    
+                    <!-- 02-2-1-3. 재정학 메뉴 시작 -->
+                    <div class="menu-item" onclick="toggleSubmenu('finance')">
+                        <div class="menu-item-title"> 재정학</div>
+                        <div class="menu-item-desc">공공재, 조세이론, 재정정책</div>
+                    </div>
+                    <div class="submenu" id="finance-submenu">
+                        <div class="submenu-item" onclick="toggleSubmenu('finance-years')">📅 연도별 기출 ▼</div>
+                        <div class="submenu" id="finance-years-submenu" style="padding-left: 20px; display: none;">
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2025년기출')">2025년 제62회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2024년기출')">2024년 제61회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2023년기출')">2023년 제60회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2022년기출')">2022년 제59회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2021년기출')">2021년 제58회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2020년기출')">2020년 제57회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2019년기출')">2019년 제56회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2018년기출')">2018년 제55회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2017년기출')">2017년 제54회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2016년기출')">2016년 제53회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2015년기출')">2015년 제52회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2014년기출')">2014년 제51회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2013년기출')">2013년 제50회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2012년기출')">2012년 제49회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2011년기출')">2011년 제48회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('재정학', '2010년기출')">2010년 제47회 기출</div>
+                        </div>
+                        
+                        <div class="submenu-item" onclick="toggleSubmenu('finance-chapters')">📖 단원별 기출 ▼</div>
+                        <div class="submenu" id="finance-chapters-submenu" style="padding-left: 20px; display: none;">
+                            <div class="submenu-item" onclick="toggleSubmenu('finance-part1')">제1편 재정학의 기초 ▼</div>
+                            <div class="submenu" id="finance-part1-submenu" style="padding-left: 20px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제1장')">제1장 재정학: 의의와 성격</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제2장')">제2장 우리나라의 재정</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제3장')">제3장 후생경제학</div>
+                            </div>
+                            
+                            <div class="submenu-item" onclick="toggleSubmenu('finance-part2')">제2편 자원배분의 문제 ▼</div>
+                            <div class="submenu" id="finance-part2-submenu" style="padding-left: 20px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제4장')">제4장 공공재의 문제</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제5장')">제5장 공공선택의 이론</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제6장')">제6장 외부성의 문제</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제7장')">제7장 환경정책</div>
+                            </div>
+                            
+                            <div class="submenu-item" onclick="toggleSubmenu('finance-part3')">제3편 분배와 사회복지 ▼</div>
+                            <div class="submenu" id="finance-part3-submenu" style="padding-left: 20px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제8장')">제8장 소득분배이론</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제9장')">제9장 재분배정책</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제10장')">제10장 사회보험제도</div>
+                            </div>
+                            
+                            <div class="submenu-item" onclick="toggleSubmenu('finance-part4')">제4편 공공지출이론 ▼</div>
+                            <div class="submenu" id="finance-part4-submenu" style="padding-left: 20px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제11장')">제11장 정부지출의 분석</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제12장')">제12장 비용편익분석</div>
+                            </div>
+                            
+                            <div class="submenu-item" onclick="toggleSubmenu('finance-part5')">제5편 조세의 이론 ▼</div>
+                            <div class="submenu" id="finance-part5-submenu" style="padding-left: 20px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제13장')">제13장 조세의 기본원리</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제14장')">제14장 조세와 소득분배</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제15장')">제15장 조세와 효율성</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제16장')">제16장 바람직한 조세제도의 탐색</div>
+                            </div>
+                            
+                            <div class="submenu-item" onclick="toggleSubmenu('finance-part6')">제6편 현실의 조세제도 ▼</div>
+                            <div class="submenu" id="finance-part6-submenu" style="padding-left: 20px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제17장')">제17장 소득세와 부가가치세</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제18장')">제18장 법인세</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제19장')">제19장 조세제도의 개혁</div>
+                            </div>
+                            
+                            <div class="submenu-item" onclick="toggleSubmenu('finance-part7')">제7편 조세와 경제행위 ▼</div>
+                            <div class="submenu" id="finance-part7-submenu" style="padding-left: 20px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제20장')">제20장 조세와 경제행위: 개인의 선택</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제21장')">제21장 조세와 경제행위: 기업의 선택</div>
+                            </div>
+                            
+                            <div class="submenu-item" onclick="toggleSubmenu('finance-part8')">제8편 재정학의 다른 문제들 ▼</div>
+                            <div class="submenu" id="finance-part8-submenu" style="padding-left: 20px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제22장')">제22장 재정적자와 국채</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제23장')">제23장 공공요금의 이론</div>
+                                <div class="submenu-item" onclick="selectChapter('재정학', '제24장')">제24장 지방재정</div>
+                            </div>
+                        </div>
+                        
+                        <div class="submenu-item" onclick="selectChapter('재정학', 'AI추천')">🤖 AI 추천문제</div>
+                    </div>
+                    <!-- 02-2-1-3. 재정학 메뉴 끝 -->
+                    
+                    <!-- 02-2-1-4. 행정소송법 메뉴 시작 -->
+                    <div class="menu-item" onclick="toggleSubmenu('admin')">
+                        <div class="menu-item-title"> 행정소송법</div>
+                        <div class="menu-item-desc">연도별 & 유형별 문제풀이</div>
+                    </div>
+                    <div class="submenu" id="admin-submenu">
+                        <div class="submenu-item" onclick="toggleSubmenu('admin-years')">📅 연도별 기출 ▼</div>
+                        <div class="submenu" id="admin-years-submenu" style="padding-left: 20px; display: none;">
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2025년기출')">2025년 제62회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2024년기출')">2024년 제61회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2023년기출')">2023년 제60회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2022년기출')">2022년 제59회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2021년기출')">2021년 제58회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2020년기출')">2020년 제57회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2019년기출')">2019년 제56회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2018년기출')">2018년 제55회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2017년기출')">2017년 제54회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2016년기출')">2016년 제53회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2015년기출')">2015년 제52회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2014년기출')">2014년 제51회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2013년기출')">2013년 제50회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2012년기출')">2012년 제49회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2011년기출')">2011년 제48회 기출</div>
+                            <div class="submenu-item" onclick="selectChapter('행정소송법', '2010년기출')">2010년 제47회 기출</div>
+                        </div>
+                        <div class="submenu-item" onclick="toggleSubmenu('admin-chapters-new')">📖 단원별 기출 (유형별) ▼</div>
+                        <div class="submenu" id="admin-chapters-new-submenu" style="padding-left: 20px; display: none;">
+                            <div class="submenu-item menu-part-header" onclick="toggleSubmenu('admin-part1')">PART 1: 소송의 제기 (소송요건) ▼</div>
+                            <div class="submenu" id="admin-part1-submenu" style="padding-left: 40px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('행정소송법', '제1장: 소송의 대상')">제1장: 소송의 대상 (대상적격)</div>
+                                <div class="submenu-item" onclick="selectChapter('행정소송법', '제2장: 소송의 당사자')">제2장: 소송의 당사자</div>
+                                <div class="submenu-item" onclick="selectChapter('행정소송법', '제3장: 소의 이익')">제3장: 소의 이익</div>
+                                <div class="submenu-item" onclick="selectChapter('행정소송법', '제4장: 제소기간 및 행정심판')">제4장: 제소기간 및 행정심판</div>
+                            </div>
+
+                            <div class="submenu-item menu-part-header" onclick="toggleSubmenu('admin-part2')">PART 2: 소송의 진행 (심리/절차) ▼</div>
+                            <div class="submenu" id="admin-part2-submenu" style="padding-left: 40px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('행정소송법', '제5장: 가구제')">제5장: 가구제 (집행정지)</div>
+                                <div class="submenu-item" onclick="selectChapter('행정소송법', '제6장: 소의 변경, 이송, 병합')">제6장: 소의 변경, 이송 및 병합</div>
+                                <div class="submenu-item" onclick="selectChapter('행정소송법', '제7장: 소송의 심리')">제7장: 소송의 심리</div>
+                            </div>
+
+                            <div class="submenu-item menu-part-header" onclick="toggleSubmenu('admin-part3')">PART 3: 소송의 종료 (판결) ▼</div>
+                            <div class="submenu" id="admin-part3-submenu" style="padding-left: 40px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('행정소송법', '제8장: 판결의 종류')">제8장: 판결의 종류</div>
+                                <div class="submenu-item" onclick="selectChapter('행정소송법', '제9장: 판결의 효력')">제9장: 판결의 효력</div>
+                            </div>
+
+                            <div class="submenu-item menu-part-header" onclick="toggleSubmenu('admin-part4')">PART 4: 그 밖의 행정소송 ▼</div>
+                            <div class="submenu" id="admin-part4-submenu" style="padding-left: 40px; display: none;">
+                                <div class="submenu-item" onclick="selectChapter('행정소송법', '제10장: 무효등확인소송')">제10장: 무효등확인소송</div>
+                                <div class="submenu-item" onclick="selectChapter('행정소송법', '제11장: 부작위위법확인소송')">제11장: 부작위위법확인소송</div>
+                                <div class="submenu-item" onclick="selectChapter('행정소송법', '제12장: 당사자소송')">제12장: 당사자소송</div>
+                            </div>
+                        </div>
+
+                        <div class="submenu-item" onclick="selectChapter('행정소송법', 'AI추천')">🤖 AI 추천문제</div>
+                    </div>
+                    <!-- 02-2-1-4. 행정소송법 메뉴 끝 -->
                 </div>
-                <!-- 02-2-1-3. 재정학 메뉴 끝 -->
+                <!-- 02-2-1. 1차 시험 메뉴 섹션 끝 -->
                 
-                <!-- 02-2-1-4. 행정소송법 메뉴 시작 -->
-                <div class="menu-item" onclick="toggleSubmenu('admin')">
-    <div class="menu-item-title"> 행정소송법</div>
-    <div class="menu-item-desc">연도별 & 유형별 문제풀이</div>
-</div>
-<div class="submenu" id="admin-submenu">
-    <div class="submenu-item" onclick="toggleSubmenu('admin-years')">📅 연도별 기출 ▼</div>
-    <div class="submenu" id="admin-years-submenu" style="padding-left: 20px; display: none;">
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2025년기출')">2025년 제62회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2024년기출')">2024년 제61회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2023년기출')">2023년 제60회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2022년기출')">2022년 제59회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2021년기출')">2021년 제58회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2020년기출')">2020년 제57회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2019년기출')">2019년 제56회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2018년기출')">2018년 제55회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2017년기출')">2017년 제54회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2016년기출')">2016년 제53회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2015년기출')">2015년 제52회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2014년기출')">2014년 제51회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2013년기출')">2013년 제50회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2012년기출')">2012년 제49회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2011년기출')">2011년 제48회 기출</div>
-        <div class="submenu-item" onclick="selectChapter('행정소송법', '2010년기출')">2010년 제47회 기출</div>
-    </div>
-
-    <div class="submenu-item" onclick="toggleSubmenu('admin-chapters-new')">📖 단원별 기출 (유형별) ▼</div>
-    <div class="submenu" id="admin-chapters-new-submenu" style="padding-left: 20px; display: none;">
-        <div class="submenu-item menu-part-header" onclick="toggleSubmenu('admin-part1')">PART 1: 소송의 제기 (소송요건) ▼</div>
-        <div class="submenu" id="admin-part1-submenu" style="padding-left: 40px; display: none;">
-            <div class="submenu-item" onclick="selectChapter('행정소송법', '제1장: 소송의 대상')">제1장: 소송의 대상 (대상적격)</div>
-            <div class="submenu-item" onclick="selectChapter('행정소송법', '제2장: 소송의 당사자')">제2장: 소송의 당사자</div>
-            <div class="submenu-item" onclick="selectChapter('행정소송법', '제3장: 소의 이익')">제3장: 소의 이익</div>
-            <div class="submenu-item" onclick="selectChapter('행정소송법', '제4장: 제소기간 및 행정심판')">제4장: 제소기간 및 행정심판</div>
-        </div>
-
-        <div class="submenu-item menu-part-header" onclick="toggleSubmenu('admin-part2')">PART 2: 소송의 진행 (심리/절차) ▼</div>
-        <div class="submenu" id="admin-part2-submenu" style="padding-left: 40px; display: none;">
-            <div class="submenu-item" onclick="selectChapter('행정소송법', '제5장: 가구제')">제5장: 가구제 (집행정지)</div>
-            <div class="submenu-item" onclick="selectChapter('행정소송법', '제6장: 소의 변경, 이송, 병합')">제6장: 소의 변경, 이송 및 병합</div>
-            <div class="submenu-item" onclick="selectChapter('행정소송법', '제7장: 소송의 심리')">제7장: 소송의 심리</div>
-        </div>
-
-        <div class="submenu-item menu-part-header" onclick="toggleSubmenu('admin-part3')">PART 3: 소송의 종료 (판결) ▼</div>
-        <div class="submenu" id="admin-part3-submenu" style="padding-left: 40px; display: none;">
-            <div class="submenu-item" onclick="selectChapter('행정소송법', '제8장: 판결의 종류')">제8장: 판결의 종류</div>
-            <div class="submenu-item" onclick="selectChapter('행정소송법', '제9장: 판결의 효력')">제9장: 판결의 효력</div>
-        </div>
-
-        <div class="submenu-item menu-part-header" onclick="toggleSubmenu('admin-part4')">PART 4: 그 밖의 행정소송 ▼</div>
-        <div class="submenu" id="admin-part4-submenu" style="padding-left: 40px; display: none;">
-            <div class="submenu-item" onclick="selectChapter('행정소송법', '제10장: 무효등확인소송')">제10장: 무효등확인소송</div>
-            <div class="submenu-item" onclick="selectChapter('행정소송법', '제11장: 부작위위법확인소송')">제11장: 부작위위법확인소송</div>
-            <div class="submenu-item" onclick="selectChapter('행정소송법', '제12장: 당사자소송')">제12장: 당사자소송</div>
-        </div>
-    </div>
-
-    <div class="submenu-item" onclick="selectChapter('행정소송법', 'AI추천')">🤖 AI 추천문제</div>
-</div>
-                <!-- 02-2-1-4. 행정소송법 메뉴 끝 -->
+                <!-- 02-2-2. 2차 시험 메뉴 섹션 시작 -->
+                <div class="menu-section">
+                    <div class="menu-section-title"> 2차 시험 문제풀이</div>
+                    
+                    <div class="menu-item" onclick="selectChapter('회계학1부', '기출문제')">
+                        <div class="menu-item-title"> 회계학 1부 (재무회계)</div>
+                        <div class="menu-item-desc">연결회계, 고급회계, 특수회계</div>
+                    </div>
+                    
+                    <div class="menu-item" onclick="selectChapter('회계학2부', '기출문제')">
+                        <div class="menu-item-title"> 회계학 2부 (세무회계)</div>
+                        <div class="menu-item-desc">세무조정, 실무사례</div>
+                    </div>
+                    
+                    <div class="menu-item" onclick="selectChapter('세법학1부', '기출문제')">
+                        <div class="menu-item-title"> 세법학 1부 (사례형)</div>
+                        <div class="menu-item-desc">국세기본법, 법인세법, 소득세법</div>
+                    </div>
+                    
+                    <div class="menu-item" onclick="selectChapter('세법학2부', '기출문제')">
+                        <div class="menu-item-title"> 세법학 2부 (법령형)</div>
+                        <div class="menu-item-desc">부가가치세법, 지방세법</div>
+                    </div>
+                </div>
+                <!-- 02-2-2. 2차 시험 메뉴 섹션 끝 -->
             </div>
-            <!-- 02-2-1. 1차 시험 메뉴 섹션 끝 -->
-            
-            <!-- 02-2-2. 2차 시험 메뉴 섹션 시작 -->
-            <div class="menu-section">
-                <div class="menu-section-title"> 2차 시험 문제풀이</div>
-                
-                <!-- 02-2-2-1. 회계학 1부 시작 -->
-                <div class="menu-item" onclick="selectChapter('회계학1부', '기출문제')">
-                    <div class="menu-item-title"> 회계학 1부 (재무회계)</div>
-                    <div class="menu-item-desc">연결회계, 고급회계, 특수회계</div>
+            <!-- ========================================
+                 문제풀이 목차 컨테이너 끝
+                 ======================================== -->
+
+                        <!-- ========================================
+                 (최종 확정) 이론학습 목차 컨테이너 시작
+                 ======================================== -->
+            <div id="theory-menu-content" style="display: none;">
+                <div class="menu-section">
+                    <div class="menu-section-title">📚 통합 이론 학습</div>
+                    
+                    <!-- 회계학 메뉴 -->
+                    <div class="menu-item" onclick="toggleSubmenu('theory-accounting-main')">
+                        <div class="menu-item-title">회계학</div>
+                    </div>
+                    <div class="submenu" id="theory-accounting-main-submenu">
+                        <div class="submenu-item" onclick="selectChapter('재무회계', '전체 이론')">재무회계</div>
+                        <div class="submenu-item" onclick="selectChapter('원가관리회계', '전체 이론')">원가관리회계</div>
+                        <div class="submenu-item" onclick="selectChapter('세무회계', '전체 이론')">세무회계</div>
+                    </div>
+
+                    <!-- 세법학 (2차 시험 중심) 메뉴 -->
+                    <div class="menu-item" onclick="toggleSubmenu('theory-tax-main')">
+                        <div class="menu-item-title">세법학 (2차 중심)</div>
+                    </div>
+                    <div class="submenu" id="theory-tax-main-submenu">
+                        <div class="submenu-item" onclick="selectChapter('국세기본법', '전체 이론')">국세기본법</div>
+                        <div class="submenu-item" onclick="selectChapter('소득세법', '전체 이론')">소득세법</div>
+                        <div class="submenu-item" onclick="selectChapter('법인세법', '전체 이론')">법인세법</div>
+                        <div class="submenu-item" onclick="selectChapter('상속세 및 증여세법', '전체 이론')">상속세 및 증여세법</div>
+                        <div class="submenu-item" onclick="selectChapter('부가가치세법', '전체 이론')">부가가치세법</div>
+                        <div class="submenu-item" onclick="selectChapter('개별소비세법', '전체 이론')">개별소비세법</div>
+                        <div class="submenu-item" onclick="selectChapter('지방세법', '전체 이론')">지방세법</div>
+                        <div class="submenu-item" onclick="selectChapter('조세특례제한법', '전체 이론')">조세특례제한법</div>
+                    </div>
+                    
+                    <!-- 기타 세법 (1차 시험 중심) 메뉴 -->
+                    <div class="menu-item" onclick="selectChapter('기타세법', '전체 이론')">
+                        <div class="menu-item-title">기타세법 (국징, 국조, 조처)</div>
+                    </div>
+
+                    <!-- 전략과목 메뉴 -->
+                    <div class="menu-item" onclick="toggleSubmenu('theory-strategy-main')">
+                        <div class="menu-item-title">전략과목</div>
+                    </div>
+                    <div class="submenu" id="theory-strategy-main-submenu">
+                        <div class="submenu-item" onclick="selectChapter('재정학', '전체 이론')">재정학</div>
+                        <div class="submenu-item" onclick="selectChapter('행정소송법', '전체 이론')">행정소송법</div>
+                    </div>
                 </div>
-                <!-- 02-2-2-1. 회계학 1부 끝 -->
-                
-                <!-- 02-2-2-2. 회계학 2부 시작 -->
-                <div class="menu-item" onclick="selectChapter('회계학2부', '기출문제')">
-                    <div class="menu-item-title"> 회계학 2부 (세무회계)</div>
-                    <div class="menu-item-desc">세무조정, 실무사례</div>
-                </div>
-                <!-- 02-2-2-2. 회계학 2부 끝 -->
-                
-                <!-- 02-2-2-3. 세법학 1부 시작 -->
-                <div class="menu-item" onclick="selectChapter('세법학1부', '기출문제')">
-                    <div class="menu-item-title"> 세법학 1부 (사례형)</div>
-                    <div class="menu-item-desc">국세기본법, 법인세법, 소득세법</div>
-                </div>
-                <!-- 02-2-2-3. 세법학 1부 끝 -->
-                
-                <!-- 02-2-2-4. 세법학 2부 시작 -->
-                <div class="menu-item" onclick="selectChapter('세법학2부', '기출문제')">
-                    <div class="menu-item-title"> 세법학 2부 (법령형)</div>
-                    <div class="menu-item-desc">부가가치세법, 지방세법</div>
-                </div>
-                <!-- 02-2-2-4. 세법학 2부 끝 -->
             </div>
-            <!-- 02-2-2. 2차 시험 메뉴 섹션 끝 -->
+            <!-- ========================================
+                 이론학습 목차 컨테이너 끝
+                 ======================================== -->
+
         </div>
-        <!-- 02-2. 사이드바 네비게이션 메뉴 (목차 구조) 끝 -->
-        
+        <!-- ========================================
+             02-2. 사이드바 네비게이션 메뉴 (목차 구조) 끝
+             ======================================== -->
+
+
         <!-- ========================================
              02. 오버레이 및 사이드바 섹션 끝
              ======================================== -->
         
-        <!-- ========================================
-             03. 상단 네비게이션 섹션 시작
+                <!-- ========================================
+             (통합) 03. 초슬림 한 줄 헤더 섹션 시작
              ======================================== -->
-        <nav class="top-nav">
-            <!-- 03-1. 네비게이션 왼쪽 영역 시작 -->
-            <div class="nav-left">
-                <button class="back-btn" onclick="goBack()">← 뒤로</button>
-                <button class="menu-btn" onclick="toggleSidebar()">☰ 목차</button>
-                <div class="breadcrumb">
-                    <span id="breadcrumb-text">세법 학습 시스템</span>
+        <header class="unified-header">
+            <!-- 03-1. 헤더 왼쪽: 뒤로가기, 현재 위치 -->
+            <div class="header-left">
+                <button class="header-btn back-btn" onclick="goBack()">←</button>
+                <div class="breadcrumb" id="breadcrumb-text">세법 학습 시스템</div>
+            </div>
+
+            <!-- 03-2. 헤더 중앙: 메인 탭 (목차 열기 기능 포함) -->
+            <div class="header-center">
+                <button class="tab-btn active" onclick="switchTab('quiz')">📝 문제풀이</button>
+                <button class="tab-btn" onclick="switchTab('theory')">📚 이론학습</button>
+                <button class="tab-btn" onclick="switchTab('progress')">📊 학습관리</button>
+            </div>
+
+            <!-- 03-3. 헤더 오른쪽: 상세목차, 타이머 -->
+            <div class="header-right">
+                <button class="header-btn" id="floating-toc-btn" style="display: none;" onclick="toggleFloatingTOC()">📖 상세목차</button>
+                <div class="timer-container">
+                    <div class="timer-display" id="timer">00:00:00</div>
+                    <div class="timer-controls">
+                        <button id="start-timer-btn" class="timer-btn start" onclick="startTimer()">▶️</button>
+                        <button id="pause-timer-btn" class="timer-btn pause" onclick="pauseTimer()">⏸️</button>
+                        <button id="reset-timer-btn" class="timer-btn reset" onclick="resetTimer()">🔄</button>
+                    </div>
                 </div>
             </div>
-            <!-- 03-1. 네비게이션 왼쪽 영역 끝 -->
-            
-<!-- 03-2. 네비게이션 오른쪽 영역 시작 -->
-<div class="nav-right">
-    <div class="timer-container">
-        <div class="timer-display" id="timer">00:00:00</div>
-        <div class="timer-controls">
-            <button id="start-timer-btn" class="timer-btn start" onclick="startTimer()">▶️</button>
-            <button id="pause-timer-btn" class="timer-btn pause" onclick="pauseTimer()">⏸️</button>
-            <button id="reset-timer-btn" class="timer-btn reset" onclick="resetTimer()">🔄</button>
-        </div>
-    </div>
-</div>
-<!-- 03-2. 네비게이션 오른쪽 영역 끝 -->
-
-        </nav>
+        </header>
         <!-- ========================================
-             03. 상단 네비게이션 섹션 끝
+             (통합) 03. 초슬림 한 줄 헤더 섹션 끝
              ======================================== -->
 
-        <!-- ========================================
-             04. 탭 네비게이션 섹션 시작
-             ======================================== -->
-        <div class="tab-navigation">
-            <!-- 04-1. 탭 버튼들 시작 -->
-            <button class="tab-btn active" onclick="switchTab('quiz')">📝 문제풀이</button>
-            <button class="tab-btn" onclick="switchTab('theory')">📚 이론학습</button>
-            <button class="tab-btn" onclick="switchTab('progress')">📊 학습관리</button>
-            <!-- 04-1. 탭 버튼들 끝 -->
-        </div>
-        <!-- ========================================
-             04. 탭 네비게이션 섹션 끝
-             ======================================== -->
 
         <!-- ========================================
              05. 메인 콘텐츠 섹션 시작
@@ -2039,16 +2025,19 @@
                 </section>
                 <!-- 05-1-3. 오른쪽: 계산기 영역 끝 -->
             <!-- 05-1. 문제풀이 화면 레이아웃 끝 -->
-        <!-- (신규) 05-2. 이론학습 화면 레이아웃 시작 -->
-            <div class="theory-layout" id="theory-layout">
-                <main class="theory-main-content" id="theoryMainContent">
-                    <div class="loading-spinner" id="theoryLoadingSpinner">
-                        📚 이론 데이터베이스에 접속하는 중...
-                    </div>
-                    <div class="theory-book" id="theoryBook" style="display:none;"></div>
-                </main>
+        <!-- (수정) 05-2. 이론학습 화면 레이아웃 시작 -->
+        <div class="theory-layout" id="theory-layout">
+            <div class="theory-main-content" id="theoryMainContent">
+                <div class="loading-spinner" id="theoryLoadingSpinner" style="display: none;">
+                    <!-- 이 내용은 JS에 의해 동적으로 변경됩니다 -->
+                </div>
+                <div class="theory-book" id="theoryBook">
+                    <!-- 이론 콘텐츠가 여기에 동적으로 채워집니다 -->
+                </div>
             </div>
+        </div>
         <!-- 05-2. 이론학습 화면 레이아웃 끝 -->
+
 
                 <div id="progress-layout" style="display: none; justify-content: center; align-items: center; font-size: 1.2em; color: #6c757d; height: 100%;">
                 📊 학습관리 기능은 준비 중입니다.
@@ -2456,29 +2445,28 @@ function clearCalculationHistory() {
         }
         // 06-10-3. 서브메뉴 토글 (다중 중첩 지원) 끝
 
-// 06-10-4. 과목/단원 선택 처리 함수 (탭 기능 연동)
+/* ===== (수정) 06-10-4. 과목/단원 선택 처리 함수 (사이드바 닫기 추가) ===== */
 async function selectChapter(subject, chapter, isReturning = false) {
+    // 챕터 선택 시, 즉시 사이드바를 닫아 사용자 경험을 개선합니다.
+    closeSidebar(); 
+
     console.log(`🎯 selectChapter 호출됨: ${subject}, ${chapter} (활성탭: ${activeTab})`);
 
-    // 현재 활성화된 탭에 따라 다른 함수를 호출
     if (activeTab === 'quiz') {
         await loadQuizChapter(subject, chapter, isReturning);
     } else if (activeTab === 'theory') {
         await loadTheoryChapter(subject, chapter);
     } else {
-        // 예: '학습관리' 탭 등. 현재는 동작 없음.
         console.log(`${activeTab} 탭에서는 챕터 선택 기능이 정의되지 않았습니다.`);
     }
 }
 
-// (신규) 06-10-4-1. 퀴즈 챕터 로딩 함수 (기존 selectChapter 로직 분리)
+
+// (수정) 06-10-4-1. 퀴즈 챕터 로딩 함수
 async function loadQuizChapter(subject, chapter, isReturning) {
-    // 화면 레이아웃이 없으면 새로 생성 (안정성 강화)
     if (!document.getElementById('quiz-layout')) {
         const mainContent = document.querySelector('.main-content');
-        if (mainContent) {
-            mainContent.innerHTML = getMainContentHTML(); // (수정) 새로운 마스터 템플릿 함수 호출
-        }
+        if (mainContent) { mainContent.innerHTML = getMainContentHTML(); }
     }
     
     const breadcrumb = document.getElementById('breadcrumb-text');
@@ -2490,7 +2478,7 @@ async function loadQuizChapter(subject, chapter, isReturning) {
         return;
     }
 
-    // 경로 표시 로직
+    // 경로 표시 로직 (생략하지 않음)
     let path = ['1차 시험 문제풀이'];
     const subjectToPath = {
         '재무회계': ['회계학개론', '과목별 기출'], '원가관리회계': ['회계학개론', '과목별 기출'], '회계학개론': ['회계학개론'],
@@ -2498,20 +2486,17 @@ async function loadQuizChapter(subject, chapter, isReturning) {
         '국세기본법': ['세법학개론', '세목별 기출'], '국세징수법': ['세법학개론', '세목별 기출'], '조세범처벌법': ['세법학개론', '세목별 기출'],
         '세법학개론': ['세법학개론'], '재정학': ['재정학'], '행정소송법': ['행정소송법'],
     };
-    if (subjectToPath[subject]) {
-        path.push(...subjectToPath[subject]);
-    }
+    if (subjectToPath[subject]) { path.push(...subjectToPath[subject]); }
     path.push(chapter.includes('기출문제') || chapter.includes('AI추천') ? chapter : `단원별 기출 > ${chapter}`);
     breadcrumb.innerHTML = path.map((p, i) => i === path.length - 1 ? `<span class="current">${p.split(' > ').pop()}</span>` : `<span>${p}</span>`).join(' &gt; ');
 
     questionText.textContent = `${subject} ${chapter} 문제를 불러오는 중...`;
     optionsContainer.innerHTML = '';
     
-    if (!isReturning) {
-        resetQuizState();
-    }
-    closeSidebar();
-    switchTab('quiz'); // (추가) 퀴즈 레이아웃을 확실히 보여주기 위해 호출
+    if (!isReturning) { resetQuizState(); }
+    
+    // closeSidebar(); // 이 함수는 상위 함수인 selectChapter에서 이미 호출되므로 중복 제거
+    // switchTab('quiz'); // (핵심 수정) 이 라인을 제거하여 사이드바가 다시 열리는 것을 방지합니다.
 
     try {
         const questions = await loadQuestionsFromBack4App(subject, chapter, subject);
@@ -2519,11 +2504,7 @@ async function loadQuizChapter(subject, chapter, isReturning) {
         if (questions.length > 0) {
             currentQuestionSet = questions;
             currentQuestionIndex = 0;
-            
-            if (!isReturning) {
-                pushToViewHistory({ view: 'quiz', data: { subject, chapter } });
-            }
-
+            if (!isReturning) { pushToViewHistory({ view: 'quiz', data: { subject, chapter } }); }
             setupQuizInterface();
             loadQuestion(questions[0]);
             updateQuestionCounter();
@@ -2536,51 +2517,46 @@ async function loadQuizChapter(subject, chapter, isReturning) {
     }
 }
 
-// (신규) 06-10-4-2. 이론 챕터 로딩 함수
+
+/* ===== (최종 수정) 06-10-4-2. 이론 챕터 로딩 함수 (플로팅 목차 연동) ===== */
 async function loadTheoryChapter(subject, chapter) {
     const breadcrumb = document.getElementById('breadcrumb-text');
     const loadingSpinner = document.getElementById('theoryLoadingSpinner');
     const theoryBook = document.getElementById('theoryBook');
+    const theoryMainContent = document.getElementById('theoryMainContent');
 
-    if (!breadcrumb || !loadingSpinner || !theoryBook) {
-        console.error('❌ 이론학습 필수 DOM 요소를 찾을 수 없습니다.');
-        return;
-    }
-    
-    // 경로 표시 업데이트
-    let path = ['이론학습'];
-    const subjectToPath = {
-        '재무회계': ['회계학개론'], '원가관리회계': ['회계학개론'],
-        '법인세법': ['세법학개론'], '소득세법': ['세법학개론'], '부가가치세법': ['세법학개론'],
-        '국세기본법': ['세법학개론'], '국세징수법': ['세법학개론'], '조세범처벌법': ['세법학개론'],
-        '세법학개론': ['세법학개론'], '재정학': ['재정학'], '행정소송법': ['행정소송법'],
-    };
-     if (subjectToPath[subject]) {
-        path.push(...subjectToPath[subject]);
-    } else {
-        path.push(subject);
-    }
-    path.push(chapter);
-    breadcrumb.innerHTML = path.map((p, i) => i === path.length - 1 ? `<span class="current">${p}</span>` : `<span>${p}</span>`).join(' &gt; ');
+    if (!breadcrumb || !loadingSpinner || !theoryBook || !theoryMainContent) return;
 
-
-    // 로딩 상태 표시
-    loadingSpinner.innerHTML = `📚 ${subject} ${chapter} 이론을 불러오는 중...`;
+    loadingSpinner.innerHTML = `📚 <strong>${subject} &gt; ${chapter}</strong> 이론을 불러오는 중...`;
     loadingSpinner.style.display = 'block';
     theoryBook.style.display = 'none';
-    theoryBook.innerHTML = ''; // 이전 내용 초기화
+    theoryBook.innerHTML = '';
     
-    closeSidebar();
-    
+    // 경로 업데이트 (생략하지 않음)
+    let path = ['이론학습', subject, chapter];
+    breadcrumb.innerHTML = path.map((p, i) => i === path.length - 1 ? `<span class="current">${p}</span>` : `<span>${p}</span>`).join(' &gt; ');
+
     try {
         const theoryContents = await loadTheoryContentFromBack4App(subject, chapter);
+        
         if (theoryContents.length > 0) {
-            renderTheoryBook(theoryContents);
+            renderTheoryBook(theoryContents);      // 1. 책 내용 그리기
+            setupTheoryBookNavigation();      // 2. 책 넘김(스와이프) 기능 설정
+            
+            // 3. (핵심 추가) 플로팅 목차 생성 및 스크롤 스파이 이벤트 연결
+            const theoryPage = document.querySelector('.theory-page');
+            if (theoryPage) {
+                renderFloatingTOC(theoryBook); // 본문 내용 기반으로 목차 생성
+                
+                // 기존 스크롤 이벤트 리스너 제거 후 새로 추가 (중복 방지)
+                theoryPage.removeEventListener('scroll', updateScrollSpy);
+                theoryPage.addEventListener('scroll', updateScrollSpy);
+            }
+            
             loadingSpinner.style.display = 'none';
-            theoryBook.style.display = 'flex'; // flex로 표시
-            setupTheoryBookNavigation(); // 스와이프 기능 활성화
+            theoryBook.style.display = 'flex';
         } else {
-            loadingSpinner.innerHTML = `😥 해당 챕터(${subject} - ${chapter})에 대한 이론 콘텐츠가 아직 준비되지 않았습니다.`;
+            loadingSpinner.innerHTML = `😥 해당 챕터(<strong>${subject} &gt; ${chapter}</strong>)에 대한 이론 콘텐츠가 아직 준비되지 않았습니다.`;
         }
     } catch (error) {
         console.error('❌ 이론 콘텐츠 로딩 실패:', error);
@@ -2588,6 +2564,191 @@ async function loadTheoryChapter(subject, chapter) {
     }
 }
 
+
+// (신규) 06-10-5. 이론 콘텐츠를 '두 페이지 보기'로 렌더링하는 함수
+function renderTheoryBook(contents) {
+    const theoryBook = document.getElementById('theoryBook');
+    if (!theoryBook) return;
+
+    // 1. 데이터를 'pageGroup' 기준으로 그룹화하여 펼친 페이지 단위로 묶습니다.
+    const pagesByGroup = contents.reduce((acc, item) => {
+        const group = item.pageGroup;
+        if (!acc[group]) acc[group] = [];
+        acc[group].push(item.content);
+        return acc;
+    }, {});
+
+    let finalHtml = '';
+    let pageCounter = 1;
+    // 2. 그룹화된 데이터를 기반으로 '펼친 페이지(page-spread)' HTML을 생성합니다.
+    Object.values(pagesByGroup).sort((a,b) => a[0].pageGroup - b[0].pageGroup).forEach(groupContents => {
+        const leftPageContent = groupContents[0] || '';
+        const rightPageContent = groupContents.length > 1 ? groupContents[1] : '';
+
+        finalHtml += `
+            <div class="theory-page-spread">
+                <div class="theory-page theory-left-page">
+                    <div class="theory-content-wrapper">${leftPageContent}</div>
+                    <div class="theory-page-number">${pageCounter++}</div>
+                </div>
+                <div class="theory-page theory-right-page">
+                    <div class="theory-content-wrapper">${rightPageContent}</div>
+                    <div class="theory-page-number">${pageCounter++}</div>
+                </div>
+            </div>
+        `;
+    });
+    
+    // theoryBook의 너비를 페이지 수에 맞게 동적으로 설정합니다.
+    theoryBook.style.width = `${Object.keys(pagesByGroup).length * 100}%`;
+    theoryBook.innerHTML = finalHtml;
+}
+
+// (신규) 06-10-6. 이론 책 넘김(스와이프) 기능 설정 함수
+function setupTheoryBookNavigation() {
+    const book = document.getElementById('theoryBook');
+    const mainContent = document.getElementById('theoryMainContent');
+    if (!book || !mainContent) return;
+
+    const spreads = book.querySelectorAll('.theory-page-spread');
+    if (spreads.length === 0) return;
+
+    let currentPage = 0;
+    let isDragging = false;
+    let startPos = 0;
+    let currentTranslate = 0;
+    let prevTranslate = 0;
+    
+    // spreadWidth를 한 번만 계산하여 성능을 최적화합니다.
+    const spreadWidth = mainContent.clientWidth;
+
+    function setPositionByIndex() {
+        currentTranslate = currentPage * -spreadWidth;
+        prevTranslate = currentTranslate;
+        book.style.transform = `translateX(${currentTranslate}px)`;
+    }
+
+    setPositionByIndex(); // 초기 위치 설정
+
+    // 이벤트 리스너 등록
+    book.addEventListener('mousedown', dragStart);
+    book.addEventListener('touchstart', dragStart, { passive: true });
+    book.addEventListener('mouseup', dragEnd);
+    book.addEventListener('touchend', dragEnd);
+    book.addEventListener('mouseleave', dragEnd);
+    book.addEventListener('mousemove', drag);
+    book.addEventListener('touchmove', drag, { passive: true });
+
+    window.addEventListener('resize', () => {
+        // 창 크기가 변경되면 페이지 너비를 다시 계산하고 위치를 재설정합니다.
+        const newSpreadWidth = mainContent.clientWidth;
+        setPositionByIndex();
+    });
+
+    function getPositionX(event) {
+        return event.type.includes('mouse') ? event.pageX : event.touches[0].clientX;
+    }
+
+    function dragStart(event) {
+        isDragging = true;
+        startPos = getPositionX(event);
+        book.style.transition = 'none'; // 드래그 중에는 부드러운 전환 효과를 끕니다.
+    }
+
+    function drag(event) {
+        if (isDragging) {
+            const currentPosition = getPositionX(event);
+            currentTranslate = prevTranslate + currentPosition - startPos;
+            book.style.transform = `translateX(${currentTranslate}px)`;
+        }
+    }
+
+    function dragEnd(event) {
+        if (!isDragging) return;
+        isDragging = false;
+
+        const movedBy = currentTranslate - prevTranslate;
+
+        // 화면 너비의 1/5 이상을 움직였을 때만 페이지를 넘깁니다.
+        if (movedBy < -spreadWidth / 5 && currentPage < spreads.length - 1) {
+            currentPage++;
+        }
+        if (movedBy > spreadWidth / 5 && currentPage > 0) {
+            currentPage--;
+        }
+
+        book.style.transition = 'transform 0.3s ease-out'; // 전환 효과를 다시 켭니다.
+        setPositionByIndex();
+    }
+}
+
+/* ===== (신규) 06-11. 플로팅 목차(TOC) 관련 함수들 시작 ===== */
+
+// 06-11-1. 오른쪽 플로팅 목차를 열고 닫는 함수
+function toggleFloatingTOC() {
+    const toc = document.getElementById('floating-toc');
+    toc.classList.toggle('open');
+}
+
+// 06-11-2. 이론 본문 내용을 기반으로 플로팅 목차를 동적으로 생성하는 함수
+function renderFloatingTOC(contentContainer) {
+    const tocList = document.getElementById('floating-toc-list');
+    tocList.innerHTML = '';
+    const headings = contentContainer.querySelectorAll('h1, h2, h3');
+
+    if (headings.length === 0) {
+        tocList.innerHTML = '<li>상세 목차가 없습니다.</li>';
+        return;
+    }
+
+    headings.forEach((heading, index) => {
+        const id = `toc-heading-${index}`;
+        heading.id = id; // 본문 제목에 ID 부여
+
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = `#${id}`;
+        a.textContent = heading.textContent;
+        a.dataset.level = heading.tagName.toLowerCase(); // h1, h2, h3 구분을 위해 데이터 속성 추가
+        a.dataset.targetId = id; // 스크롤 스파이에서 사용할 타겟 ID
+
+        a.onclick = (e) => {
+            e.preventDefault();
+            heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            toggleFloatingTOC(); // 목차 항목 클릭 시 자동으로 닫기
+        };
+
+        li.appendChild(a);
+        tocList.appendChild(li);
+    });
+}
+
+// 06-11-3. 본문 스크롤에 따라 플로팅 목차를 하이라이트하는 '스크롤 스파이' 함수
+function updateScrollSpy() {
+    const headings = document.querySelectorAll('.theory-content-wrapper h1, .theory-content-wrapper h2, .theory-content-wrapper h3');
+    const tocLinks = document.querySelectorAll('.floating-toc-list a');
+    let activeId = null;
+
+    // 화면 상단에서 150px 아래 지점을 기준으로 활성 섹션을 찾습니다.
+    const scrollThreshold = 150; 
+
+    for (let i = headings.length - 1; i >= 0; i--) {
+        const heading = headings[i];
+        const rect = heading.getBoundingClientRect();
+        if (rect.top <= scrollThreshold) {
+            activeId = heading.id;
+            break;
+        }
+    }
+
+    tocLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.dataset.targetId === activeId) {
+            link.classList.add('active');
+        }
+    });
+}
+/* ===== (신규) 06-11. 플로팅 목차(TOC) 관련 함수들 끝 ===== */
 
 /* ===== 06-12. 기타 UI 함수들 시작 ===== */
 
@@ -2626,22 +2787,31 @@ function resetQuizState() {
     }
 }
 
-// 06-12-3. 초기 화면으로 돌아가는 함수
+// (수정) 06-12-3. 초기 화면으로 돌아가는 함수
 function goHome() {
     console.log('🏠 초기 화면으로 돌아가기');
     viewHistory = []; 
-    pushToViewHistory({ view: 'home', data: null }); 
-
+    pushToViewHistory({ view: 'home', data: null });
+    
     const mainContent = document.querySelector('.main-content');
-    mainContent.innerHTML = getMainContentHTML(); // (수정) 새로운 마스터 템플릿 함수 호출
+    mainContent.innerHTML = getMainContentHTML(); 
 
     document.getElementById('breadcrumb-text').innerHTML = '세법 학습 시스템';
     
     // 화면을 그린 직후, 관련 기능들을 초기화합니다.
     setupQuizInterface();
     updateHistoryDisplay();
-    switchTab('quiz'); // (추가) 초기 탭을 'quiz'로 설정
+
+    // (핵심 수정) switchTab 대신, 초기 화면 상태를 직접 설정합니다.
+    // 이렇게 하면 사이드바가 열리지 않습니다.
+    activeTab = 'quiz';
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector('.tab-btn[onclick="switchTab(\'quiz\')"]').classList.add('active');
+    document.getElementById('quiz-layout').style.display = 'flex';
+    document.getElementById('theory-layout').style.display = 'none';
+    document.getElementById('progress-layout').style.display = 'none';
 }
+
 
 // 06-12-4. 뒤로가기 기능 구현 (새로운 로직)
 function goBack() {
@@ -2674,50 +2844,130 @@ function goBack() {
     }
 }
 
-// 06-12-5. 탭 전환 함수 (기능 구현)
+/* ===== (최종 수정) 06-12-5. 탭 전환 함수 (화면 복구 기능 추가) ===== */
 function switchTab(tabName) {
-    // 전역 변수에 현재 활성 탭 저장
-    activeTab = tabName;
-    console.log(`📘 ${tabName} 탭으로 전환`);
+    // (핵심 로직) 현재 화면에 퀴즈/이론 레이아웃이 없는지 확인합니다.
+    // 없다면(예: 결과화면), 메인 화면 뼈대부터 다시 그립니다.
+    if (!document.getElementById('quiz-layout')) {
+        console.log('뼈대 없음! 메인 레이아웃을 다시 그립니다.');
+        const mainContent = document.querySelector('.main-content');
+        mainContent.innerHTML = getMainContentHTML();
+        // 뼈대를 다시 그렸으므로, 필요한 기능들을 다시 연결해줍니다.
+        setupQuizInterface();
+        updateHistoryDisplay();
+    }
 
-    // 모든 탭 버튼에서 'active' 클래스 제거
+    activeTab = tabName;
+    console.log(`📘 탭 전환: ${tabName}, 사이드바를 엽니다.`);
+
+    // 1. 모든 탭 버튼의 활성 상태를 초기화하고, 클릭된 탭만 활성화합니다.
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    // 클릭된 탭에 'active' 클래스 추가
     const activeButton = document.querySelector(`.tab-btn[onclick="switchTab('${tabName}')"]`);
     if (activeButton) activeButton.classList.add('active');
 
-    // 모든 메인 레이아웃 숨기기
+    // 2. 모든 메인 레이아웃을 숨깁니다.
     document.getElementById('quiz-layout').style.display = 'none';
     document.getElementById('theory-layout').style.display = 'none';
-    // 나중에 'progress-layout'이 추가될 경우를 대비
-    // document.getElementById('progress-layout').style.display = 'none'; 
-
-    // 요청된 탭에 해당하는 레이아웃 표시
-    const layoutToShow = document.getElementById(`${tabName}-layout`);
-    if (layoutToShow) {
-        layoutToShow.style.display = 'flex';
-    }
+    document.getElementById('progress-layout').style.display = 'none';
     
-    // 이론 탭을 처음 눌렀을 때, 또는 내용이 없을 때 안내 메시지 표시
-    if (tabName === 'theory') {
-        const theoryBook = document.getElementById('theoryBook');
-        const loadingSpinner = document.getElementById('theoryLoadingSpinner');
-        // 책 내용이 비어있으면 안내 메시지 표시
-        if (theoryBook && theoryBook.innerHTML.trim() === '') {
-            if(loadingSpinner) {
-               loadingSpinner.innerHTML = '📚 왼쪽 목차에서 학습할 이론 챕터를 선택해주세요.';
-               loadingSpinner.style.display = 'block';
-            }
-            if(theoryBook) theoryBook.style.display = 'none';
-        }
-    } else if (tabName === 'quiz') {
-        // 퀴즈 탭으로 돌아왔을 때, 만약 퀴즈가 선택되지 않았다면 초기 안내 메시지를 보여주도록 확인
-        const questionText = document.getElementById('question-text');
-        if (questionText && questionText.textContent === '목차에서 원하는 과목과 단원을 선택해주세요.') {
-            // 특별한 동작 없음, 기본 상태 유지
-        }
+    // 3. 오른쪽 상세 목차 버튼('📖 상세목차')의 표시 여부를 결정합니다.
+    const floatingTocBtn = document.getElementById('floating-toc-btn');
+    if (floatingTocBtn) {
+        floatingTocBtn.style.display = (tabName === 'theory') ? 'inline-flex' : 'none';
+    }
+
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const sidebarTitle = document.getElementById('sidebar-title');
+    const quizMenu = document.getElementById('quiz-menu-content');
+    const theoryMenu = document.getElementById('theory-menu-content');
+
+    // 4. 탭 종류에 따라 다른 동작을 수행합니다.
+    if (tabName === 'quiz') {
+        document.getElementById('quiz-layout').style.display = 'flex';
+        sidebarTitle.textContent = '📝 문제풀이 목차';
+        quizMenu.style.display = 'block';
+        theoryMenu.style.display = 'none';
+        sidebar.classList.add('open');
+        overlay.classList.add('show');
+    } else if (tabName === 'theory') {
+        document.getElementById('theory-layout').style.display = 'flex';
+        sidebarTitle.textContent = '📚 통합 이론 학습';
+        quizMenu.style.display = 'none';
+        theoryMenu.style.display = 'block';
+        sidebar.classList.add('open');
+        overlay.classList.add('show');
+    } else if (tabName === 'progress') {
+        document.getElementById('progress-layout').style.display = 'flex';
+        // 학습관리 탭에서는 사이드바를 닫습니다.
+        closeSidebar(); 
     }
 }
+
+
+/* ===== (신규) 06-12-6. 메인 콘텐츠 마스터 템플릿 함수 ===== */
+// 이 함수는 앱의 기본 레이아웃(문제풀이, 이론, 학습관리) HTML을 반환합니다.
+// 결과 화면 등에서 메인 화면으로 돌아올 때 이 템플릿을 사용해 뼈대를 다시 그립니다.
+function getMainContentHTML() {
+    return `
+        <!-- 05-1. 문제풀이 화면 레이아웃 시작 -->
+        <div class="quiz-layout" id="quiz-layout">
+            <div class="main-column">
+                <section class="quiz-section" id="quiz-section">
+                    <canvas class="annotation-canvas" id="annotation-canvas"></canvas>
+                    <div class="quiz-header">
+                        <span id="question-counter">문제 준비중</span>
+                        <span id="quiz-status">대기</span>
+                    </div>
+                    <div class="question-container" id="question-container">
+                        <h3 id="question-text">목차에서 원하는 과목과 단원을 선택해주세요.</h3>
+                        <div class="options-container" id="options-container"></div>
+                    </div>
+                </section>
+                <div class="resizer-vertical" id="vertical-resizer"></div>
+                <section class="workspace-section-new" id="workspace-section">
+                    <div class="workspace-header">
+                        <h3>✏️ 연습장 (문제별 자동저장)</h3>
+                        <button class="draw-btn" onclick="clearAllCanvases()">전체 필기 지우기</button>
+                    </div>
+                    <canvas class="workspace-canvas" id="workspace-canvas"></canvas>
+                </section>
+            </div>
+            <section class="calculator-section">
+                <!-- 계산기 HTML 코드는 길어서 생략합니다. 실제 코드에서는 이 부분이 포함됩니다. -->
+                <div class="calculator-container">
+                    <div class="calc-brand">CASIO JS-40B</div>
+                    <div class="calculator-display" id="calc-display">
+                        <div class="memory-indicator" id="memory-indicator"></div>
+                        <div class="display-value" id="display-value">0</div>
+                    </div>
+                    <div class="calculator-buttons">
+                        <button class="calc-btn memory" onclick="memoryExchange()">M/EX</button><button class="calc-btn function" onclick="percentage()">%</button><button class="calc-btn function" onclick="squareRoot()">√</button><button class="calc-btn function" onclick="backspace()">⌫</button><button class="calc-btn memory" onclick="grandTotal()">GT</button>
+                        <button class="calc-btn memory" onclick="memoryClear()">MC</button><button class="calc-btn memory" onclick="memoryRecall()">MR</button><button class="calc-btn memory" onclick="memorySubtract()">M-</button><button class="calc-btn memory" onclick="memoryAdd()">M+</button><button class="calc-btn operator" onclick="appendToDisplay('/')">÷</button>
+                        <button class="calc-btn function" onclick="changeSign()">+/-</button><button class="calc-btn number" onclick="appendToDisplay('7')">7</button><button class="calc-btn number" onclick="appendToDisplay('8')">8</button><button class="calc-btn number" onclick="appendToDisplay('9')">9</button><button class="calc-btn operator" onclick="appendToDisplay('*')">×</button>
+                        <button class="calc-btn function" onclick="clearEntry()">C</button><button class="calc-btn number" onclick="appendToDisplay('4')">4</button><button class="calc-btn number" onclick="appendToDisplay('5')">5</button><button class="calc-btn number" onclick="appendToDisplay('6')">6</button><button class="calc-btn operator" onclick="appendToDisplay('-')">-</button>
+                        <button class="calc-btn function" onclick="clearAll()">AC</button><button class="calc-btn number" onclick="appendToDisplay('1')">1</button><button class="calc-btn number" onclick="appendToDisplay('2')">2</button><button class="calc-btn number" onclick="appendToDisplay('3')">3</button><button class="calc-btn plus-tall" onclick="appendToDisplay('+')">+</button>
+                        <button class="calc-btn number" onclick="appendToDisplay('0')">0</button><button class="calc-btn number" onclick="appendToDisplay('00')">00</button><button class="calc-btn number" onclick="appendToDisplay('.')">.</button><button class="calc-btn equals" onclick="calculate()">=</button>
+                    </div>
+                    <div class="calculation-history">
+                        <div class="history-title">계산기록 <button class="clear-history-btn" onclick="clearCalculationHistory()">지우기</button></div>
+                        <div class="history-values" id="historyValues"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <!-- 이론학습 화면 레이아웃 -->
+        <div class="theory-layout" id="theory-layout">
+            <div class="theory-main-content" id="theoryMainContent">
+                <div class="loading-spinner" id="theoryLoadingSpinner" style="display: none;"></div>
+                <div class="theory-book" id="theoryBook"></div>
+            </div>
+        </div>
+        <!-- 학습관리 화면 레이아웃 -->
+        <div id="progress-layout" style="display: none; justify-content: center; align-items: center; height: 100%;">📊 학습관리 기능은 준비 중입니다.</div>
+    `;
+}
+
 
 /* ===== 06-12. 기타 UI 함수들 끝 ===== */
 
@@ -3749,5 +3999,92 @@ function setupTheoryBookNavigation() {
 }
 
     </script>
+    <!-- 1. Back4App 연동 및 콘텐츠 표시를 위한 메인 스크립트 -->
+<script src="https://unpkg.com/parse@4.0.1/dist/parse.min.js"></script>
+<script>
+    // 2. Back4App 초기화
+    // 'YOUR_APP_ID'와 'YOUR_JAVASCRIPT_KEY'는 Back4App 대시보드의 'App Keys'에서 확인하여 실제 값으로 교체해주세요.
+    Parse.initialize("sRKpx71t2JwbatmvWe2SZi67cShfsk72HhyR1vqb", "fG2HXOiMWSlHuSmeOINADUyNU8rPxX5lku389GJV");
+    Parse.serverURL = "https://parseapi.back4app.com/";
+
+    /* 3. 이론 콘텐츠 조회 및 렌더링 함수 */
+    async function fetchAndDisplayTheory(subject, chapter) {
+        const contentContainer = document.getElementById('content-container');
+        const loadingMessage = document.getElementById('loading-message');
+
+        // 3-1. 로딩 메시지 표시 및 기존 콘텐츠 초기화
+        loadingMessage.style.display = 'block'; // 로딩 메시지를 다시 보이게 합니다.
+        loadingMessage.textContent = `📚 '${chapter}' 이론 데이터를 불러오는 중...`;
+        contentContainer.innerHTML = '';
+
+        const TheoryContent = Parse.Object.extend("TheoryContent");
+        const query = new Parse.Query(TheoryContent);
+
+        // 3-2. 조회 조건 설정
+        query.equalTo("subject", subject);
+        query.equalTo("chapter", chapter);
+        query.equalTo("isActive", true);
+        query.ascending("pageGroup", "order");
+
+        try {
+            const results = await query.find();
+
+            if (results.length === 0) {
+                loadingMessage.textContent = '😅 해당 챕터의 학습 데이터가 아직 준비되지 않았습니다.';
+                return;
+            }
+
+            // 3-3. 'pageGroup' 기준으로 데이터 그룹화
+            const pagesByGroup = results.reduce((acc, item) => {
+                const group = item.get('pageGroup');
+                const content = item.get('content'); // HTML 콘텐츠
+                if (!acc[group]) acc[group] = [];
+                acc[group].push(content);
+                return acc;
+            }, {});
+
+            // 3-4. '두 페이지 보기' HTML 생성
+            let finalHtml = '';
+            for (const group in pagesByGroup) {
+                const contents = pagesByGroup[group];
+                // 기획서에 따라 h1, h2, h3 태그에 형광펜 효과 스타일을 적용합니다.
+                const styledLeftContent = contents[0] ? contents[0].replace(/<h1>/g, '<h1 style="background-color: #dad4ff;">').replace(/<h2>/g, '<h2 style="background-color: #b7e5ff;">').replace(/<h3>/g, '<h3 style="background-color: #D6E8DB;">') : '';
+                const styledRightContent = contents[1] ? contents[1].replace(/<h1>/g, '<h1 style="background-color: #dad4ff;">').replace(/<h2>/g, '<h2 style="background-color: #b7e5ff;">').replace(/<h3>/g, '<h3 style="background-color: #D6E8DB;">') : '';
+
+                finalHtml += `
+                    <div class="page-spread">
+                        <div class="page left">${styledLeftContent}</div>
+                        <div class="page right">${styledRightContent}</div>
+                    </div>
+                `;
+            }
+            
+            contentContainer.innerHTML = finalHtml;
+            loadingMessage.style.display = 'none';
+
+        } catch (error) {
+            console.error("데이터 조회 중 오류 발생:", error);
+            loadingMessage.textContent = '🚫 데이터를 불러오는 데 실패했습니다. 콘솔(F12)을 확인해주세요.';
+        }
+    }
+
+    /* 4. 모든 목차 링크(a 태그)에 클릭 이벤트 추가 */
+    document.querySelectorAll('.sidebar-content a').forEach(link => {
+        link.addEventListener('click', (event) => {
+            event.preventDefault(); // 기본 링크 이동 방지
+
+            // 4-1. 클릭된 챕터와 상위 과목 정보 가져오기
+            const chapterText = event.target.textContent;
+            const parentUl = event.target.closest('ul');
+            const subjectH3 = parentUl ? parentUl.previousElementSibling : null;
+            // '▼' 문자를 제거하고 앞뒤 공백을 정리합니다.
+            const subjectText = subjectH3 && subjectH3.tagName === 'H3' ? subjectH3.textContent.replace('▼', '').trim() : '알 수 없는 과목';
+
+            // 4-2. 데이터 조회 함수 호출
+            fetchAndDisplayTheory(subjectText, chapterText);
+        });
+    });
+</script>
+
 </body>
 </html>
