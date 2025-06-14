@@ -17,9 +17,7 @@
 @font-face {
     font-family: 'digital-7-mono-italic'; 
     /* 01-1-1. 저장소 루트에 있는 폰트 파일을 직접 불러오는 방식 */
-    src: url('digital-7-mono-italic.woff2') format('woff2'),
-         url('digital-7-mono-italic.woff') format('woff'),
-         url('digital-7-mono-italic.ttf') format('truetype');
+    src: url('digital-7-mono-italic.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
@@ -2052,6 +2050,10 @@
             </div>
         <!-- 05-2. 이론학습 화면 레이아웃 끝 -->
 
+                <div id="progress-layout" style="display: none; justify-content: center; align-items: center; font-size: 1.2em; color: #6c757d; height: 100%;">
+                📊 학습관리 기능은 준비 중입니다.
+            </div>
+
         </main>
         <!-- ========================================
              05. 메인 콘텐츠 섹션 끝
@@ -2471,11 +2473,11 @@ async function selectChapter(subject, chapter, isReturning = false) {
 
 // (신규) 06-10-4-1. 퀴즈 챕터 로딩 함수 (기존 selectChapter 로직 분리)
 async function loadQuizChapter(subject, chapter, isReturning) {
-    // 화면 레이아웃이 없으면 새로 생성
+    // 화면 레이아웃이 없으면 새로 생성 (안정성 강화)
     if (!document.getElementById('quiz-layout')) {
         const mainContent = document.querySelector('.main-content');
         if (mainContent) {
-            mainContent.innerHTML = getQuizLayoutHTML(); // 표준 함수 사용
+            mainContent.innerHTML = getMainContentHTML(); // (수정) 새로운 마스터 템플릿 함수 호출
         }
     }
     
@@ -2505,10 +2507,11 @@ async function loadQuizChapter(subject, chapter, isReturning) {
     questionText.textContent = `${subject} ${chapter} 문제를 불러오는 중...`;
     optionsContainer.innerHTML = '';
     
-    if (!isReturning) { // 뒤로가기로 돌아온 게 아닐 때만 초기화
+    if (!isReturning) {
         resetQuizState();
     }
     closeSidebar();
+    switchTab('quiz'); // (추가) 퀴즈 레이아웃을 확실히 보여주기 위해 호출
 
     try {
         const questions = await loadQuestionsFromBack4App(subject, chapter, subject);
@@ -2521,9 +2524,7 @@ async function loadQuizChapter(subject, chapter, isReturning) {
                 pushToViewHistory({ view: 'quiz', data: { subject, chapter } });
             }
 
-            // UI 기능 초기화 (캔버스, 리사이저 등)
-            setupQuizInterface(); 
-
+            setupQuizInterface();
             loadQuestion(questions[0]);
             updateQuestionCounter();
         } else {
@@ -2587,239 +2588,6 @@ async function loadTheoryChapter(subject, chapter) {
     }
 }
 
-// 06-10-5. 문제 로딩 및 표시 함수 - 세법학개론 선택지 표시 개선
-function loadQuestion(questionData) {
-    console.log('🎯 loadQuestion 호출됨:', questionData);
-    
-    if (!questionData) {
-        console.error('❌ questionData가 없습니다.');
-        return;
-    }
-    
-    // 🔥 DOM 요소 확인
-    const questionText = document.getElementById('question-text');
-    const optionsContainer = document.getElementById('options-container');
-    
-    if (!questionText || !optionsContainer) {
-        console.error('❌ 필수 DOM 요소를 찾을 수 없습니다.');
-        return;
-    }
-    
-    // 🔥 문제 헤더 정보 표시
-    const questionHeader = `
-        <div class="question-header">
-            <span class="question-meta">${questionData.subject || '세법학개론'} | ${questionData.year || ''}년 | ${questionData.examType || '1차시험'} | 문제 ${questionData.questionNumber || currentQuestionIndex + 1}번</span>
-        </div>
-    `;
-    
-    // 🔥 문제 텍스트 표시
-    questionText.innerHTML = questionHeader + `<div class="question-content">${questionData.questionText || '문제를 불러올 수 없습니다.'}</div>`;
-    
-    // 🔥 기존 선택지 초기화
-    optionsContainer.innerHTML = '';
-    
-    // 🔥 선택지 데이터 처리 개선 - 여러 형태 지원
-    let options = [];
-    
-    // 방법 1: options 배열이 있는 경우
-    if (questionData.options && Array.isArray(questionData.options)) {
-        options = questionData.options;
-        console.log('📝 options 배열 사용:', options);
-    } 
-    // 방법 2: 개별 option 필드가 있는 경우
-    else {
-        options = [
-            questionData.option1,
-            questionData.option2,
-            questionData.option3,
-            questionData.option4,
-            questionData.option5
-        ].filter(option => option && option.trim() !== ''); // 빈 선택지 제거
-        console.log('📝 개별 option 필드 사용:', options);
-    }
-    
-    console.log(`📊 총 ${options.length}개 선택지 발견`);
-    
-    // 🔥 선택지가 없는 경우 경고
-    if (options.length === 0) {
-        console.warn('⚠️ 선택지가 없습니다!');
-        optionsContainer.innerHTML = '<div style="color: red; padding: 20px;">이 문제에는 선택지가 없습니다. 데이터를 확인해주세요.</div>';
-        return;
-    }
-    
-    // 🔥 선택지 생성 및 표시
-    options.forEach((option, index) => {
-        if (option && option.trim() !== '') {
-            const optionElement = document.createElement('div');
-            optionElement.className = 'option-item';
-            optionElement.onclick = () => selectOption(index + 1);
-            
-            // 이전 선택 상태 복원
-            const isSelected = selectedAnswers[currentQuestionIndex] === (index + 1);
-            if (isSelected) {
-                optionElement.classList.add('selected');
-            }
-            
-            optionElement.innerHTML = `
-                <span class="option-number">${index + 1}</span>
-                <span class="option-text">${option}</span>
-            `;
-            
-            optionsContainer.appendChild(optionElement);
-            console.log(`✅ 선택지 ${index + 1} 생성 완료: ${option.substring(0, 50)}...`);
-        }
-    });
-    
-    // 🔥 네비게이션 버튼 추가
-    const navigationDiv = document.createElement('div');
-    navigationDiv.className = 'question-navigation';
-    navigationDiv.innerHTML = `
-        <button class="nav-btn" onclick="previousQuestion()" ${currentQuestionIndex === 0 ? 'disabled' : ''}>← 이전문제</button>
-        <button class="nav-btn" onclick="submitAnswer()" id="submit-btn">정답 확인</button>
-        <button class="nav-btn" onclick="nextQuestion()" id="next-btn" style="display: none;">다음 문제</button>
-        <button class="nav-btn finish-btn" onclick="finishQuiz()">풀이완료</button>
-    `;
-    optionsContainer.appendChild(navigationDiv);
-    
-    // 🔥 전역 변수 업데이트
-    currentQuestionData = questionData;
-    showingResults = false;
-    
-    // 🔥 타이머 자동 시작 (첫 번째 문제일 때만)
-    if (currentQuestionIndex === 0 && !showingResults) {
-        autoStartTimer();
-    }
-    
-    console.log('🎉 문제 로딩 완료!');
-}
-
-
-// 06-10-6. 선택지 선택 처리 함수
-function selectOption(optionNumber) {
-    console.log(`🎯 선택지 ${optionNumber} 선택됨`);
-    
-    // 🔥 기존 선택 해제
-    const allOptions = document.querySelectorAll('.option-item');
-    allOptions.forEach(option => {
-        option.classList.remove('selected');
-    });
-    
-    // 🔥 현재 선택 표시
-    const selectedOption = allOptions[optionNumber - 1];
-    if (selectedOption) {
-        selectedOption.classList.add('selected');
-    }
-    
-    // 🔥 선택 저장
-    selectedAnswers[currentQuestionIndex] = optionNumber;
-    
-    console.log(`✅ 선택지 ${optionNumber} 저장 완료`);
-}
-
-// 06-10-7. 정답 확인 함수
-function submitAnswer() {
-    console.log('🎯 정답 확인 시작');
-    
-    const selectedAnswer = selectedAnswers[currentQuestionIndex];
-    
-    if (!selectedAnswer) {
-        alert('선택지를 선택해주세요.');
-        return;
-    }
-    
-    const correctAnswer = currentQuestionData.correctAnswer;
-    const isCorrect = selectedAnswer === correctAnswer;
-    
-    // 🔥 사용자 답안 저장
-    userAnswers[currentQuestionIndex] = {
-        selected: selectedAnswer,
-        correct: correctAnswer,
-        isCorrect: isCorrect,
-        questionData: currentQuestionData
-    };
-    
-    // 🔥 해설 표시
-    showExplanation(selectedAnswer, correctAnswer);
-    
-    // 🔥 버튼 상태 변경
-    document.getElementById('submit-btn').style.display = 'none';
-    document.getElementById('next-btn').style.display = 'inline-block';
-    
-    showingResults = true;
-    
-    console.log(`✅ 정답 확인 완료: 선택 ${selectedAnswer}, 정답 ${correctAnswer}, ${isCorrect ? '정답' : '오답'}`);
-}
-
-// 06-10-8. 해설 표시 함수
-function showExplanation(selectedAnswer, correctAnswer) {
-    console.log('🎯 해설 표시 시작');
-    
-    const optionsContainer = document.getElementById('options-container');
-    const allOptions = document.querySelectorAll('.option-item');
-    
-    // 🔥 각 선택지에 해설 추가
-    allOptions.forEach((option, index) => {
-        const optionNumber = index + 1;
-        const explanationKey = `explanation${optionNumber}`;
-        const explanation = currentQuestionData[explanationKey];
-        
-        if (explanation && explanation.trim() !== '') {
-            const explanationDiv = document.createElement('div');
-            explanationDiv.className = 'explanation-item';
-            
-            // 🔥 정답/오답 스타일 적용
-            if (optionNumber === correctAnswer) {
-                explanationDiv.classList.add('correct');
-            } else {
-                explanationDiv.classList.add('incorrect');
-            }
-            
-            // 🔥 사용자 선택 표시
-            if (optionNumber === selectedAnswer) {
-                explanationDiv.classList.add('user-choice');
-            }
-            
-            explanationDiv.innerHTML = `
-                <div class="option-header">
-                    <span class="option-number">${optionNumber}</span>
-                    <span class="option-status">
-                        ${optionNumber === correctAnswer ? '✅ 정답' : '❌ 오답'}
-                        ${optionNumber === selectedAnswer ? ' (선택함)' : ''}
-                    </span>
-                </div>
-                <div class="explanation-text">${explanation}</div>
-            `;
-            
-            option.appendChild(explanationDiv);
-        }
-    });
-    
-    console.log('✅ 해설 표시 완료');
-}
-
-// 06-10-9. 다음 문제 함수
-function nextQuestion() {
-    console.log('🎯 다음 문제로 이동');
-    
-    if (currentQuestionIndex < currentQuestionSet.length - 1) {
-        currentQuestionIndex++;
-        loadQuestion(currentQuestionSet[currentQuestionIndex]);
-        updateQuestionCounter();
-    } else {
-        // 🔥 모든 문제 완료
-        showQuizResults();
-    }
-}
-
-// 06-10-10. 문제 카운터 업데이트 함수
-function updateQuestionCounter() {
-    const questionCounter = document.getElementById('question-counter');
-    if (questionCounter && currentQuestionSet && currentQuestionSet.length > 0) {
-        questionCounter.textContent = `문제 ${currentQuestionIndex + 1} / ${currentQuestionSet.length}`;
-    }
-}
-
-        /* ===== 06-10. 사이드바 관련 함수들 (다중 중첩 메뉴 지원) 끝 ===== */
 
 /* ===== 06-12. 기타 UI 함수들 시작 ===== */
 
@@ -2865,13 +2633,14 @@ function goHome() {
     pushToViewHistory({ view: 'home', data: null }); 
 
     const mainContent = document.querySelector('.main-content');
-    mainContent.innerHTML = getQuizLayoutHTML(); // 새로운 표준 함수로 화면 구성
+    mainContent.innerHTML = getMainContentHTML(); // (수정) 새로운 마스터 템플릿 함수 호출
 
     document.getElementById('breadcrumb-text').innerHTML = '세법 학습 시스템';
     
     // 화면을 그린 직후, 관련 기능들을 초기화합니다.
     setupQuizInterface();
     updateHistoryDisplay();
+    switchTab('quiz'); // (추가) 초기 탭을 'quiz'로 설정
 }
 
 // 06-12-4. 뒤로가기 기능 구현 (새로운 로직)
@@ -3790,83 +3559,62 @@ function initializeVerticalResizer() {
 
 /* ===== 06-21. UI 템플릿 함수 시작 ===== */
 
-// 06-21-1. 퀴즈 화면 레이아웃 HTML 생성 함수
-function getQuizLayoutHTML() {
+// 06-21-1. 메인 콘텐츠 전체 레이아웃 HTML 생성 함수 (수정)
+function getMainContentHTML() {
+    // 퀴즈, 이론, 학습관리 레이아웃을 모두 포함하는 전체 HTML 구조를 반환합니다.
     return `
-    <div class="quiz-layout" id="quiz-layout">
-        <div class="main-column">
-            <section class="quiz-section" id="quiz-section">
-                <canvas class="annotation-canvas" id="annotation-canvas"></canvas>
-                <div class="quiz-header">
-                    <span id="question-counter">문제 준비중</span><span id="quiz-status">대기</span>
-                </div>
-                <div class="question-container" id="question-container">
-                    <h3 id="question-text">목차에서 원하는 과목과 단원을 선택해주세요.</h3>
-                    <div class="options-container" id="options-container"></div>
-                </div>
-            </section>
-            <div class="resizer-vertical" id="vertical-resizer"></div>
-            <section class="workspace-section-new" id="workspace-section">
-                <div class="workspace-header">
-                    <h3>✏️ 연습장</h3>
-                    <div>
-                        <button class="draw-btn" id="eraser-btn" onclick="toggleEraserMode()">지우개</button>
-                        <button class="draw-btn" onclick="clearAllCanvases()">전체 지우기</button>
+        <div class="quiz-layout" id="quiz-layout">
+            <div class="main-column">
+                <section class="quiz-section" id="quiz-section">
+                    <canvas class="annotation-canvas" id="annotation-canvas"></canvas>
+                    <div class="quiz-header">
+                        <span id="question-counter">문제 준비중</span><span id="quiz-status">대기</span>
                     </div>
+                    <div class="question-container" id="question-container">
+                        <h3 id="question-text">목차에서 원하는 과목과 단원을 선택해주세요.</h3>
+                        <div class="options-container" id="options-container"></div>
+                    </div>
+                </section>
+                <div class="resizer-vertical" id="vertical-resizer"></div>
+                <section class="workspace-section-new" id="workspace-section">
+                    <div class="workspace-header">
+                        <h3>✏️ 연습장</h3>
+                        <div>
+                            <button class="draw-btn" id="eraser-btn" onclick="toggleEraserMode()">지우개</button>
+                            <button class="draw-btn" onclick="clearAllCanvases()">전체 지우기</button>
+                        </div>
+                    </div>
+                    <canvas class="workspace-canvas" id="workspace-canvas"></canvas>
+                </section>
+            </div>
+            <section class="calculator-section">
+                <div class="calculator-container">
+                    <div class="calc-brand">CASIO JS-40B</div>
+                    <div class="calculator-display" id="calc-display">
+                        <div class="memory-indicator" id="memory-indicator"></div>
+                        <div class="display-value" id="display-value">0</div>
+                    </div>
+                    <div class="calculator-buttons">
+                        <button class="calc-btn memory" onclick="memoryExchange()">M/EX</button><button class="calc-btn function" onclick="percentage()">%</button><button class="calc-btn function" onclick="squareRoot()">√</button><button class="calc-btn function" onclick="backspace()">⌫</button><button class="calc-btn memory" onclick="grandTotal()">GT</button><button class="calc-btn memory" onclick="memoryClear()">MC</button><button class="calc-btn memory" onclick="memoryRecall()">MR</button><button class="calc-btn memory" onclick="memorySubtract()">M-</button><button class="calc-btn memory" onclick="memoryAdd()">M+</button><button class="calc-btn operator" onclick="appendToDisplay('/')">÷</button><button class="calc-btn function" onclick="changeSign()">+/-</button><button class="calc-btn number" onclick="appendToDisplay('7')">7</button><button class="calc-btn number" onclick="appendToDisplay('8')">8</button><button class="calc-btn number" onclick="appendToDisplay('9')">9</button><button class="calc-btn operator" onclick="appendToDisplay('*')">×</button><button class="calc-btn function" onclick="clearEntry()">C</button><button class="calc-btn number" onclick="appendToDisplay('4')">4</button><button class="calc-btn number" onclick="appendToDisplay('5')">5</button><button class="calc-btn number" onclick="appendToDisplay('6')">6</button><button class="calc-btn operator" onclick="appendToDisplay('-')">-</button><button class="calc-btn function" onclick="clearAll()">AC</button><button class="calc-btn number" onclick="appendToDisplay('1')">1</button><button class="calc-btn number" onclick="appendToDisplay('2')">2</button><button class="calc-btn number" onclick="appendToDisplay('3')">3</button><button class="calc-btn plus-tall" onclick="appendToDisplay('+')">+</button><button class="calc-btn number" onclick="appendToDisplay('0')">0</button><button class="calc-btn number" onclick="appendToDisplay('00')">00</button><button class="calc-btn number" onclick="appendToDisplay('.')">.</button><button class="calc-btn equals" onclick="calculate()">=</button>
+                    </div>
+                    <div class="calculation-history"><div class="history-title">계산기록<button class="clear-history-btn" onclick="clearCalculationHistory()">지우기</button></div><div class="history-values" id="historyValues"></div></div>
                 </div>
-                <canvas class="workspace-canvas" id="workspace-canvas"></canvas>
             </section>
         </div>
-        <section class="calculator-section">
-            <div class="calculator-container">
-                <div class="calc-brand">CASIO JS-40B</div>
-                <div class="calculator-display" id="calc-display">
-                    <div class="memory-indicator" id="memory-indicator"></div>
-                    <div class="display-value" id="display-value">0</div>
-                </div>
-                <div class="calculator-buttons">
-                    <button class="calc-btn memory" onclick="memoryExchange()">M/EX</button>
-                    <button class="calc-btn function" onclick="percentage()">%</button>
-                    <button class="calc-btn function" onclick="squareRoot()">√</button>
-                    <button class="calc-btn function" onclick="backspace()">⌫</button>
-                    <button class="calc-btn memory" onclick="grandTotal()">GT</button>
-                    <button class="calc-btn memory" onclick="memoryClear()">MC</button>
-                    <button class="calc-btn memory" onclick="memoryRecall()">MR</button>
-                    <button class="calc-btn memory" onclick="memorySubtract()">M-</button>
-                    <button class="calc-btn memory" onclick="memoryAdd()">M+</button>
-                    <button class="calc-btn operator" onclick="appendToDisplay('/')">÷</button>
-                    <button class="calc-btn function" onclick="changeSign()">+/-</button>
-                    <button class="calc-btn number" onclick="appendToDisplay('7')">7</button>
-                    <button class="calc-btn number" onclick="appendToDisplay('8')">8</button>
-                    <button class="calc-btn number" onclick="appendToDisplay('9')">9</button>
-                    <button class="calc-btn operator" onclick="appendToDisplay('*')">×</button>
-                    <button class="calc-btn function" onclick="clearEntry()">C</button>
-                    <button class="calc-btn number" onclick="appendToDisplay('4')">4</button>
-                    <button class="calc-btn number" onclick="appendToDisplay('5')">5</button>
-                    <button class="calc-btn number" onclick="appendToDisplay('6')">6</button>
-                    <button class="calc-btn operator" onclick="appendToDisplay('-')">-</button>
-                    <button class="calc-btn function" onclick="clearAll()">AC</button>
-                    <button class="calc-btn number" onclick="appendToDisplay('1')">1</button>
-                    <button class="calc-btn number" onclick="appendToDisplay('2')">2</button>
-                    <button class="calc-btn number" onclick="appendToDisplay('3')">3</button>
-                    <button class="calc-btn plus-tall" onclick="appendToDisplay('+')">+</button>
-                    <button class="calc-btn number" onclick="appendToDisplay('0')">0</button>
-                    <button class="calc-btn number" onclick="appendToDisplay('00')">00</button>
-                    <button class="calc-btn number" onclick="appendToDisplay('.')">.</button>
-                    <button class="calc-btn equals" onclick="calculate()">=</button>
-                </div>
-                <div class="calculation-history">
-                    <div class="history-title">
-                        계산기록
-                        <button class="clear-history-btn" onclick="clearCalculationHistory()">지우기</button>
-                    </div>
-                    <div class="history-values" id="historyValues"></div>
-                </div>
-            </div>
-        </section>
-    </div>
+
+        <div class="theory-layout" id="theory-layout">
+            <main class="theory-main-content" id="theoryMainContent">
+                <div id="theoryLoadingSpinner">📚 이론 데이터베이스에 접속하는 중...</div>
+                <div class="theory-book" id="theoryBook" style="display:none;"></div>
+            </main>
+        </div>
+
+        <div id="progress-layout" style="display: none; justify-content: center; align-items: center; font-size: 1.2em; color: #6c757d; height: 100%;">
+            📊 학습관리 기능은 준비 중입니다.
+        </div>
     `;
 }
+
 /* ===== 06-21. UI 템플릿 함수 끝 ===== */
 
 // (신규) 06-22. 이론 콘텐츠를 책 형태로 렌더링하는 함수
