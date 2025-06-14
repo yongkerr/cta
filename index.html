@@ -262,14 +262,14 @@
 
 /* 스크롤바 웹킷 브라우저(크롬, 사파리 등)용 스타일 */
 .quiz-section::-webkit-scrollbar {
-    width: 15px; /* 스크롤바 너비 */
+    width: 150px; /* 스크롤바 너비 */
 }
 .quiz-section::-webkit-scrollbar-track {
     background: #f1f3f4; /* 트랙 배경색 */
     border-radius: 10px;
 }
 .quiz-section::-webkit-scrollbar-thumb {
-    background: #ced4da; /* 스크롤바 색상 */
+    background: #83a4c4; /* 스크롤바 색상 */
     border-radius: 10px;
     border: 3px solid #f1f3f4;
 }
@@ -2873,14 +2873,20 @@ function loadQuestion(questionData) {
     
     // 선택지 표시
     optionsContainer.innerHTML = '';
-    questionData.options.forEach((option, index) => {
+    let options = questionData.options || [questionData.option1, questionData.option2, questionData.option3, questionData.option4, questionData.option5].filter(Boolean);
+
+    options.forEach((option, index) => {
         const optionDiv = document.createElement('div');
         optionDiv.className = 'option-item';
+        
+        // [오류 수정] 'question' -> 'questionData'로 변수명을 올바르게 수정하여 클릭 이벤트를 복구합니다.
         optionDiv.onclick = () => selectOption(questionData.questionId, index + 1);
         
+        // [오류 수정] 'question' -> 'questionData'로 변수명을 올바르게 수정하여 이전에 선택한 답을 정확히 표시합니다.
         if (selectedAnswers[questionData.questionId] === (index + 1)) {
             optionDiv.classList.add('selected');
         }
+
         optionDiv.innerHTML = `<span class="option-number">${index + 1}</span><span class="option-text">${option}</span>`;
         optionsContainer.appendChild(optionDiv);
     });
@@ -2894,11 +2900,14 @@ function loadQuestion(questionData) {
         <button class="nav-btn finish-btn" onclick="finishQuiz()">풀이완료</button>`;
     optionsContainer.appendChild(navDiv);
 
+    // 문제에 맞는 필기 상태를 불러옵니다.
+    loadWorkspaceState(currentQuestionIndex);
+    loadAnnotationState(currentQuestionIndex);
+
     if (currentQuestionIndex === 0 && !quizCompleted) {
         autoStartTimer();
     }
 }
-
 
 // 06-15-2. 선택지 선택 처리 함수
 function selectOption(questionId, optionNumber) {
@@ -3242,16 +3251,27 @@ function initializeCanvases() {
             const container = entry.target;
             const canvas = container.querySelector('canvas');
             if (canvas) {
-                // 캔버스의 그리기 해상도를 컨테이너의 실제 크기와 일치시킵니다. (영점 문제 해결)
-                canvas.width = container.clientWidth;
-                canvas.height = container.clientHeight;
-                console.log(`${canvas.id}가 자동으로 리사이즈됨: ${canvas.width}x${canvas.height}`);
+                let newWidth = container.clientWidth;
+                const newHeight = container.clientHeight;
 
-                // 크기가 재조정된 후에는 저장된 필기 내용을 다시 그려줍니다.
+                // [핵심 수정] 주석 캔버스(annotation-canvas)인 경우, 스크롤바와 겹치지 않도록 너비를 17px 강제로 줄입니다.
+                // 이렇게 하면 스크롤바를 위한 공간이 확실하게 확보됩니다.
                 if (canvas.id === 'annotation-canvas') {
-                    loadAnnotationState(currentQuestionIndex);
-                } else if (canvas.id === 'workspace-canvas') {
-                    loadWorkspaceState(currentQuestionIndex);
+                    newWidth -= 35;
+                }
+
+                // 크기가 실제로 변경되었을 때만 캔버스 해상도를 재설정하여 불필요한 다시 그리기를 방지합니다.
+                if ((canvas.width !== newWidth || canvas.height !== newHeight) && newWidth > 0 && newHeight > 0) {
+                    canvas.width = newWidth;
+                    canvas.height = newHeight;
+                    console.log(`${canvas.id}가 리사이즈됨: ${canvas.width}x${canvas.height}`);
+
+                    // 크기가 재조정된 후에는 저장된 필기 내용을 다시 그려줍니다.
+                    if (canvas.id === 'annotation-canvas') {
+                        loadAnnotationState(currentQuestionIndex);
+                    } else if (canvas.id === 'workspace-canvas') {
+                        loadWorkspaceState(currentQuestionIndex);
+                    }
                 }
             }
         }
@@ -3261,23 +3281,20 @@ function initializeCanvases() {
     canvasResizeObserver.observe(quizSection);
     canvasResizeObserver.observe(workspaceSection);
 
-    // 각 캔버스에 이벤트 리스너를 설정합니다. (휠, 터치/클릭 등)
+    // 각 캔버스에 이벤트 리스너를 설정합니다. (기존과 동일)
     [annotationCanvas, workspaceCanvas].forEach(canvas => {
         if (canvas) {
-            // (휠 스크롤 해결) 휠 이벤트는 기본 스크롤 동작을 허용합니다.
             canvas.addEventListener('wheel', e => {}, { passive: true });
-            
-            // 포인터(터치/마우스) 이벤트 리스너를 설정합니다.
             canvas.removeEventListener('pointerdown', handlePointerDown);
             canvas.addEventListener('pointerdown', handlePointerDown);
         }
     });
 
-    // 전역 컨텍스트 변수를 할당합니다.
+    // 전역 컨텍스트 변수를 할당합니다. (기존과 동일)
     annotationCtx = annotationCanvas.getContext('2d');
     workspaceCtx = workspaceCanvas.getContext('2d');
     
-    // 문서 전체에 대한 이벤트 리스너를 설정합니다.
+    // 문서 전체에 대한 이벤트 리스너를 설정합니다. (기존과 동일)
     document.removeEventListener('pointermove', handlePointerMove);
     document.addEventListener('pointermove', handlePointerMove);
     document.removeEventListener('pointerup', handlePointerUp);
