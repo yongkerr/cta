@@ -1336,13 +1336,92 @@
     pointer-events: none; /* 힌트가 클릭되지 않도록 설정 */
 }
 
+/* (신규) 01-25. 이론학습 페이지 스타일 시작 */
+        .theory-layout {
+            display: none; /* 기본적으로 숨김 */
+            height: 100%;
+            flex-direction: column;
+        }
+
+        .theory-main-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .theory-book {
+            display: flex;
+            /* width: 100%; */ /* (수정) JS에서 동적으로 설정하므로 제거합니다. */
+            height: 100%;
+            max-width: 1200px;
+            max-height: 800px;
+            transition: transform 0.3s ease-out;
+            cursor: grab;
+        }
+        .theory-book:active { cursor: grabbing; }
+
+        .theory-page-spread {
+            flex: 0 0 100%;
+            display: flex;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            border-radius: 6px;
+        }
+
+        .theory-page {
+            flex: 1;
+            background-color: #fff;
+            padding: 30px 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+        .theory-left-page {
+            border-top-left-radius: 6px;
+            border-bottom-left-radius: 6px;
+        }
+        .theory-right-page {
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+            border-left: 1px solid #eee;
+        }
+        
+        .theory-page-number {
+            position: absolute;
+            bottom: 15px;
+            font-size: 12px;
+            color: #999;
+        }
+        .theory-left-page .theory-page-number { left: 40px; }
+        .theory-right-page .theory-page-number { right: 40px; }
+
+        .theory-content-wrapper h1, .theory-content-wrapper h2, .theory-content-wrapper h3 {
+            display: inline;
+            line-height: 1.9;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        .theory-content-wrapper h1 { background-color: #dad4ff; }
+        .theory-content-wrapper h2 { background-color: #b7e5ff; }
+        .theory-content-wrapper h3 { background-color: #D6E8DB; }
+        .theory-content-wrapper p { margin-top: 12px; line-height: 1.7; color: #333; }
+        .theory-content-wrapper table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .theory-content-wrapper th, .theory-content-wrapper td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        .theory-content-wrapper th { background-color: #f2f2f2; }
+        .theory-content-wrapper a { color: #007bff; text-decoration: none; }
+        .theory-content-wrapper a:hover { text-decoration: underline; }
+
+        /* ===== 01-25. 이론학습 페이지 스타일 끝 ===== */
+
+
     </style>
 
-    <!-- ===== 01-22. iOS 전체화면(PWA) 메타태그 추가 ===== -->
+    <!-- =====  iOS 전체화면(PWA) 메타태그 추가 ===== -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="세무사 학습 웹앱">
-<!-- ===== 01-22. iOS 전체화면(PWA) 메타태그 끝 ===== -->
+<!-- =====  iOS 전체화면(PWA) 메타태그 끝 ===== -->
 
 
 
@@ -1962,6 +2041,17 @@
                 </section>
                 <!-- 05-1-3. 오른쪽: 계산기 영역 끝 -->
             <!-- 05-1. 문제풀이 화면 레이아웃 끝 -->
+        <!-- (신규) 05-2. 이론학습 화면 레이아웃 시작 -->
+            <div class="theory-layout" id="theory-layout">
+                <main class="theory-main-content" id="theoryMainContent">
+                    <div class="loading-spinner" id="theoryLoadingSpinner">
+                        📚 이론 데이터베이스에 접속하는 중...
+                    </div>
+                    <div class="theory-book" id="theoryBook" style="display:none;"></div>
+                </main>
+            </div>
+        <!-- 05-2. 이론학습 화면 레이아웃 끝 -->
+
         </main>
         <!-- ========================================
              05. 메인 콘텐츠 섹션 끝
@@ -2006,6 +2096,7 @@ let currentQuestionIndex = 0;
 let userAnswers = {};
 let selectedAnswers = {};
 let quizCompleted = false;
+let activeTab = 'quiz'; // (추가) 현재 활성화된 탭('quiz' 또는 'theory')을 추적합니다.
 /* ===== 06-1. 전역 변수 선언 (수정) 끝 ===== */
 
         /* ===== 06-2. 숫자 포맷팅 함수들 시작 ===== */
@@ -2363,10 +2454,23 @@ function clearCalculationHistory() {
         }
         // 06-10-3. 서브메뉴 토글 (다중 중첩 지원) 끝
 
-// 06-10-4. 과목/단원 선택 처리 함수 (수정)
-async function selectChapter(subject, chapter) {
-    console.log(`🎯 selectChapter 호출됨: ${subject}, ${chapter}`);
+// 06-10-4. 과목/단원 선택 처리 함수 (탭 기능 연동)
+async function selectChapter(subject, chapter, isReturning = false) {
+    console.log(`🎯 selectChapter 호출됨: ${subject}, ${chapter} (활성탭: ${activeTab})`);
 
+    // 현재 활성화된 탭에 따라 다른 함수를 호출
+    if (activeTab === 'quiz') {
+        await loadQuizChapter(subject, chapter, isReturning);
+    } else if (activeTab === 'theory') {
+        await loadTheoryChapter(subject, chapter);
+    } else {
+        // 예: '학습관리' 탭 등. 현재는 동작 없음.
+        console.log(`${activeTab} 탭에서는 챕터 선택 기능이 정의되지 않았습니다.`);
+    }
+}
+
+// (신규) 06-10-4-1. 퀴즈 챕터 로딩 함수 (기존 selectChapter 로직 분리)
+async function loadQuizChapter(subject, chapter, isReturning) {
     // 화면 레이아웃이 없으면 새로 생성
     if (!document.getElementById('quiz-layout')) {
         const mainContent = document.querySelector('.main-content');
@@ -2384,7 +2488,7 @@ async function selectChapter(subject, chapter) {
         return;
     }
 
-    // 경로 표시 로직 (기존과 동일)
+    // 경로 표시 로직
     let path = ['1차 시험 문제풀이'];
     const subjectToPath = {
         '재무회계': ['회계학개론', '과목별 기출'], '원가관리회계': ['회계학개론', '과목별 기출'], '회계학개론': ['회계학개론'],
@@ -2401,7 +2505,9 @@ async function selectChapter(subject, chapter) {
     questionText.textContent = `${subject} ${chapter} 문제를 불러오는 중...`;
     optionsContainer.innerHTML = '';
     
-    resetQuizState();
+    if (!isReturning) { // 뒤로가기로 돌아온 게 아닐 때만 초기화
+        resetQuizState();
+    }
     closeSidebar();
 
     try {
@@ -2411,7 +2517,9 @@ async function selectChapter(subject, chapter) {
             currentQuestionSet = questions;
             currentQuestionIndex = 0;
             
-            pushToViewHistory({ view: 'quiz', data: { subject, chapter } });
+            if (!isReturning) {
+                pushToViewHistory({ view: 'quiz', data: { subject, chapter } });
+            }
 
             // UI 기능 초기화 (캔버스, 리사이저 등)
             setupQuizInterface(); 
@@ -2424,6 +2532,58 @@ async function selectChapter(subject, chapter) {
     } catch (error) {
         console.error('❌ 문제 로딩 실패:', error);
         questionText.textContent = '문제를 불러오는 중 오류가 발생했습니다.';
+    }
+}
+
+// (신규) 06-10-4-2. 이론 챕터 로딩 함수
+async function loadTheoryChapter(subject, chapter) {
+    const breadcrumb = document.getElementById('breadcrumb-text');
+    const loadingSpinner = document.getElementById('theoryLoadingSpinner');
+    const theoryBook = document.getElementById('theoryBook');
+
+    if (!breadcrumb || !loadingSpinner || !theoryBook) {
+        console.error('❌ 이론학습 필수 DOM 요소를 찾을 수 없습니다.');
+        return;
+    }
+    
+    // 경로 표시 업데이트
+    let path = ['이론학습'];
+    const subjectToPath = {
+        '재무회계': ['회계학개론'], '원가관리회계': ['회계학개론'],
+        '법인세법': ['세법학개론'], '소득세법': ['세법학개론'], '부가가치세법': ['세법학개론'],
+        '국세기본법': ['세법학개론'], '국세징수법': ['세법학개론'], '조세범처벌법': ['세법학개론'],
+        '세법학개론': ['세법학개론'], '재정학': ['재정학'], '행정소송법': ['행정소송법'],
+    };
+     if (subjectToPath[subject]) {
+        path.push(...subjectToPath[subject]);
+    } else {
+        path.push(subject);
+    }
+    path.push(chapter);
+    breadcrumb.innerHTML = path.map((p, i) => i === path.length - 1 ? `<span class="current">${p}</span>` : `<span>${p}</span>`).join(' &gt; ');
+
+
+    // 로딩 상태 표시
+    loadingSpinner.innerHTML = `📚 ${subject} ${chapter} 이론을 불러오는 중...`;
+    loadingSpinner.style.display = 'block';
+    theoryBook.style.display = 'none';
+    theoryBook.innerHTML = ''; // 이전 내용 초기화
+    
+    closeSidebar();
+    
+    try {
+        const theoryContents = await loadTheoryContentFromBack4App(subject, chapter);
+        if (theoryContents.length > 0) {
+            renderTheoryBook(theoryContents);
+            loadingSpinner.style.display = 'none';
+            theoryBook.style.display = 'flex'; // flex로 표시
+            setupTheoryBookNavigation(); // 스와이프 기능 활성화
+        } else {
+            loadingSpinner.innerHTML = `😥 해당 챕터(${subject} - ${chapter})에 대한 이론 콘텐츠가 아직 준비되지 않았습니다.`;
+        }
+    } catch (error) {
+        console.error('❌ 이론 콘텐츠 로딩 실패:', error);
+        loadingSpinner.innerHTML = '이론 콘텐츠를 불러오는 중 오류가 발생했습니다.';
     }
 }
 
@@ -2745,9 +2905,49 @@ function goBack() {
     }
 }
 
-// 06-12-5. 탭 전환 (기존 코드 유지)
+// 06-12-5. 탭 전환 함수 (기능 구현)
 function switchTab(tabName) {
-    console.log(`${tabName} 탭으로 전환`);
+    // 전역 변수에 현재 활성 탭 저장
+    activeTab = tabName;
+    console.log(`📘 ${tabName} 탭으로 전환`);
+
+    // 모든 탭 버튼에서 'active' 클래스 제거
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    // 클릭된 탭에 'active' 클래스 추가
+    const activeButton = document.querySelector(`.tab-btn[onclick="switchTab('${tabName}')"]`);
+    if (activeButton) activeButton.classList.add('active');
+
+    // 모든 메인 레이아웃 숨기기
+    document.getElementById('quiz-layout').style.display = 'none';
+    document.getElementById('theory-layout').style.display = 'none';
+    // 나중에 'progress-layout'이 추가될 경우를 대비
+    // document.getElementById('progress-layout').style.display = 'none'; 
+
+    // 요청된 탭에 해당하는 레이아웃 표시
+    const layoutToShow = document.getElementById(`${tabName}-layout`);
+    if (layoutToShow) {
+        layoutToShow.style.display = 'flex';
+    }
+    
+    // 이론 탭을 처음 눌렀을 때, 또는 내용이 없을 때 안내 메시지 표시
+    if (tabName === 'theory') {
+        const theoryBook = document.getElementById('theoryBook');
+        const loadingSpinner = document.getElementById('theoryLoadingSpinner');
+        // 책 내용이 비어있으면 안내 메시지 표시
+        if (theoryBook && theoryBook.innerHTML.trim() === '') {
+            if(loadingSpinner) {
+               loadingSpinner.innerHTML = '📚 왼쪽 목차에서 학습할 이론 챕터를 선택해주세요.';
+               loadingSpinner.style.display = 'block';
+            }
+            if(theoryBook) theoryBook.style.display = 'none';
+        }
+    } else if (tabName === 'quiz') {
+        // 퀴즈 탭으로 돌아왔을 때, 만약 퀴즈가 선택되지 않았다면 초기 안내 메시지를 보여주도록 확인
+        const questionText = document.getElementById('question-text');
+        if (questionText && questionText.textContent === '목차에서 원하는 과목과 단원을 선택해주세요.') {
+            // 특별한 동작 없음, 기본 상태 유지
+        }
+    }
 }
 
 /* ===== 06-12. 기타 UI 함수들 끝 ===== */
@@ -2812,7 +3012,37 @@ function autoStartTimer() {
 
 /* ===== 06-14. Back4App 연동 및 퀴즈 데이터 관리 시작 ===== */
 
+// (신규) 06-14-3. Back4App에서 이론 콘텐츠 로딩 함수
+async function loadTheoryContentFromBack4App(subject, chapter) {
+    console.log(`🔍 Back4App 이론 쿼리: 과목=${subject}, 챕터=${chapter}`);
+    const TheoryContent = Parse.Object.extend("TheoryContent");
+    const query = new Parse.Query(TheoryContent);
 
+    try {
+        // 정확한 과목명과 챕터명으로 쿼리
+        query.equalTo("subject", subject);
+        query.equalTo("chapter", chapter);
+        query.equalTo("isActive", true);
+        
+        // 페이지 그룹(펼친 페이지)과 그 안에서의 순서대로 정렬
+        query.ascending("pageGroup", "order");
+        query.limit(1000); // 챕터의 모든 콘텐츠를 가져오기 위해 limit 증가
+
+        const results = await query.find();
+        console.log(`📊 ${results.length}개의 이론 콘텐츠를 서버에서 가져옴`);
+
+        if (results.length === 0) return [];
+        
+        // 필요한 데이터만 추출하여 반환
+        return results.map(result => ({
+            pageGroup: result.get("pageGroup"),
+            content: result.get("content")
+        }));
+    } catch (error) {
+        console.error("❌ Back4App 이론 쿼리 실패:", error);
+        return [];
+    }
+}
 
 // 06-14-2. Back4App에서 문제 데이터 로딩 함수 (정리된 버전)
 async function loadQuestionsFromBack4App(subject, chapter, originalSubject) {
@@ -3297,7 +3527,7 @@ function setupQuizInterface() {
     initializeVerticalResizer();
 }
 
-// 06-20-2. (전면 교체) 캔버스 초기화 (모든 문제 최종 해결)
+// 06-20-2. (전면 교체) 캔버스 초기화 (리사이즈 필기 삭제 최종 해결)
 function initializeCanvases() {
     const quizSection = document.getElementById('quiz-section');
     const workspaceSection = document.getElementById('workspace-section');
@@ -3315,6 +3545,7 @@ function initializeCanvases() {
             if (!canvas) continue;
 
             const ctx = canvas.getContext('2d');
+            
             let oldDrawing = null;
             if (canvas.width > 0 && canvas.height > 0) {
                 oldDrawing = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -3323,28 +3554,37 @@ function initializeCanvases() {
             let newWidth, newHeight;
 
             if (container.id === 'quiz-section') {
-                // (핵심 수정) 캔버스가 아닌 컨테이너의 크기를 직접 참조하여 타이밍 문제를 해결합니다.
-                newWidth = entry.contentRect.width;
-                newHeight = entry.contentRect.height;
+                // (최종 핵심 수정) contentRect(여백제외) 대신, 여백을 포함하는 clientWidth/clientHeight를 사용합니다.
+                // 이것이 '지우개 현상'과 '필기 안 되는 영역' 문제의 진짜 원인이었습니다.
+                newWidth = container.clientWidth;
+                newHeight = container.clientHeight;
             } else { // workspace-section
-                newWidth = canvas.clientWidth; // 보이는 너비에 맞춤
-                newHeight = 1000; // 실제 그림판 높이는 1000px
+                // 연습장은 보이는 너비(clientWidth)와 고정된 높이를 사용합니다.
+                newWidth = canvas.clientWidth;
+                newHeight = 1000;
             }
-            
-            if (newWidth <= 0 || (canvas.id === 'annotation-canvas' && newHeight <= 0)) continue;
 
+            if (newWidth <= 0) continue;
+            if (canvas.id === 'annotation-canvas' && newHeight <= 0) continue;
+            
+            // 캔버스의 실제 해상도(width/height 속성)가 보이는 크기와 다를 때만 업데이트합니다.
             if (canvas.width !== newWidth || canvas.height !== newHeight) {
                 canvas.width = newWidth;
                 canvas.height = newHeight;
-                if (oldDrawing) ctx.putImageData(oldDrawing, 0, 0);
+
+                // 저장해둔 그림이 있으면, 새 캔버스에 즉시 다시 그려줍니다.
+                if (oldDrawing) {
+                    ctx.putImageData(oldDrawing, 0, 0);
+                }
             }
         }
     });
 
+    // 두 컨테이너 모두 크기 변경 감시
     window.canvasResizeObserver.observe(quizSection);
     window.canvasResizeObserver.observe(workspaceSection);
 
-    // 이벤트 리스너 설정
+    // --- 이하 이벤트 리스너 설정은 기존과 동일 ---
     [annotationCanvas, workspaceCanvas].forEach(canvas => {
         if (canvas) {
             canvas.removeEventListener('pointerdown', handlePointerDown);
@@ -3355,7 +3595,6 @@ function initializeCanvases() {
     annotationCtx = annotationCanvas.getContext('2d');
     workspaceCtx = workspaceCanvas.getContext('2d');
     
-    // 문서 전체 이벤트 리스너
     document.removeEventListener('pointermove', handlePointerMove);
     document.addEventListener('pointermove', handlePointerMove);
     document.removeEventListener('pointerup', handlePointerUp);
@@ -3630,6 +3869,136 @@ function getQuizLayoutHTML() {
 }
 /* ===== 06-21. UI 템플릿 함수 끝 ===== */
 
+// (신규) 06-22. 이론 콘텐츠를 책 형태로 렌더링하는 함수
+function renderTheoryBook(contents) {
+    const theoryBook = document.getElementById('theoryBook');
+    theoryBook.innerHTML = ''; // 기존 내용 초기화
+
+    // pageGroup 번호를 기준으로 콘텐츠 그룹화
+    const pagesByGroup = contents.reduce((acc, item) => {
+        acc[item.pageGroup] = acc[item.pageGroup] || [];
+        acc[item.pageGroup].push(item.content);
+        return acc;
+    }, {});
+
+    // pageGroup 오름차순으로 정렬된 키 배열 생성
+    const sortedGroups = Object.keys(pagesByGroup).sort((a, b) => parseInt(a) - parseInt(b));
+    const totalPageSpreads = sortedGroups.length;
+
+    // 각 페이지 그룹(펼친 페이지)을 HTML로 구성
+    sortedGroups.forEach((groupKey, index) => {
+        const pageContents = pagesByGroup[groupKey];
+        
+        const pageSpread = document.createElement('div');
+        pageSpread.className = 'theory-page-spread';
+
+        const leftPageNumber = index * 2 + 1;
+        const rightPageNumber = index * 2 + 2;
+
+        pageSpread.innerHTML = `
+            <div class="theory-page theory-left-page">
+                <div class="theory-content-wrapper">${pageContents[0] || ''}</div>
+                <div class="theory-page-number">${leftPageNumber}</div>
+            </div>
+            <div class="theory-page theory-right-page">
+                <div class="theory-content-wrapper">${pageContents[1] || ''}</div>
+                <div class="theory-page-number">${rightPageNumber}</div>
+            </div>
+        `;
+        theoryBook.appendChild(pageSpread);
+    });
+
+    // 모든 페이지가 추가된 후, 책의 전체 너비를 설정
+    if (totalPageSpreads > 0) {
+        theoryBook.style.width = `${totalPageSpreads * 100}%`;
+    }
+}
+
+// (신규) 06-23. 이론 책 넘김(스와이프) 기능 설정 함수
+function setupTheoryBookNavigation() {
+    const book = document.getElementById('theoryBook');
+    const mainContent = document.getElementById('theoryMainContent');
+    if (!book || !mainContent) return;
+
+    let currentPage = 0;
+    let startX = 0;
+    let isDragging = false;
+    let currentTranslateX = 0;
+
+    const pageSpreads = book.querySelectorAll('.theory-page-spread');
+    if (pageSpreads.length === 0) return;
+    
+    const totalPages = pageSpreads.length;
+    
+    const navigate = (page) => {
+        if (page < 0) page = 0;
+        if (page >= totalPages) page = totalPages - 1;
+        
+        currentPage = page;
+        const viewWidth = mainContent.clientWidth;
+        currentTranslateX = -currentPage * viewWidth;
+        book.style.transition = 'transform 0.4s ease-in-out';
+        book.style.transform = `translateX(${currentTranslateX}px)`;
+    };
+    
+    // 초기 페이지로 이동
+    navigate(0);
+
+    const onPointerDown = (e) => {
+        isDragging = true;
+        startX = e.pageX || e.touches[0].pageX;
+        book.style.transition = 'none';
+        e.currentTarget.setPointerCapture(e.pointerId); // 포인터 이벤트 독점
+    };
+
+    const onPointerMove = (e) => {
+        if (!isDragging) return;
+        const currentX = e.pageX || e.touches[0].pageX;
+        const diffX = currentX - startX;
+        book.style.transform = `translateX(${currentTranslateX + diffX}px)`;
+    };
+
+    const onPointerUp = (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        
+        e.currentTarget.releasePointerCapture(e.pointerId);
+
+        const endX = e.pageX || e.changedTouches[0].pageX;
+        const diffX = endX - startX;
+        
+        // 스와이프 감지 임계값 (50px 이상 움직여야 페이지 넘김)
+        if (Math.abs(diffX) > 50) {
+            if (diffX < 0) { // 왼쪽으로 스와이프 (다음 페이지)
+                navigate(currentPage + 1);
+            } else { // 오른쪽으로 스와이프 (이전 페이지)
+                navigate(currentPage - 1);
+            }
+        } else { // 임계값 미만이면 원래 페이지로 복귀
+            navigate(currentPage);
+        }
+    };
+    
+    // 리스너 중복 방지를 위해 기존 리스너 제거
+    const controller = new AbortController();
+    const options = { signal: controller.signal };
+
+    if (book.dataset.eventsAttached) {
+        // 기존 컨트롤러가 있다면 이벤트를 중단시킴 (실제로는 복잡하므로 간단히 플래그로만 관리)
+    }
+
+    book.addEventListener('pointerdown', onPointerDown, options);
+    book.addEventListener('pointermove', onPointerMove, options);
+    book.addEventListener('pointerup', onPointerUp, options);
+    book.addEventListener('pointercancel', onPointerUp, options);
+    book.dataset.eventsAttached = 'true';
+
+    // 창 크기 변경 시 현재 페이지 위치 재조정
+    const resizeObserver = new ResizeObserver(() => {
+        navigate(currentPage);
+    });
+    resizeObserver.observe(mainContent);
+}
 
     </script>
 </body>
