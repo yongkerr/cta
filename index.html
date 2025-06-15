@@ -1370,6 +1370,26 @@
     margin-bottom: 2px; /* (수정) 항목 간 여백을 조금 더 확보 */
 }
 
+        /* (신규) 01-25-25. 이론 페이지 내 이미지 및 코드 블록 스타일 */
+.theory-content-wrapper img {
+    max-width: 100%; /* 이미지가 페이지 너비를 넘어가지 않도록 함 */
+    height: auto;
+    display: block;
+    margin: 15px auto;
+}
+.theory-content-wrapper pre {
+    white-space: pre-wrap;   /* (핵심 수정 1) 자동 줄바꿈을 허용하되, 코드 형식은 유지 */
+    word-break: break-all;   /* (핵심 수정 2) URL처럼 아주 긴 단어도 강제로 줄바꿈 */
+    background-color: #f5f5f5;
+    padding: 15px;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-top: 15px;
+    overflow-x: auto; /* 만약을 대비한 최소한의 가로 스크롤 허용 */
+}
+
+
 
 
         /* ===== 01-25. 이론학습 페이지 스타일 끝 ===== */
