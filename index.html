@@ -1361,13 +1361,15 @@
         .theory-content-wrapper a:hover { text-decoration: underline; }
 
 /* (신규) 01-25-24. 이론 학습 페이지의 목록(리스트) 스타일 추가 */
-.theory-content-wrapper ul {
-    padding-left: 25px; /* 01-25-24-1. (추가) 기본 들여쓰기 조정 */
+.theory-content-wrapper ul, 
+.theory-content-wrapper ol { /* (핵심 수정 1) ol 태그도 적용 대상에 추가 */
+    padding-left: 28px; /* (핵심 수정 2) 잘림 현상 해결을 위해 들여쓰기 값을 넉넉하게 늘림 */
 }
 .theory-content-wrapper li {
-    line-height: 1.65; /* 01-25-24-2. (추가) 각 항목의 줄 높이를 늘려 쾌적하게 만듦 */
-    margin-bottom: 2px; /* 01-25-24-3. (추가) 각 항목 아래에 여백을 주어 명확히 구분 */
+    line-height: 1.65; 
+    margin-bottom: 2px; /* (수정) 항목 간 여백을 조금 더 확보 */
 }
+
 
 
         /* ===== 01-25. 이론학습 페이지 스타일 끝 ===== */
