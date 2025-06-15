@@ -1275,7 +1275,9 @@
             flex: 1;
             padding: 5px;
             overflow: hidden;
-            /* justify-content: center; 이 한 줄만 제거하여 정렬 문제 해결 */
+            display: flex;           /* 01-25-1. (추가) 자식 요소를 flex로 제어하기 위해 추가 */
+            justify-content: center; /* 01-25-2. (추가) 가로 중앙 정렬을 위해 추가 */
+            align-items: center;     /* 01-25-3. (추가) 세로 중앙 정렬을 위해 추가 */
         }
 
         .theory-book {
@@ -1298,14 +1300,17 @@
             margin-right: 40px; /* (핵심 추가) 각 펼친 페이지 사이에 40px 간격 추가 */
         }
 
-        .theory-page {
-            flex: 1 0 0%;
-            background-color: #fff;
-            padding: 15px 20px; /* (핵심 수정) 30px 40px → 15px 20px로 대폭 축소 */
-            overflow-y: auto;
-            position: relative;
-            min-width: 0;
-        }
+    .theory-page {
+        flex: 1 0 50%; /* 각 페이지가 정확히 50%씩 차지 */
+        background-color: #fff;
+        padding: 10px 15px; /* 패딩 축소 */
+        overflow-y: auto;
+        position: relative;
+        min-width: 300px; /* 최소 너비 보장 */
+        max-width: 50%; /* 최대 너비 제한 */
+        box-sizing: border-box; /* 패딩 포함 크기 계산 */
+}
+
 
         .theory-left-page {
             border-top-left-radius: 6px;
@@ -3947,7 +3952,12 @@ function setupTheoryBookNavigation() {
         
         currentPage = page;
         const viewWidth = mainContent.clientWidth;
-        currentTranslateX = -currentPage * viewWidth;
+        
+           // (핵심 수정) 이동 거리를 계산할 때, 페이지 너비(viewWidth)에
+    // CSS에 설정된 오른쪽 여백(40px)을 더해줍니다.
+    const totalMoveDistance = -currentPage * (viewWidth + 40);
+    currentTranslateX = totalMoveDistance;
+    
         book.style.transition = 'transform 0.4s ease-in-out';
         book.style.transform = `translateX(${currentTranslateX}px)`;
     };
