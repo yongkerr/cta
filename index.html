@@ -2620,16 +2620,22 @@ function renderTheoryBook(contents) {
     const pagesByGroup = contents.reduce((acc, item) => {
         const group = item.pageGroup;
         if (!acc[group]) acc[group] = [];
-        acc[group].push(item.content);
+        // (수정) 그룹화 시 content뿐만 아니라 order 정보도 함께 저장합니다.
+        acc[group].push({ 
+            content: item.content, 
+            order: item.order 
+        });
         return acc;
     }, {});
 
     let finalHtml = '';
     let pageCounter = 1;
-    // 2. 그룹화된 데이터를 기반으로 '펼친 페이지(page-spread)' HTML을 생성합니다.
-    Object.values(pagesByGroup).sort((a,b) => a[0].pageGroup - b[0].pageGroup).forEach(groupContents => {
-        const leftPageContent = groupContents[0] || '';
-        const rightPageContent = groupContents.length > 1 ? groupContents[1] : '';
+    // 2. 그룹화된 데이터를 pageGroup 번호 순서대로 정렬하여 처리합니다.
+    Object.keys(pagesByGroup).sort((a, b) => a - b).forEach(groupKey => {
+        const groupContents = pagesByGroup[groupKey].sort((a, b) => a.order - b.order); // 그룹 내에서도 order로 정렬
+        
+        const leftPageContent = groupContents[0] ? groupContents[0].content : '';
+        const rightPageContent = groupContents[1] ? groupContents[1].content : '';
 
         finalHtml += `
             <div class="theory-page-spread">
@@ -2645,10 +2651,12 @@ function renderTheoryBook(contents) {
         `;
     });
     
-    // theoryBook의 너비를 페이지 수에 맞게 동적으로 설정합니다.
-    theoryBook.style.width = `${Object.keys(pagesByGroup).length * 100}%`;
+    // (핵심 수정) 레이아웃을 망가뜨리는 원인이었던 아래 코드 라인을 완전히 삭제합니다.
+    // theoryBook.style.width = `${Object.keys(pagesByGroup).length * 100}%`; 
+    
     theoryBook.innerHTML = finalHtml;
 }
+
 
 // (개선) 06-10-6. 이론 책 넘김(스와이프) 기능 설정 함수
 function setupTheoryBookNavigation() {
