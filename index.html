@@ -1342,11 +1342,13 @@
         .theory-right-page .theory-page-number { right: 40px; }
 
         .theory-content-wrapper h1, .theory-content-wrapper h2, .theory-content-wrapper h3 {
-            display: inline;
-            line-height: 1.9;
-            padding: 3px 8px;
-            border-radius: 4px;
-        }
+    display: block; /* 01-25-19. (수정) 제목이 한 줄을 모두 차지하도록 블록 요소로 변경 */
+    line-height: 1.7; /* 01-25-20. (수정) 줄 간격 조정 */
+    margin-top: 20px; /* 01-25-21. (추가) 제목 위에 여백을 주어 가독성 향상 */
+    margin-bottom: 10px; /* 01-25-22. (추가) 제목 아래에도 여백 추가 */
+    padding: 0; /* 01-25-23. (삭제) 배경색을 없애므로 패딩도 초기화 */
+    border-radius: 0;
+}
 
         .theory-content-wrapper h1 { background-color: #dad4ff; }
         .theory-content-wrapper h2 { background-color: #b7e5ff; }
