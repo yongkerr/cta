@@ -1277,39 +1277,49 @@
             overflow: hidden;
             display: flex;           /* 01-25-1. (추가) 자식 요소를 flex로 제어하기 위해 추가 */
             justify-content: center; /* 01-25-2. (추가) 가로 중앙 정렬을 위해 추가 */
-            align-items: center;     /* 01-25-3. (추가) 세로 중앙 정렬을 위해 추가 */
-        }
+            align-items: flex-start;   /* 01-25-3. (수정) 책을 화면 상단에 맞추기 위해 '시작점' 정렬로 변경 */
+}
 
         .theory-book {
-            display: flex;
-            height: 100%;
-            max-width: 1340px;
-            max-height: 1000px;
-            margin: auto; /* 책을 중앙에 위치시킴 */
-            transition: transform 0.3s ease-out;
-            cursor: grab;
-        }
+    display: flex;
+    height: 100%; 
+    max-width: 1340px;
+    max-height: 1000px;
+    margin: auto; /* 자동 중앙 정렬은 유지합니다. */
+
+    /* --- (신규) 스크롤 스냅 적용을 위한 핵심 코드 --- */
+    overflow-x: auto; /* 01-25-6. (추가) 내용이 넘칠 때 가로 스크롤이 가능하도록 설정 */
+    scroll-snap-type: x mandatory; /* 01-25-7. (추가) 가로 스크롤이 멈출 때 자석처럼 달라붙게 함 */
+    gap: 40px; /* 01-25-8. (추가) margin-right 대신 페이지 펼침면 사이의 간격을 설정 */
+
+    /* --- (신규) 스크롤바 숨기기 --- */
+    -ms-overflow-style: none; /* 01-25-9. (추가) IE, Edge 용 스크롤바 숨기기 */
+    scrollbar-width: none; /* 01-25-10. (추가) Firefox 용 스크롤바 숨기기 */
+}
+/* 01-25-11. (추가) 크롬, 사파리 등 Webkit 계열용 스크롤바 숨기기 */
+.theory-book::-webkit-scrollbar {
+    display: none; 
+}
 
         .theory-book:active { cursor: grabbing; }
 
         .theory-page-spread {
-            flex: 0 0 100%;
-            display: flex;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-            border-radius: 6px;
-            margin-right: 40px; /* (핵심 추가) 각 펼친 페이지 사이에 40px 간격 추가 */
-        }
+    flex: 0 0 100%; /* 01-25-12. (유지) 펼침면이 부모 너비의 100%를 차지하게 함 */
+    display: flex;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    border-radius: 6px;
+    scroll-snap-align: center; /* 01-25-13. (추가) 스크롤이 멈출 때 이 요소를 화면 중앙에 맞춤 */
+}
 
     .theory-page {
-        flex: 1 0 50%; /* 각 페이지가 정확히 50%씩 차지 */
-        background-color: #fff;
-        padding: 10px 15px; /* 패딩 축소 */
-        overflow-y: auto;
-        position: relative;
-        min-width: 300px; /* 최소 너비 보장 */
-        max-width: 50%; /* 최대 너비 제한 */
-        box-sizing: border-box; /* 패딩 포함 크기 계산 */
+    flex: 1 0 50%; /* 01-25-15. (수정) 각 페이지가 펼침면의 50%를 정확히 차지하도록 설정 */
+    background-color: #fff;
+    padding: 15px 20px;
+    overflow-y: auto; /* 01-25-16. (수정) 내용이 페이지보다 길 경우에만 스크롤이 생기도록 변경 */
+    position: relative;
+    box-sizing: border-box; /* 01-25-17. (추가) 패딩을 너비 계산에 포함시켜 레이아웃이 깨지지 않게 함 */
 }
+
 
 
         .theory-left-page {
@@ -2563,7 +2573,7 @@ async function loadTheoryChapter(subject, chapter) {
         
         if (theoryContents.length > 0) {
             renderTheoryBook(theoryContents);      // 1. 책 내용 그리기
-            setupTheoryBookNavigation();      // 2. 책 넘김(스와이프) 기능 설정
+            // setupTheoryBookNavigation();      // 2. 책 넘김(스와이프) 기능 설정
             
             // 3. (핵심 추가) 플로팅 목차 생성 및 스크롤 스파이 이벤트 연결
             const theoryPage = document.querySelector('.theory-page');
@@ -3930,6 +3940,7 @@ function renderTheoryBook(contents) {
     }
 }
 
+/* 더이상 사용하지 않는 기능
 // (신규) 06-23. 이론 책 넘김(스와이프) 기능 설정 함수
 function setupTheoryBookNavigation() {
     const book = document.getElementById('theoryBook');
@@ -4019,7 +4030,7 @@ function setupTheoryBookNavigation() {
         navigate(currentPage);
     });
     resizeObserver.observe(mainContent);
-}
+} */
 
     </script>
     <!-- 1. Back4App 연동 및 콘텐츠 표시를 위한 메인 스크립트 -->
