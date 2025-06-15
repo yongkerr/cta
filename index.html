@@ -1341,10 +1341,10 @@
         .theory-left-page .theory-page-number { left: 40px; }
         .theory-right-page .theory-page-number { right: 40px; }
 
-        .theory-content-wrapper h1, .theory-content-wrapper h2, .theory-content-wrapper h3 {
+        .theory-content-wrapper h1, .theory-content-wrapper h2, .theory-content-wrapper h3, .theory-content-wrapper h4  {
     display: block; /* 01-25-19. (수정) 제목이 한 줄을 모두 차지하도록 블록 요소로 변경 */
     line-height: 1.7; /* 01-25-20. (수정) 줄 간격 조정 */
-    margin-top: 20px; /* 01-25-21. (추가) 제목 위에 여백을 주어 가독성 향상 */
+    margin-top: 15px; /* 01-25-21. (추가) 제목 위에 여백을 주어 가독성 향상 */
     margin-bottom: 10px; /* 01-25-22. (추가) 제목 아래에도 여백 추가 */
     padding: 0; /* 01-25-23. (삭제) 배경색을 없애므로 패딩도 초기화 */
     border-radius: 0;
@@ -1359,6 +1359,16 @@
         .theory-content-wrapper th { background-color: #f2f2f2; }
         .theory-content-wrapper a { color: #007bff; text-decoration: none; }
         .theory-content-wrapper a:hover { text-decoration: underline; }
+
+/* (신규) 01-25-24. 이론 학습 페이지의 목록(리스트) 스타일 추가 */
+.theory-content-wrapper ul {
+    padding-left: 25px; /* 01-25-24-1. (추가) 기본 들여쓰기 조정 */
+}
+.theory-content-wrapper li {
+    line-height: 1.8; /* 01-25-24-2. (추가) 각 항목의 줄 높이를 늘려 쾌적하게 만듦 */
+    margin-bottom: 5px; /* 01-25-24-3. (추가) 각 항목 아래에 여백을 주어 명확히 구분 */
+}
+
 
         /* ===== 01-25. 이론학습 페이지 스타일 끝 ===== */
 
