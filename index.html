@@ -4213,8 +4213,8 @@ function setupTheoryBookNavigation() {
      - 테이블 계산 오류 수정 및 로직 개선
      ======================================== */
 
-// 06-24-1. 페이지 분할 메인 함수 (최종 튜닝 v7.0)
-function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3050) { // 06-24-1-1. (수정) targetVolume을 3100으로 최종 조정
+// 06-24-1. 페이지 분할 메인 함수 (최종 튜닝 v8.0 - 제목 묶음 버그 수정)
+function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3050) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html');
     const contentContainer = doc.body.firstChild;
@@ -4228,22 +4228,38 @@ function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3050) { // 06-24
     for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         
-        // (신규) 06-24-1-2. '제목 묶음(Keep with Next)' 로직 시작
-        // 현재 노드가 제목이고, 다음 노드가 존재할 경우
+        // (수정) 06-24-1-2. '제목 묶음(Keep with Next)' 로직 업그레이드
         const isHeader = node.nodeType === Node.ELEMENT_NODE && ['H1', 'H2', 'H3', 'H4'].includes(node.tagName);
-        if (isHeader && i + 1 < nodes.length) {
-            const headerVolume = calculateNodeVolume(node);
-            const nextNodeVolume = calculateNodeVolume(nodes[i + 1]);
-            
-            // 만약 현재 페이지에 '제목+다음내용' 세트가 들어가지 않는다면, '제목'을 추가하기 전에 미리 페이지를 나눔
-            if (currentVolume > 0 && (currentVolume + headerVolume + nextNodeVolume) > targetVolume) {
-                pages.push(currentPageContainer.innerHTML);
-                currentPageContainer = document.createElement('div');
-                currentVolume = 0;
+        if (isHeader) {
+            // (추가) 다음 '실질적인' 노드를 찾습니다 (공백 텍스트 노드 건너뛰기)
+            let nextNode = null;
+            let nextNodeIndex = i + 1;
+            while(nextNodeIndex < nodes.length) {
+                const potentialNextNode = nodes[nextNodeIndex];
+                // 노드가 텍스트 노드이고, 내용이 공백 뿐이라면 건너뜁니다.
+                if (potentialNextNode.nodeType === Node.TEXT_NODE && potentialNextNode.textContent.trim() === '') {
+                    nextNodeIndex++;
+                    continue;
+                }
+                // 실질적인 노드를 찾았으므로 루프를 탈출합니다.
+                nextNode = potentialNextNode;
+                break;
+            }
+
+            // 실질적인 다음 노드가 있을 경우에만 묶음 로직 실행
+            if (nextNode) { 
+                const headerVolume = calculateNodeVolume(node);
+                const nextNodeVolume = calculateNodeVolume(nextNode);
+
+                // 만약 현재 페이지에 '제목+다음내용' 세트가 들어가지 않는다면, '제목'을 추가하기 전에 미리 페이지를 나눔
+                if (currentVolume > 0 && (currentVolume + headerVolume + nextNodeVolume) > targetVolume) {
+                    pages.push(currentPageContainer.innerHTML);
+                    currentPageContainer = document.createElement('div');
+                    currentVolume = 0;
+                }
             }
         }
-        // (신규) '제목 묶음(Keep with Next)' 로직 끝
-
+        
         const nodeVolume = calculateNodeVolume(node);
         const isNoBreakBlock = node.nodeType === Node.ELEMENT_NODE && node.classList.contains('no-break');
 
@@ -4255,8 +4271,6 @@ function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3050) { // 06-24
             }
         }
         
-        // '제목 묶음'이 아닌 일반적인 경우의 페이지 나눔 처리
-        // (주의: isHeader 조건이 없어야 제목만으로도 페이지가 넘어갈 수 있음)
         if (!isNoBreakBlock && currentVolume + nodeVolume > targetVolume && currentVolume > 0) {
             pages.push(currentPageContainer.innerHTML);
             currentPageContainer = document.createElement('div');
