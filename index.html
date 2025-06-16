@@ -4289,7 +4289,7 @@ function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3050) {
     return pages;
 }
 
-// 06-24-2. 개별 HTML 노드의 부피를 계산하는 함수 (최종 튜닝 v7.0)
+// 06-24-2. 개별 HTML 노드의 부피를 계산하는 함수 (v9.0 최종)
 function calculateNodeVolume(node) {
     if (node.nodeType === Node.TEXT_NODE) {
         const text = node.textContent.trim();
@@ -4317,21 +4317,35 @@ function calculateNodeVolume(node) {
         case 'li':
             const isNested = node.parentElement && ['ul', 'ol'].includes(node.parentElement.tagName.toLowerCase()) && node.parentElement.parentElement && ['li'].includes(node.parentElement.parentElement.tagName.toLowerCase());
             if (isNested) {
-                volume += 30 + (Math.ceil(textContent.trim().length / 35) * 85);
+                volume += 35 + (Math.ceil(textContent.trim().length / 35) * 85);
             } else {
-                volume += 30 + (Math.ceil(textContent.trim().length / 48) * 85);
+                volume += 35 + (Math.ceil(textContent.trim().length / 48) * 85);
             }
             break;
         case 'table':
+            // 06-24-2-1. (수정) 테이블 자체 점수는 최소화. 모든 계산은 tr에서 처리.
             volume += 15 + calculateRecursiveVolume(node);
             break;
         case 'tr':
-             // 06-24-2-1. (수정) tr 기본 점수를 210점으로 대폭 상향하여 테이블 부피 현실화
-            volume += 175 + calculateRecursiveVolume(node);
+            // 06-24-2-2. (수정) '개량형 하이브리드 모델' 적용
+            // 행(tr) 내부에서 가장 글자 수가 많은 칸(td, th)을 찾습니다.
+            let maxCharsInRow = 0;
+            if (node.childNodes) {
+                node.childNodes.forEach(cell => {
+                    if (cell.nodeType === Node.ELEMENT_NODE && ['TD', 'TH'].includes(cell.tagName)) {
+                        const cellTextLength = cell.textContent.trim().length;
+                        if (cellTextLength > maxCharsInRow) {
+                            maxCharsInRow = cellTextLength;
+                        }
+                    }
+                });
+            }
+            // 연립방정식으로 계산된 가중치를 적용합니다.
+            // 행 부피 = 기본 점수(80) + (가장 긴 칸의 글자 수 × 글자당 점수(2.6))
+            volume += 80 + (maxCharsInRow * 2.6);
             break;
         case 'blockquote':
-            // 06-24-2-2. (수정) CSS 여백 추가에 맞춰 기본 점수 100점으로 상향
-            volume += 60 + calculateRecursiveVolume(node);
+            volume += 40 + calculateRecursiveVolume(node);
             break;
         case 'hr': case 'br':
             volume += 40;
@@ -4344,7 +4358,10 @@ function calculateNodeVolume(node) {
             volume += 40 + (lineCount * 95);
             break;
         default:
-            volume += calculateRecursiveVolume(node);
+            // 06-24-2-3. (수정) tr의 자식 노드들은 이미 tr에서 계산했으므로, 재귀호출에서 제외합니다.
+            if (node.parentElement.tagName !== 'TR') {
+                 volume += calculateRecursiveVolume(node);
+            }
             break;
     }
     return volume;
