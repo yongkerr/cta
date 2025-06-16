@@ -4213,8 +4213,11 @@ function setupTheoryBookNavigation() {
      - 테이블 계산 오류 수정 및 로직 개선
      ======================================== */
 
-// 06-24-1. 페이지 분할 메인 함수 (최종 튜닝 v8.0 - 제목 묶음 버그 수정)
-function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 2850) {
+/* ========================================
+ (수정본) 06-24-1. 페이지 분할 메인 함수 (v2.1 - 그룹핑 버그 수정)
+ - 헤더(제목)와 바로 다음 요소 하나만 묶도록 로직을 단순화하여 수정
+ ======================================== */
+function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 2900) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html');
     const contentContainer = doc.body.firstChild;
@@ -4227,51 +4230,30 @@ function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 2850) {
 
     for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
-        
-        // (수정) 06-24-1-2. '제목 묶음(Keep with Next)' 로직 업그레이드
+
+        if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() === '') {
+            continue;
+        }
+
+        let nodeVolume = calculateNodeVolume(node);
+
+        // '헤더 잘림 방지' 로직: 헤더와 '바로 다음' 요소만 함께 취급
         const isHeader = node.nodeType === Node.ELEMENT_NODE && ['H1', 'H2', 'H3', 'H4'].includes(node.tagName);
         if (isHeader) {
-            // (추가) 다음 '실질적인' 노드를 찾습니다 (공백 텍스트 노드 건너뛰기)
-            let nextNode = null;
-            let nextNodeIndex = i + 1;
-            while(nextNodeIndex < nodes.length) {
-                const potentialNextNode = nodes[nextNodeIndex];
-                // 노드가 텍스트 노드이고, 내용이 공백 뿐이라면 건너뜁니다.
-                if (potentialNextNode.nodeType === Node.TEXT_NODE && potentialNextNode.textContent.trim() === '') {
-                    nextNodeIndex++;
-                    continue;
-                }
-                // 실질적인 노드를 찾았으므로 루프를 탈출합니다.
-                nextNode = potentialNextNode;
-                break;
-            }
-
-            // 실질적인 다음 노드가 있을 경우에만 묶음 로직 실행
-            if (nextNode) { 
-                const headerVolume = calculateNodeVolume(node);
+            let nextNode = nodes[i + 1];
+            if (nextNode) {
                 const nextNodeVolume = calculateNodeVolume(nextNode);
-
-                // 만약 현재 페이지에 '제목+다음내용' 세트가 들어가지 않는다면, '제목'을 추가하기 전에 미리 페이지를 나눔
-                if (currentVolume > 0 && (currentVolume + headerVolume + nextNodeVolume) > targetVolume) {
+                // 현재 페이지에 '헤더+다음요소'가 들어가지 않는다면, 페이지를 나눔
+                if (currentVolume > 0 && (currentVolume + nodeVolume + nextNodeVolume) > targetVolume) {
                     pages.push(currentPageContainer.innerHTML);
                     currentPageContainer = document.createElement('div');
                     currentVolume = 0;
                 }
             }
         }
-        
-        const nodeVolume = calculateNodeVolume(node);
-        const isNoBreakBlock = node.nodeType === Node.ELEMENT_NODE && node.classList.contains('no-break');
 
-        if (isNoBreakBlock) {
-            if (currentVolume > 0 && currentVolume + nodeVolume > targetVolume) {
-                pages.push(currentPageContainer.innerHTML);
-                currentPageContainer = document.createElement('div');
-                currentVolume = 0;
-            }
-        }
-        
-        if (!isNoBreakBlock && currentVolume + nodeVolume > targetVolume && currentVolume > 0) {
+        // 일반적인 페이지 나누기: 현재 노드를 추가하면 목표량을 초과할 경우 페이지 나눔
+        if (currentVolume > 0 && (currentVolume + nodeVolume) > targetVolume) {
             pages.push(currentPageContainer.innerHTML);
             currentPageContainer = document.createElement('div');
             currentVolume = 0;
@@ -4284,85 +4266,61 @@ function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 2850) {
     if (currentVolume > 0) {
         pages.push(currentPageContainer.innerHTML);
     }
-
-    console.log(`📃 페이지 분할 완료: 총 ${pages.length} 페이지 생성됨.`);
     return pages;
 }
 
-// 06-24-2. 개별 HTML 노드의 부피를 계산하는 함수 (v9.0 최종)
+/* ========================================
+ (수정본) 06-24-2. 개별 HTML 노드의 부피 계산 함수 (v2.1 - 점수 보정)
+ - blockquote 내부 li 점수 계산 방식을 단순화하여 부피 과대평가 문제 수정
+ ======================================== */
 function calculateNodeVolume(node) {
     if (node.nodeType === Node.TEXT_NODE) {
-        const text = node.textContent.trim();
-        if (!text) return 0;
-        return Math.ceil(text.length / 48) * 85; 
+        return 0; // 텍스트 노드는 부모 요소에서 함께 계산되므로 자체 부피는 0
     }
-
     if (node.nodeType !== Node.ELEMENT_NODE) return 0;
 
+    // no-break 블록은 내부 부피를 모두 합산 (예외적 재귀)
     if (node.classList.contains('no-break')) {
-        return calculateRecursiveVolume(node);
+        let totalVolume = 0;
+        node.childNodes.forEach(child => {
+            totalVolume += calculateNodeVolume(child);
+        });
+        return totalVolume;
     }
-    
-    let volume = 0;
+
     const tagName = node.tagName.toLowerCase();
-    const textContent = node.textContent; 
+    const textContent = node.textContent.trim();
+    let volume = 0;
 
     switch (tagName) {
-        case 'h1': case 'h2': case 'h3': case 'h4':
-            volume += 80;
-            break;
+        case 'h1': volume = 200; break;
+        case 'h2': volume = 180; break;
+        case 'h3': volume = 150; break;
+        case 'h4': volume = 120; break;
         case 'p':
-            volume += 60 + (Math.ceil(textContent.trim().length / 48) * 85);
+            volume = 60 + Math.ceil(textContent.length / 50) * 85;
             break;
         case 'li':
-            const isNested = node.parentElement && ['ul', 'ol'].includes(node.parentElement.tagName.toLowerCase()) && node.parentElement.parentElement && ['li'].includes(node.parentElement.parentElement.tagName.toLowerCase());
-            if (isNested) {
-                volume += 35 + (Math.ceil(textContent.trim().length / 35) * 85);
-            } else {
-                volume += 35 + (Math.ceil(textContent.trim().length / 48) * 85);
-            }
-            break;
-        case 'table':
-            // 06-24-2-1. (수정) 테이블 자체 점수는 최소화. 모든 계산은 tr에서 처리.
-            volume += 15 + calculateRecursiveVolume(node);
+            // (핵심 수정) li 점수 = 기본 점수(40) + 글자수 비례 점수
+            volume = 40 + (textContent.length * 1.5);
             break;
         case 'tr':
-            // 06-24-2-2. (수정) '개량형 하이브리드 모델' 적용
-            // 행(tr) 내부에서 가장 글자 수가 많은 칸(td, th)을 찾습니다.
-            let maxCharsInRow = 0;
-            if (node.childNodes) {
-                node.childNodes.forEach(cell => {
-                    if (cell.nodeType === Node.ELEMENT_NODE && ['TD', 'TH'].includes(cell.tagName)) {
-                        const cellTextLength = cell.textContent.trim().length;
-                        if (cellTextLength > maxCharsInRow) {
-                            maxCharsInRow = cellTextLength;
-                        }
-                    }
-                });
-            }
-            // 연립방정식으로 계산된 가중치를 적용합니다.
-            // 행 부피 = 기본 점수(80) + (가장 긴 칸의 글자 수 × 글자당 점수(2.6))
-            volume += 80 + (maxCharsInRow * 2.6);
-            break;
+            volume = 180; break; // 테이블 한 줄은 고정 점수
+        case 'hr':
+            volume = 50; break;
         case 'blockquote':
-            volume += 40 + calculateRecursiveVolume(node);
-            break;
-        case 'hr': case 'br':
-            volume += 40;
-            break;
-        case 'img':
-            volume += 1050;
-            break;
-        case 'pre':
-            const lineCount = (textContent.match(/\n/g) || []).length + 1;
-            volume += 40 + (lineCount * 95);
+        case 'ul':
+        case 'ol':
+            // 컨테이너 태그는 자식 요소들의 부피를 합산
+            let childVolume = 0;
+            node.childNodes.forEach(child => {
+                childVolume += calculateNodeVolume(child);
+            });
+            // blockquote 자체 여백 점수 80 추가
+            volume = (tagName === 'blockquote' ? 80 : 0) + childVolume;
             break;
         default:
-            // 06-24-2-3. (수정) tr의 자식 노드들은 이미 tr에서 계산했으므로, 재귀호출에서 제외합니다.
-            if (node.parentElement.tagName !== 'TR') {
-                 volume += calculateRecursiveVolume(node);
-            }
-            break;
+            volume = 0; break;
     }
     return volume;
 }
