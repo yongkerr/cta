@@ -4274,18 +4274,18 @@ function calculateNodeVolume(node) {
             volume += 50 + (Math.ceil(textContent.trim().length / 45) * 80);
             break;
         case 'li':
-            // (수정) 실측값(2.2cm)을 반영하여, li의 기본 점수를 10 -> 20으로 상향
             const isNested = node.parentElement && ['ul', 'ol'].includes(node.parentElement.tagName.toLowerCase()) && node.parentElement.parentElement && ['li'].includes(node.parentElement.parentElement.tagName.toLowerCase());
             if (isNested) {
-                volume += 20 + (Math.ceil(textContent.trim().length / 35) * 80);
+                volume += 10 + (Math.ceil(textContent.trim().length / 35) * 80);
             } else {
-                volume += 20 + (Math.ceil(textContent.trim().length / 45) * 80);
+                volume += 10 + (Math.ceil(textContent.trim().length / 45) * 80);
             }
             break;
         case 'table':
             volume += 15 + calculateRecursiveVolume(node);
             break;
         case 'tr':
+            // 테이블 실측값을 반영한 행(tr)의 기본 점수 75점
             volume += 75 + calculateRecursiveVolume(node);
             break;
         case 'blockquote':
@@ -4295,10 +4295,13 @@ function calculateNodeVolume(node) {
             volume += 40;
             break;
         case 'img':
+            // 사장님 요청에 따라 1050 고정 점수 사용
             volume += 1050;
             break;
         case 'pre':
+            // (업그레이드) 글자 수가 아닌, 실제 줄 수를 세어 계산하는 방식으로 변경
             const lineCount = (textContent.match(/\n/g) || []).length + 1;
+            // pre 태그 기본 점수(40) + (한 줄당 점수(90) * 줄 수)
             volume += 40 + (lineCount * 90);
             break;
         default:
