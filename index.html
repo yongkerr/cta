@@ -1392,8 +1392,15 @@
     overflow-x: auto; /* 만약을 대비한 최소한의 가로 스크롤 허용 */
 }
 
-
-
+/* (신규) 01-25-26. 인용문(blockquote) 스타일 추가 */
+.theory-content-wrapper blockquote {
+    margin-top: 10px; /* 01-25-26-1. (추가) 내용 구분을 위해 상단에 여백 추가 */
+    margin-bottom: 5px;
+    padding: 5px;
+    background-color: #f8f9fa;
+    border-left: 5px solid #6c757d;
+    line-height: 1.7; /* 01-25-26-2. (추가) 줄간격 조정 */
+}
 
         /* ===== 01-25. 이론학습 페이지 스타일 끝 ===== */
 
@@ -4206,8 +4213,8 @@ function setupTheoryBookNavigation() {
      - 테이블 계산 오류 수정 및 로직 개선
      ======================================== */
 
-// 06-24-1. 페이지 분할 메인 함수 (최종 튜닝 v5.0)
-function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3150) {
+// 06-24-1. 페이지 분할 메인 함수 (최종 튜닝 v7.0)
+function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3100) { // 06-24-1-1. (수정) targetVolume을 3100으로 최종 조정
     const parser = new DOMParser();
     const doc = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html');
     const contentContainer = doc.body.firstChild;
@@ -4218,7 +4225,25 @@ function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3150) {
 
     const nodes = Array.from(contentContainer.childNodes);
 
-    for (const node of nodes) {
+    for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        
+        // (신규) 06-24-1-2. '제목 묶음(Keep with Next)' 로직 시작
+        // 현재 노드가 제목이고, 다음 노드가 존재할 경우
+        const isHeader = node.nodeType === Node.ELEMENT_NODE && ['H1', 'H2', 'H3', 'H4'].includes(node.tagName);
+        if (isHeader && i + 1 < nodes.length) {
+            const headerVolume = calculateNodeVolume(node);
+            const nextNodeVolume = calculateNodeVolume(nodes[i + 1]);
+            
+            // 만약 현재 페이지에 '제목+다음내용' 세트가 들어가지 않는다면, '제목'을 추가하기 전에 미리 페이지를 나눔
+            if (currentVolume > 0 && (currentVolume + headerVolume + nextNodeVolume) > targetVolume) {
+                pages.push(currentPageContainer.innerHTML);
+                currentPageContainer = document.createElement('div');
+                currentVolume = 0;
+            }
+        }
+        // (신규) '제목 묶음(Keep with Next)' 로직 끝
+
         const nodeVolume = calculateNodeVolume(node);
         const isNoBreakBlock = node.nodeType === Node.ELEMENT_NODE && node.classList.contains('no-break');
 
@@ -4230,6 +4255,8 @@ function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3150) {
             }
         }
         
+        // '제목 묶음'이 아닌 일반적인 경우의 페이지 나눔 처리
+        // (주의: isHeader 조건이 없어야 제목만으로도 페이지가 넘어갈 수 있음)
         if (!isNoBreakBlock && currentVolume + nodeVolume > targetVolume && currentVolume > 0) {
             pages.push(currentPageContainer.innerHTML);
             currentPageContainer = document.createElement('div');
@@ -4248,13 +4275,12 @@ function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3150) {
     return pages;
 }
 
-// 06-24-2. 개별 HTML 노드의 부피를 계산하는 함수 (최종 튜닝 v5.0)
+// 06-24-2. 개별 HTML 노드의 부피를 계산하는 함수 (최종 튜닝 v7.0)
 function calculateNodeVolume(node) {
     if (node.nodeType === Node.TEXT_NODE) {
         const text = node.textContent.trim();
         if (!text) return 0;
-        // (v5) 텍스트 한 줄의 가치를 85점으로 상향하여 전반적인 부피 현실화
-        return Math.ceil(text.length / 48) * 85;
+        return Math.ceil(text.length / 48) * 85; 
     }
 
     if (node.nodeType !== Node.ELEMENT_NODE) return 0;
@@ -4272,37 +4298,34 @@ function calculateNodeVolume(node) {
             volume += 80;
             break;
         case 'p':
-            // (v5) 텍스트 점수 계산 로직 변경에 따라 자동 반영
-            volume += 50 + (Math.ceil(textContent.trim().length / 48) * 85);
+            volume += 55 + (Math.ceil(textContent.trim().length / 48) * 85);
             break;
         case 'li':
-            // (v5) 텍스트 점수 계산 로직 변경 및 기본 점수 30점으로 변경
             const isNested = node.parentElement && ['ul', 'ol'].includes(node.parentElement.tagName.toLowerCase()) && node.parentElement.parentElement && ['li'].includes(node.parentElement.parentElement.tagName.toLowerCase());
             if (isNested) {
                 volume += 30 + (Math.ceil(textContent.trim().length / 35) * 85);
             } else {
-                volume += 30 + (Math.ceil(textContent.trim().length / 45) * 85);
+                volume += 30 + (Math.ceil(textContent.trim().length / 48) * 85);
             }
             break;
         case 'table':
             volume += 15 + calculateRecursiveVolume(node);
             break;
         case 'tr':
-            // (v5) tr 기본 점수 120점으로 조정
-            volume += 120 + calculateRecursiveVolume(node);
+             // 06-24-2-1. (수정) tr 기본 점수를 210점으로 대폭 상향하여 테이블 부피 현실화
+            volume += 160 + calculateRecursiveVolume(node);
             break;
         case 'blockquote':
-            volume += 60 + calculateRecursiveVolume(node);
+            // 06-24-2-2. (수정) CSS 여백 추가에 맞춰 기본 점수 100점으로 상향
+            volume += 50 + calculateRecursiveVolume(node);
             break;
         case 'hr': case 'br':
             volume += 40;
             break;
         case 'img':
-            // (v5) 사장님 요청에 따라 1050 고정 점수 사용
             volume += 1050;
             break;
         case 'pre':
-            // (v5) 한 줄당 점수를 95점으로 최종 조정
             const lineCount = (textContent.match(/\n/g) || []).length + 1;
             volume += 40 + (lineCount * 95);
             break;
