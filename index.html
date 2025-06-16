@@ -4207,7 +4207,7 @@ function setupTheoryBookNavigation() {
      ======================================== */
 
 // 06-24-1. 페이지 분할 메인 함수 (핵심 로직은 이전과 동일)
-function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3300) {
+function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3150) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html');
     const contentContainer = doc.body.firstChild;
@@ -4296,7 +4296,7 @@ function calculateNodeVolume(node) {
             volume += 40;
             break;
         case 'img':
-            volume += 600;
+            volume += 1050;
             break;
         case 'pre':
             volume += 40 + (Math.ceil(textContent.length / 60) * 80);
