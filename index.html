@@ -1295,6 +1295,9 @@
     /* --- (신규) 스크롤바 숨기기 --- */
     -ms-overflow-style: none; /* 01-25-9. (추가) IE, Edge 용 스크롤바 숨기기 */
     scrollbar-width: none; /* 01-25-10. (추가) Firefox 용 스크롤바 숨기기 */
+    /* (핵심 수정) 플렉스 아이템이 부모 컨테이너를 넘어가지 않도록 강제하는 코드 */
+    min-width: 0;
+
 }
 /* 01-25-11. (추가) 크롬, 사파리 등 Webkit 계열용 스크롤바 숨기기 */
 .theory-book::-webkit-scrollbar {
@@ -1370,7 +1373,7 @@
     margin-bottom: 2px; /* (수정) 항목 간 여백을 조금 더 확보 */
 }
 
-        /* (신규) 01-25-25. 이론 페이지 내 이미지 및 코드 블록 스타일 */
+/* (신규) 01-25-25. 이론 페이지 내 이미지 및 코드 블록 스타일 */
 .theory-content-wrapper img {
     max-width: 100%; /* 이미지가 페이지 너비를 넘어가지 않도록 함 */
     height: auto;
@@ -2584,7 +2587,7 @@ async function loadQuizChapter(subject, chapter, isReturning) {
 }
 
 
-/* ===== (최종 수정) 06-10-4-2. 이론 챕터 로딩 함수 (플로팅 목차 연동) ===== */
+/* ===== (최종 수정) 06-10-4-2. 이론 챕터 로딩 함수 (페이지 분할 알고리즘 적용) ===== */
 async function loadTheoryChapter(subject, chapter) {
     const breadcrumb = document.getElementById('breadcrumb-text');
     const loadingSpinner = document.getElementById('theoryLoadingSpinner');
@@ -2593,30 +2596,36 @@ async function loadTheoryChapter(subject, chapter) {
 
     if (!breadcrumb || !loadingSpinner || !theoryBook || !theoryMainContent) return;
 
+    // 06-10-4-2-1. 로딩 화면 표시 및 경로 업데이트
     loadingSpinner.innerHTML = `📚 <strong>${subject} &gt; ${chapter}</strong> 이론을 불러오는 중...`;
     loadingSpinner.style.display = 'block';
     theoryBook.style.display = 'none';
     theoryBook.innerHTML = '';
-    
-    // 경로 업데이트 (생략하지 않음)
     let path = ['이론학습', subject, chapter];
     breadcrumb.innerHTML = path.map((p, i) => i === path.length - 1 ? `<span class="current">${p}</span>` : `<span>${p}</span>`).join(' &gt; ');
 
     try {
+        // 06-10-4-2-2. Back4App에서 해당 챕터의 모든 콘텐츠 조각을 가져옴
         const theoryContents = await loadTheoryContentFromBack4App(subject, chapter);
         
         if (theoryContents.length > 0) {
-            renderTheoryBook(theoryContents);      // 1. 책 내용 그리기
-            // setupTheoryBookNavigation();      // 2. 책 넘김(스와이프) 기능 설정
+            // 06-10-4-2-3. 가져온 모든 HTML 조각을 하나의 긴 HTML 문자열로 합침
+            const fullHtmlContent = theoryContents.map(item => item.content).join('');
+
+            // 06-10-4-2-4. 새로 만든 페이지 분할 알고리즘 호출
+            const pages = splitHtmlIntoPagesByVolume(fullHtmlContent);
+
+            // 06-10-4-2-5. 분할된 페이지 데이터를 사용하여 책 렌더링 함수 호출
+            renderTheoryBookAsPages(pages);
             
-            // 3. (핵심 추가) 플로팅 목차 생성 및 스크롤 스파이 이벤트 연결
-            const theoryPage = document.querySelector('.theory-page');
-            if (theoryPage) {
-                renderFloatingTOC(theoryBook); // 본문 내용 기반으로 목차 생성
-                
-                // 기존 스크롤 이벤트 리스너 제거 후 새로 추가 (중복 방지)
-                theoryPage.removeEventListener('scroll', updateScrollSpy);
-                theoryPage.addEventListener('scroll', updateScrollSpy);
+            // 06-10-4-2-6. 플로팅 목차 생성 및 스크롤 스파이 이벤트 연결
+            const firstPage = document.querySelector('.theory-page');
+            if (firstPage) {
+                renderFloatingTOC(theoryBook); 
+                document.querySelectorAll('.theory-page').forEach(page => {
+                    page.removeEventListener('scroll', updateScrollSpy);
+                    page.addEventListener('scroll', updateScrollSpy);
+                });
             }
             
             loadingSpinner.style.display = 'none';
@@ -2628,6 +2637,36 @@ async function loadTheoryChapter(subject, chapter) {
         console.error('❌ 이론 콘텐츠 로딩 실패:', error);
         loadingSpinner.innerHTML = '이론 콘텐츠를 불러오는 중 오류가 발생했습니다.';
     }
+}
+
+// (신규) 06-10-4-3. 분할된 페이지 배열을 받아 책을 렌더링하는 함수
+function renderTheoryBookAsPages(pages) {
+    const theoryBook = document.getElementById('theoryBook');
+    if (!theoryBook) return;
+    
+    theoryBook.innerHTML = '';
+    theoryBook.style.width = '';
+
+    let finalHtml = '';
+    for (let i = 0; i < pages.length; i += 2) {
+        const leftPageContent = pages[i] || '';
+        const rightPageContent = pages[i + 1] || '';
+
+        finalHtml += `
+            <div class="theory-page-spread">
+                <div class="theory-page theory-left-page">
+                    <div class="theory-content-wrapper">${leftPageContent}</div>
+                    <div class="theory-page-number">${i + 1}</div>
+                </div>
+                <div class="theory-page theory-right-page">
+                    <div class="theory-content-wrapper">${rightPageContent}</div>
+                    <div class="theory-page-number">${i + 2}</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    theoryBook.innerHTML = finalHtml;
 }
 
 
@@ -4161,6 +4200,130 @@ function setupTheoryBookNavigation() {
             fetchAndDisplayTheory(subjectText, chapterText);
         });
     });
+
+    /* ========================================
+     (신규/최종본) 06-24. 이론 콘텐츠 페이지 자동 분할 알고리즘 (v2.1)
+     - 테이블 계산 오류 수정 및 로직 개선
+     ======================================== */
+
+// 06-24-1. 페이지 분할 메인 함수 (핵심 로직은 이전과 동일)
+function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 2800) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html');
+    const contentContainer = doc.body.firstChild;
+
+    let pages = [];
+    let currentPageContainer = document.createElement('div');
+    let currentVolume = 0;
+
+    const nodes = Array.from(contentContainer.childNodes);
+
+    for (const node of nodes) {
+        const nodeVolume = calculateNodeVolume(node);
+        const isNoBreakBlock = node.nodeType === Node.ELEMENT_NODE && node.classList.contains('no-break');
+
+        if (isNoBreakBlock) {
+            if (currentVolume > 0 && currentVolume + nodeVolume > targetVolume) {
+                pages.push(currentPageContainer.innerHTML);
+                currentPageContainer = document.createElement('div');
+                currentVolume = 0;
+            }
+        }
+        
+        if (!isNoBreakBlock && currentVolume + nodeVolume > targetVolume && currentVolume > 0) {
+            pages.push(currentPageContainer.innerHTML);
+            currentPageContainer = document.createElement('div');
+            currentVolume = 0;
+        }
+
+        currentPageContainer.appendChild(node.cloneNode(true));
+        currentVolume += nodeVolume;
+    }
+
+    if (currentVolume > 0) {
+        pages.push(currentPageContainer.innerHTML);
+    }
+
+    console.log(`📃 페이지 분할 완료: 총 ${pages.length} 페이지 생성됨.`);
+    return pages;
+}
+
+// 06-24-2. 개별 HTML 노드의 부피를 계산하는 함수 (SOP v4.2 가중치표 기반)
+function calculateNodeVolume(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent.trim();
+        if (!text) return 0;
+        return Math.ceil(text.length / 45) * 80;
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) return 0;
+
+    if (node.classList.contains('no-break')) {
+        return calculateRecursiveVolume(node);
+    }
+    
+    let volume = 0;
+    const tagName = node.tagName.toLowerCase();
+    const textContent = node.textContent.trim();
+
+    switch (tagName) {
+        case 'h1': case 'h2': case 'h3': case 'h4':
+            volume += 80;
+            break;
+        case 'p':
+            volume += 50 + (Math.ceil(textContent.length / 45) * 80);
+            break;
+        case 'li':
+            const isNested = node.parentElement && ['ul', 'ol'].includes(node.parentElement.tagName.toLowerCase()) && node.parentElement.parentElement && ['li'].includes(node.parentElement.parentElement.tagName.toLowerCase());
+            if (isNested) {
+                volume += 10 + (Math.ceil(textContent.length / 35) * 80);
+            } else {
+                volume += 10 + (Math.ceil(textContent.length / 45) * 80);
+            }
+            break;
+        case 'table':
+            // 06-24-2-1. (수정) 테이블 자체 점수(15)와 함께, 자식 노드(tbody, aed...)의 부피를 재귀적으로 계산
+            volume += 15 + calculateRecursiveVolume(node);
+            break;
+        case 'tr':
+            // 06-24-2-2. (수정) tr 자체 점수(60)와 함께, 자식 노드(td, th)의 부피를 재귀적으로 계산
+            volume += 60 + calculateRecursiveVolume(node);
+            break;
+        case 'blockquote':
+            volume += 60 + calculateRecursiveVolume(node);
+            break;
+        case 'hr': case 'br':
+            volume += 40;
+            break;
+        case 'img':
+            volume += 750;
+            break;
+        case 'pre':
+            volume += 40 + (Math.ceil(textContent.length / 60) * 80);
+            break;
+        default:
+            volume += calculateRecursiveVolume(node);
+            break;
+    }
+    return volume;
+}
+
+// 06-24-3. 자식 노드들의 부피를 재귀적으로 합산하는 도우미 함수 (오류 수정됨)
+function calculateRecursiveVolume(element) {
+    let totalVolume = 0;
+    if (element.childNodes && element.childNodes.length > 0) {
+        element.childNodes.forEach(child => {
+            /* (오류 수정) 
+             * 이전에 있던 'tr 태그를 건너뛰는 조건문'을 완전히 삭제했습니다.
+             * 이 조건문은 테이블의 행(tr) 부피가 계산되지 못하게 하는 원인이었습니다.
+             * 이제 모든 자식 노드의 부피를 재귀적으로 정확히 계산하여 합산합니다.
+             */
+            totalVolume += calculateNodeVolume(child);
+        });
+    }
+    return totalVolume;
+}
+
 </script>
 
 </body>
