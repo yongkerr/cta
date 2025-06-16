@@ -4264,30 +4264,29 @@ function calculateNodeVolume(node) {
     
     let volume = 0;
     const tagName = node.tagName.toLowerCase();
-    const textContent = node.textContent.trim();
+    const textContent = node.textContent; // .trim()을 제거하여 줄바꿈 문자 보존
 
     switch (tagName) {
         case 'h1': case 'h2': case 'h3': case 'h4':
             volume += 80;
             break;
         case 'p':
-            volume += 50 + (Math.ceil(textContent.length / 45) * 80);
+            volume += 50 + (Math.ceil(textContent.trim().length / 45) * 80);
             break;
         case 'li':
             const isNested = node.parentElement && ['ul', 'ol'].includes(node.parentElement.tagName.toLowerCase()) && node.parentElement.parentElement && ['li'].includes(node.parentElement.parentElement.tagName.toLowerCase());
             if (isNested) {
-                volume += 10 + (Math.ceil(textContent.length / 35) * 80);
+                volume += 10 + (Math.ceil(textContent.trim().length / 35) * 80);
             } else {
-                volume += 10 + (Math.ceil(textContent.length / 45) * 80);
+                volume += 10 + (Math.ceil(textContent.trim().length / 45) * 80);
             }
             break;
         case 'table':
-            // 06-24-2-1. (수정) 테이블 자체 점수(15)와 함께, 자식 노드(tbody, aed...)의 부피를 재귀적으로 계산
             volume += 15 + calculateRecursiveVolume(node);
             break;
         case 'tr':
-            // 06-24-2-2. (수정) tr 자체 점수(60)와 함께, 자식 노드(td, th)의 부피를 재귀적으로 계산
-            volume += 60 + calculateRecursiveVolume(node);
+            // 테이블 실측값을 반영한 행(tr)의 기본 점수 75점
+            volume += 75 + calculateRecursiveVolume(node);
             break;
         case 'blockquote':
             volume += 60 + calculateRecursiveVolume(node);
@@ -4296,10 +4295,14 @@ function calculateNodeVolume(node) {
             volume += 40;
             break;
         case 'img':
+            // 사장님 요청에 따라 1050 고정 점수 사용
             volume += 1050;
             break;
         case 'pre':
-            volume += 40 + (Math.ceil(textContent.length / 60) * 80);
+            // (업그레이드) 글자 수가 아닌, 실제 줄 수를 세어 계산하는 방식으로 변경
+            const lineCount = (textContent.match(/\n/g) || []).length + 1;
+            // pre 태그 기본 점수(40) + (한 줄당 점수(90) * 줄 수)
+            volume += 40 + (lineCount * 90);
             break;
         default:
             volume += calculateRecursiveVolume(node);
