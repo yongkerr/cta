@@ -4217,7 +4217,7 @@ function setupTheoryBookNavigation() {
  (최종 해결 버전) 06-24-1. 페이지 분할 메인 함수
  - 모든 오류를 수정한 최종 안정화 버전
  ======================================== */
-function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 2950) { // 목표량을 3200으로 미세조정
+function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3000) { // 목표량을 3200으로 미세조정
     const parser = new DOMParser();
     const doc = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html');
     const nodes = Array.from(doc.body.firstChild.childNodes);
@@ -4289,8 +4289,8 @@ function calculateNodeVolume(node) {
     let volume = 0;
 
     switch (tagName) {
-        case 'h1': volume = 220; break;
-        case 'h2': volume = 180; break;
+        case 'h1': volume = 230; break;
+        case 'h2': volume = 200; break;
         case 'h3': volume = 150; break;
         case 'h4': volume = 120; break;
         case 'p':
@@ -4303,7 +4303,7 @@ function calculateNodeVolume(node) {
             break;
         case 'tr':
             // 테이블 한 줄은 고정 점수 160
-            volume = 160; break;
+            volume = 200; break;
         case 'blockquote':
             // 인용문은 내부 자식들 점수 합계에 추가 여백 60점
             let childVolume = 0;
