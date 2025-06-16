@@ -4207,7 +4207,7 @@ function setupTheoryBookNavigation() {
      ======================================== */
 
 // 06-24-1. 페이지 분할 메인 함수 (최종 튜닝 v5.0)
-function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3250) {
+function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3150) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html');
     const contentContainer = doc.body.firstChild;
@@ -4254,7 +4254,7 @@ function calculateNodeVolume(node) {
         const text = node.textContent.trim();
         if (!text) return 0;
         // (v5) 텍스트 한 줄의 가치를 85점으로 상향하여 전반적인 부피 현실화
-        return Math.ceil(text.length / 45) * 85;
+        return Math.ceil(text.length / 48) * 85;
     }
 
     if (node.nodeType !== Node.ELEMENT_NODE) return 0;
@@ -4273,23 +4273,23 @@ function calculateNodeVolume(node) {
             break;
         case 'p':
             // (v5) 텍스트 점수 계산 로직 변경에 따라 자동 반영
-            volume += 50 + (Math.ceil(textContent.trim().length / 45) * 85);
+            volume += 50 + (Math.ceil(textContent.trim().length / 48) * 85);
             break;
         case 'li':
-            // (v5) 텍스트 점수 계산 로직 변경 및 기본 점수 20점 유지
+            // (v5) 텍스트 점수 계산 로직 변경 및 기본 점수 30점으로 변경
             const isNested = node.parentElement && ['ul', 'ol'].includes(node.parentElement.tagName.toLowerCase()) && node.parentElement.parentElement && ['li'].includes(node.parentElement.parentElement.tagName.toLowerCase());
             if (isNested) {
-                volume += 20 + (Math.ceil(textContent.trim().length / 35) * 85);
+                volume += 30 + (Math.ceil(textContent.trim().length / 35) * 85);
             } else {
-                volume += 20 + (Math.ceil(textContent.trim().length / 45) * 85);
+                volume += 30 + (Math.ceil(textContent.trim().length / 45) * 85);
             }
             break;
         case 'table':
             volume += 15 + calculateRecursiveVolume(node);
             break;
         case 'tr':
-            // (v5) tr 기본 점수 70점으로 최종 조정
-            volume += 70 + calculateRecursiveVolume(node);
+            // (v5) tr 기본 점수 120점으로 조정
+            volume += 120 + calculateRecursiveVolume(node);
             break;
         case 'blockquote':
             volume += 60 + calculateRecursiveVolume(node);
