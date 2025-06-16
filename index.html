@@ -4214,7 +4214,7 @@ function setupTheoryBookNavigation() {
      ======================================== */
 
 // 06-24-1. 페이지 분할 메인 함수 (최종 튜닝 v8.0 - 제목 묶음 버그 수정)
-function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3050) {
+function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 2850) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html');
     const contentContainer = doc.body.firstChild;
