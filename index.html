@@ -4214,8 +4214,8 @@ function setupTheoryBookNavigation() {
      ======================================== */
 
 /* ========================================
- (수정본) 06-24-1. 페이지 분할 메인 함수 (v2.1 - 그룹핑 버그 수정)
- - 헤더(제목)와 바로 다음 요소 하나만 묶도록 로직을 단순화하여 수정
+ (신규/최종본) 06-24-1. 페이지 분할 메인 함수 (v3.0 - 로직 버그 수정)
+ - 잘못된 그룹핑 문제를 해결하고, 'Keep with Next' 로직을 개선
  ======================================== */
 function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 2900) {
     const parser = new DOMParser();
@@ -4231,20 +4231,30 @@ function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 2900) {
     for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
 
+        // 06-24-1-1. (신규 로직) 비어있는 텍스트 노드는 건너뛰어 계산 오류를 방지합니다.
         if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() === '') {
             continue;
         }
 
         let nodeVolume = calculateNodeVolume(node);
 
-        // '헤더 잘림 방지' 로직: 헤더와 '바로 다음' 요소만 함께 취급
+        // 06-24-1-2. (핵심 로직 수정) '헤더 잘림 방지' 로직
         const isHeader = node.nodeType === Node.ELEMENT_NODE && ['H1', 'H2', 'H3', 'H4'].includes(node.tagName);
         if (isHeader) {
-            let nextNode = nodes[i + 1];
+            // 헤더 다음에 오는 '실질적인' 노드를 찾습니다. (공백 노드 무시)
+            let nextNode = null;
+            for (let j = i + 1; j < nodes.length; j++) {
+                if (nodes[j].nodeType !== Node.TEXT_NODE || nodes[j].textContent.trim() !== '') {
+                    nextNode = nodes[j];
+                    break;
+                }
+            }
+
+            // 다음 노드가 존재할 경우, 헤더와 다음 노드를 합친 부피를 계산합니다.
             if (nextNode) {
-                const nextNodeVolume = calculateNodeVolume(nextNode);
-                // 현재 페이지에 '헤더+다음요소'가 들어가지 않는다면, 페이지를 나눔
-                if (currentVolume > 0 && (currentVolume + nodeVolume + nextNodeVolume) > targetVolume) {
+                const combinedVolume = nodeVolume + calculateNodeVolume(nextNode);
+                // 만약 현재 페이지에 '헤더+다음노드'가 통째로 들어가지 않는다면, 여기서 페이지를 나눕니다.
+                if (currentVolume > 0 && currentVolume + combinedVolume > targetVolume) {
                     pages.push(currentPageContainer.innerHTML);
                     currentPageContainer = document.createElement('div');
                     currentVolume = 0;
@@ -4252,75 +4262,109 @@ function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 2900) {
             }
         }
 
-        // 일반적인 페이지 나누기: 현재 노드를 추가하면 목표량을 초과할 경우 페이지 나눔
-        if (currentVolume > 0 && (currentVolume + nodeVolume) > targetVolume) {
+        // 06-24-1-3. (핵심 로직 수정) '일반 노드' 및 'no-break' 처리 로직
+        // 현재 페이지가 비어있지 않고, 현재 노드를 추가하면 목표량을 초과하는 경우 페이지를 나눕니다.
+        if (currentVolume > 0 && currentVolume + nodeVolume > targetVolume) {
             pages.push(currentPageContainer.innerHTML);
             currentPageContainer = document.createElement('div');
             currentVolume = 0;
         }
 
+        // 06-24-1-4. 현재 노드를 페이지에 추가하고, 누적 부피를 업데이트합니다.
         currentPageContainer.appendChild(node.cloneNode(true));
         currentVolume += nodeVolume;
     }
 
+    // 06-24-1-5. 마지막 페이지에 내용이 남아있으면 추가합니다.
     if (currentVolume > 0) {
         pages.push(currentPageContainer.innerHTML);
     }
+
+    console.log(`📃 페이지 분할 완료 (v3.0 엔진): 총 ${pages.length} 페이지 생성됨.`);
     return pages;
 }
 
 /* ========================================
- (수정본) 06-24-2. 개별 HTML 노드의 부피 계산 함수 (v2.1 - 점수 보정)
- - blockquote 내부 li 점수 계산 방식을 단순화하여 부피 과대평가 문제 수정
+ (신규/최종본) 06-24-2. 개별 HTML 노드의 부피를 계산하는 함수 (v10.0 - 점수 재조정)
+ - 지적사항을 반영하여 blockquote, li 등의 점수를 현실에 맞게 튜닝
  ======================================== */
 function calculateNodeVolume(node) {
     if (node.nodeType === Node.TEXT_NODE) {
-        return 0; // 텍스트 노드는 부모 요소에서 함께 계산되므로 자체 부피는 0
+        const text = node.textContent.trim();
+        if (!text) return 0;
+        // 텍스트 노드 자체는 기본 점수 없이, 순수 길이에만 의존하도록 변경
+        return Math.ceil(text.length / 50) * 80;
     }
+
     if (node.nodeType !== Node.ELEMENT_NODE) return 0;
 
-    // no-break 블록은 내부 부피를 모두 합산 (예외적 재귀)
+    // no-break div의 경우, 내부 요소들의 점수 총합으로 계산합니다.
     if (node.classList.contains('no-break')) {
         let totalVolume = 0;
-        node.childNodes.forEach(child => {
-            totalVolume += calculateNodeVolume(child);
-        });
+        if (node.childNodes && node.childNodes.length > 0) {
+            node.childNodes.forEach(child => {
+                totalVolume += calculateNodeVolume(child);
+            });
+        }
         return totalVolume;
     }
 
-    const tagName = node.tagName.toLowerCase();
-    const textContent = node.textContent.trim();
     let volume = 0;
+    const tagName = node.tagName.toLowerCase();
+    const textContent = node.textContent; 
 
     switch (tagName) {
-        case 'h1': volume = 200; break;
-        case 'h2': volume = 180; break;
-        case 'h3': volume = 150; break;
-        case 'h4': volume = 120; break;
+        case 'h1': case 'h2': case 'h3': case 'h4':
+            // (튜닝) 제목의 기본 점수를 100점으로 상향 조정
+            volume += 100;
+            break;
         case 'p':
-            volume = 60 + Math.ceil(textContent.length / 50) * 85;
+            // (튜닝) 기본 점수 40점 + 텍스트 길이 비례 점수
+            volume += 40 + (Math.ceil(textContent.trim().length / 50) * 80);
             break;
         case 'li':
-            // (핵심 수정) li 점수 = 기본 점수(40) + 글자수 비례 점수
-            volume = 40 + (textContent.length * 1.5);
+            // (핵심 튜닝) 기본 점수를 30점으로, 줄당 점수를 75점으로 하향 조정
+            volume += 30 + (Math.ceil(textContent.trim().length / 45) * 75);
+            break;
+        case 'table':
+            // 테이블은 내부 tr 점수 총합에 기본 점수 15점만 더합니다.
+            volume += 15 + calculateRecursiveVolume(node);
             break;
         case 'tr':
-            volume = 180; break; // 테이블 한 줄은 고정 점수
-        case 'hr':
-            volume = 50; break;
+            // 행의 높이는 가장 내용이 많은 칸(td,th)을 기준으로 계산합니다.
+            let maxCharsInRow = 0;
+            if (node.childNodes) {
+                node.childNodes.forEach(cell => {
+                    if (cell.nodeType === Node.ELEMENT_NODE && ['TD', 'TH'].includes(cell.tagName)) {
+                        const cellTextLength = cell.textContent.trim().length;
+                        if (cellTextLength > maxCharsInRow) {
+                            maxCharsInRow = cellTextLength;
+                        }
+                    }
+                });
+            }
+            volume += 80 + (maxCharsInRow * 2.6);
+            break;
         case 'blockquote':
-        case 'ul':
-        case 'ol':
-            // 컨테이너 태그는 자식 요소들의 부피를 합산
-            let childVolume = 0;
-            node.childNodes.forEach(child => {
-                childVolume += calculateNodeVolume(child);
-            });
-            // blockquote 자체 여백 점수 80 추가
-            volume = (tagName === 'blockquote' ? 80 : 0) + childVolume;
+            // (튜닝) 기본 점수 50점 + 내부 요소 점수 총합
+            volume += 50 + calculateRecursiveVolume(node);
+            break;
+        case 'hr': case 'br':
+            volume += 40;
+            break;
+        case 'img':
+            volume += 1050;
+            break;
+        case 'pre':
+            const lineCount = (textContent.match(/\n/g) || []).length + 1;
+            volume += 40 + (lineCount * 95);
             break;
         default:
-            volume = 0; break;
+            // ul, ol, div 등 컨테이너 태그들은 자신의 점수 없이 자식 요소 점수 총합만 가집니다.
+            if (node.parentElement && node.parentElement.tagName !== 'TR') {
+                 volume += calculateRecursiveVolume(node);
+            }
+            break;
     }
     return volume;
 }
