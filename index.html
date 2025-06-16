@@ -4214,7 +4214,7 @@ function setupTheoryBookNavigation() {
      ======================================== */
 
 // 06-24-1. 페이지 분할 메인 함수 (최종 튜닝 v7.0)
-function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3100) { // 06-24-1-1. (수정) targetVolume을 3100으로 최종 조정
+function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3050) { // 06-24-1-1. (수정) targetVolume을 3100으로 최종 조정
     const parser = new DOMParser();
     const doc = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html');
     const contentContainer = doc.body.firstChild;
@@ -4298,7 +4298,7 @@ function calculateNodeVolume(node) {
             volume += 80;
             break;
         case 'p':
-            volume += 55 + (Math.ceil(textContent.trim().length / 48) * 85);
+            volume += 60 + (Math.ceil(textContent.trim().length / 48) * 85);
             break;
         case 'li':
             const isNested = node.parentElement && ['ul', 'ol'].includes(node.parentElement.tagName.toLowerCase()) && node.parentElement.parentElement && ['li'].includes(node.parentElement.parentElement.tagName.toLowerCase());
@@ -4313,11 +4313,11 @@ function calculateNodeVolume(node) {
             break;
         case 'tr':
              // 06-24-2-1. (수정) tr 기본 점수를 210점으로 대폭 상향하여 테이블 부피 현실화
-            volume += 160 + calculateRecursiveVolume(node);
+            volume += 175 + calculateRecursiveVolume(node);
             break;
         case 'blockquote':
             // 06-24-2-2. (수정) CSS 여백 추가에 맞춰 기본 점수 100점으로 상향
-            volume += 50 + calculateRecursiveVolume(node);
+            volume += 60 + calculateRecursiveVolume(node);
             break;
         case 'hr': case 'br':
             volume += 40;
