@@ -4215,11 +4215,12 @@ function setupTheoryBookNavigation() {
 
 /**
  * ======================================================================
- * (신규 제안) '실제 높이' 기반 페이지 자동 분할 알고리즘 (v3.0)
- * 예측이 아닌 실측 방식으로 정확도를 극대화합니다.
+ * (최종版) '실제 높이' 기반 페이지 분할 알고리즘 (v5.0 - 사용자 규칙 적용)
+ * - '시작 → 연쇄 → 완성' 규칙에 따라 최소한의 묶음 단위를 구성하여
+ * 제목 고아 현상 방지와 여백 최소화의 균형을 맞춥니다.
  * ======================================================================
  */
-function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit = 570) {
+function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit = 880) {
     // --- 1. 사전 준비 ---
     const sourceContainer = document.createElement('div');
     sourceContainer.innerHTML = htmlContent;
@@ -4228,88 +4229,105 @@ function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit = 570) {
     const measurementDiv = document.createElement('div');
     measurementDiv.style.position = 'absolute';
     measurementDiv.style.left = '-9999px';
-    measurementDiv.style.width = '630px';
-    
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★
-    //       이 부분의 오타를 수정했습니다
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★
+    measurementDiv.style.width = '630px'; 
     measurementDiv.style.padding = '5px 20px';
-    
     measurementDiv.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     measurementDiv.style.visibility = 'hidden';
     document.body.appendChild(measurementDiv);
 
-    // --- 2. 페이지 분할 로직 실행 ---
-    let pages = [];
-    let currentPageNodes = [];
-
+    // --- 2. 헬퍼 함수 정의 ---
     const isHeadingElement = (n) => {
         if (!n || n.nodeType !== Node.ELEMENT_NODE) return false;
         const tagName = n.tagName.toLowerCase();
         return ['h1', 'h2', 'h3', 'h4'].includes(tagName) || (tagName === 'p' && n.querySelector('strong'));
     };
     
-    const measureNodeHeight = (nodeOrBundle) => {
+    const isWhitespaceNode = (n) => {
+        return n.nodeType === Node.TEXT_NODE && n.textContent.trim() === '';
+    };
+
+    const measureNodeHeight = (nodesToMeasure) => {
         const tempContainer = document.createElement('div');
-        if (Array.isArray(nodeOrBundle)) {
-            nodeOrBundle.forEach(n => tempContainer.appendChild(n.cloneNode(true)));
-        } else {
-            tempContainer.appendChild(nodeOrBundle.cloneNode(true));
-        }
-        if (nodeOrBundle.classList && nodeOrBundle.classList.contains('no-break')) {
-            tempContainer.classList.add('no-break');
-        }
+        nodesToMeasure.forEach(n => tempContainer.appendChild(n.cloneNode(true)));
         measurementDiv.appendChild(tempContainer);
         const height = tempContainer.scrollHeight;
         measurementDiv.removeChild(tempContainer);
         return height;
     };
+
+    // --- 3. 페이지 분할 메인 로직 ---
+    let pages = [];
+    let currentPageNodes = [];
+    let currentPageHeight = 0;
     
     let i = 0;
     while (i < nodes.length) {
-        if (nodes[i].nodeType === Node.TEXT_NODE && nodes[i].textContent.trim() === '') {
+        if (isWhitespaceNode(nodes[i])) {
             i++;
             continue;
         }
 
-        let unitNodes;
+        let unitToProcess = [];
+        let lastIndexInUnit = i;
         const currentNode = nodes[i];
-        const isNoBreakBlock = currentNode.nodeType === Node.ELEMENT_NODE && currentNode.classList.contains('no-break');
-        const isHeading = isHeadingElement(currentNode);
         
-        if (isNoBreakBlock) {
-            unitNodes = [currentNode];
-            i++;
-        } else if (isHeading) {
-            unitNodes = [currentNode];
-            let nextNodeIndex = i + 1;
-            while(nextNodeIndex < nodes.length && nodes[nextNodeIndex].nodeType === Node.TEXT_NODE && nodes[nextNodeIndex].textContent.trim() === '') {
-                nextNodeIndex++;
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        //       사용자 정의 '묶음 규칙' 적용 시작
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        if (isHeadingElement(currentNode)) {
+            // [규칙 1: 시작] - 제목 요소를 만나면 묶음 시작
+            unitToProcess.push(currentNode);
+
+            // [규칙 2: 연쇄] - 연속되는 제목들을 모두 묶음에 추가
+            let headingChainIndex = i + 1;
+            while (headingChainIndex < nodes.length) {
+                const nextNode = nodes[headingChainIndex];
+                if (isWhitespaceNode(nextNode)) {
+                    headingChainIndex++;
+                    continue;
+                }
+                if (isHeadingElement(nextNode)) {
+                    unitToProcess.push(nextNode);
+                    lastIndexInUnit = headingChainIndex;
+                    headingChainIndex++;
+                } else {
+                    break; // 제목 체인 종료
+                }
             }
-            if (nextNodeIndex < nodes.length && !isHeadingElement(nodes[nextNodeIndex])) {
-                unitNodes.push(nodes[nextNodeIndex]);
-                i = nextNodeIndex + 1;
-            } else {
-                i++;
+            
+            // [규칙 3: 완성] - 제목 체인 바로 뒤의 첫 번째 '내용' 요소까지만 포함
+            let firstContentIndex = lastIndexInUnit + 1;
+            while (firstContentIndex < nodes.length && isWhitespaceNode(nodes[firstContentIndex])) {
+                firstContentIndex++;
             }
+            if (firstContentIndex < nodes.length && !isHeadingElement(nodes[firstContentIndex])) {
+                 unitToProcess.push(nodes[firstContentIndex]);
+                 lastIndexInUnit = firstContentIndex;
+            }
+            
         } else {
-            unitNodes = [currentNode];
-            i++;
+            // 제목이 아니면 그 자체로 하나의 단위
+            unitToProcess.push(currentNode);
         }
 
-        // --- 3. 높이를 측정하고 페이지를 나눌지 결정 ---
-        measurementDiv.innerHTML = '';
-        currentPageNodes.forEach(n => measurementDiv.appendChild(n.cloneNode(true)));
-        const currentPageHeight = measurementDiv.scrollHeight;
-        
-        const unitHeight = measureNodeHeight(unitNodes.length > 1 ? unitNodes : unitNodes[0]);
-        
-        if (currentPageHeight > 0 && (currentPageHeight + unitHeight > pageHeightLimit)) {
-            pages.push(currentPageNodes.map(n => n.outerHTML).join(''));
-            currentPageNodes = [];
-        }
+        i = lastIndexInUnit + 1; // 다음 탐색 시작 위치로 인덱스 점프
 
-        currentPageNodes.push(...unitNodes);
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        //                  묶음 규칙 적용 끝
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        const unitHeight = measureNodeHeight(unitToProcess);
+        
+        // 현재 페이지에 단위를 추가할 수 없는 경우, 페이지를 나누고 새 페이지에서 시작
+        if (currentPageNodes.length > 0 && (currentPageHeight + unitHeight > pageHeightLimit)) {
+             pages.push(currentPageNodes.map(n => n.outerHTML).join(''));
+             currentPageNodes = unitToProcess;
+             currentPageHeight = unitHeight;
+        } else { // 현재 페이지에 단위를 추가할 수 있는 경우
+            currentPageNodes.push(...unitToProcess);
+            currentPageHeight += unitHeight;
+        }
     }
 
     // --- 4. 마무리 ---
@@ -4319,7 +4337,7 @@ function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit = 570) {
 
     document.body.removeChild(measurementDiv);
     
-    console.log(`✅ 콘텐츠 분할 완료: 총 ${pages.length} 페이지`);
+    console.log(`✅ 콘텐츠 분할 완료 (v5.0): 총 ${pages.length} 페이지`);
     return pages;
 }
 
