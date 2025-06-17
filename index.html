@@ -4208,6 +4208,22 @@ function setupTheoryBookNavigation() {
         });
     });
 
+
+    // (신규) 06-10-4-3-1. 제목 여부 판별 함수
+function isHeadingElement(el) {
+    // 1. h1~h3 태그는 제목으로 간주
+    if (['H1', 'H2', 'H3'].includes(el.tagName)) return true;
+    // 2. <p><strong>...</strong></p> 구조도 제목으로 간주
+    if (
+        el.tagName === 'P' &&
+        el.children.length === 1 &&
+        el.children[0].tagName === 'STRONG'
+    ) return true;
+    // 3. 그 외는 제목이 아님
+    return false;
+}
+
+
     /* ========================================
      (신규/최종본) 06-24. 이론 콘텐츠 페이지 자동 분할 알고리즘 (v2.1)
      - 테이블 계산 오류 수정 및 로직 개선
@@ -4252,7 +4268,7 @@ function splitHtmlIntoPagesByActualHeight(htmlContent) {
         if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() === '') return;
         
         const isHeading = node.nodeType === Node.ELEMENT_NODE && 
-            ['h1', 'h2', 'h3', 'h4'].includes(node.tagName.toLowerCase());
+            ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(node.tagName.toLowerCase());
         const isStrongText = node.nodeType === Node.ELEMENT_NODE && 
             node.tagName.toLowerCase() === 'p' && 
             node.firstElementChild?.tagName === 'STRONG';
@@ -4332,7 +4348,6 @@ function splitHtmlIntoPagesByActualHeight(htmlContent) {
     console.log(`✅ 페이지 분할 완료: 총 ${pages.length}페이지 생성`);
     return pages;
 }
-
 
 
 </script>
