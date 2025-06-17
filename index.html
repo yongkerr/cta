@@ -4349,6 +4349,94 @@ function splitHtmlIntoPagesByActualHeight(htmlContent) {
     return pages;
 }
 
+/* ===== 06-14. 이론 콘텐츠 묶음 확장 페이지 분할 로직 (고아현상 방지) 시작 ===== */
+
+// 06-14-1. 제목 요소 판별 함수
+function isTheoryTitleElement(el) {
+    if (!el || el.nodeType !== 1) return false;
+    const tag = el.tagName.toLowerCase();
+    if (tag === 'h1' || tag === 'h2' || tag === 'h3') return true;
+    // p>strong 구조 체크
+    if (tag === 'p' && el.firstElementChild && el.firstElementChild.tagName.toLowerCase() === 'strong') return true;
+    return false;
+}
+
+// 06-14-2. 내용(본문) 요소 판별 함수
+function isTheoryContentElement(el) {
+    if (!el || el.nodeType !== 1) return false;
+    // 제목이 아니면 내용으로 간주 (필요시 추가 조건 가능)
+    return !isTheoryTitleElement(el);
+}
+
+// 06-14-3. HTML 문자열을 DOM 노드 리스트로 변환
+function parseTheoryHtmlToNodes(htmlString) {
+    const container = document.createElement('div');
+    container.innerHTML = htmlString;
+    return Array.from(container.childNodes).filter(node => node.nodeType === 1);
+}
+
+// 06-14-4. 묶음 확장 로직: 제목 연속시 내용 나올 때까지 묶음
+function groupTheoryContentBlocks(htmlString) {
+    const nodes = parseTheoryHtmlToNodes(htmlString);
+    const blocks = [];
+    let tempGroup = [];
+
+    for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        if (isTheoryTitleElement(node)) {
+            tempGroup.push(node.outerHTML);
+        } else if (isTheoryContentElement(node)) {
+            tempGroup.push(node.outerHTML);
+            blocks.push(tempGroup.join(''));
+            tempGroup = [];
+        }
+    }
+    // 마지막에 남은 임시 묶음도 blocks에 추가
+    if (tempGroup.length > 0) {
+        blocks.push(tempGroup.join(''));
+    }
+    return blocks;
+}
+
+// 06-14-5. 실제 페이지 높이 기준으로 묶음 단위 분할
+function splitHtmlIntoPagesByActualHeight(htmlString) {
+    const blocks = groupTheoryContentBlocks(htmlString);
+    const pages = [];
+    let currentPageContent = '';
+    // 임시 컨테이너로 실제 높이 측정
+    let tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.visibility = 'hidden';
+    tempContainer.style.width = '600px'; // 실제 theory-page의 width와 맞춰야 함
+    tempContainer.style.fontSize = '16px';
+    tempContainer.style.lineHeight = '1.7';
+    tempContainer.className = 'theory-content-wrapper';
+    document.body.appendChild(tempContainer);
+
+    const maxHeight = 750; // 한 페이지 최대 높이(px), 환경에 맞게 조정
+
+    for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i];
+        tempContainer.innerHTML = currentPageContent + block;
+        if (tempContainer.scrollHeight > maxHeight) {
+            if (currentPageContent) {
+                pages.push(currentPageContent);
+            }
+            currentPageContent = block;
+        } else {
+            currentPageContent += block;
+        }
+    }
+    if (currentPageContent) {
+        pages.push(currentPageContent);
+    }
+    document.body.removeChild(tempContainer);
+    return pages;
+}
+
+/* ===== 06-14. 이론 콘텐츠 묶음 확장 페이지 분할 로직 (고아현상 방지) 끝 ===== */
+
+
 
 </script>
 
