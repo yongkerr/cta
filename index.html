@@ -4214,10 +4214,11 @@ function setupTheoryBookNavigation() {
      ======================================== */
 
 /* ========================================
- (최종 해결 버전) 06-24-1. 페이지 분할 메인 함수
- - 모든 오류를 수정한 최종 안정화 버전
+ (수정) 06-24-1. 페이지 분할 메인 함수 (묶음 규칙 확장)
+ - h1~h4 제목뿐만 아니라, <p><strong> 형태의 소제목도
+   다음 내용과 한 덩어리로 묶어주는 기능이 추가된 버전
  ======================================== */
-function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3000) { // 목표량을 3200으로 미세조정
+function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3000) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html');
     const nodes = Array.from(doc.body.firstChild.childNodes);
@@ -4232,10 +4233,13 @@ function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3000) { // 목�
 
         const nodeVolume = calculateNodeVolume(node);
         if (nodeVolume === 0) continue;
-        
-        // '헤더 잘림 방지' 로직: 헤더와 '바로 다음' 요소 하나만 확인
+
+        // 06-24-1-1. (핵심 수정) '제목' 또는 '소제목'인지 판단하는 조건 추가
         const isHeader = node.nodeType === Node.ELEMENT_NODE && ['H1', 'H2', 'H3', 'H4'].includes(node.tagName);
-        if (isHeader) {
+        const isSubheading = node.nodeType === Node.ELEMENT_NODE && node.tagName === 'P' && node.firstElementChild?.tagName === 'STRONG';
+
+        // 06-24-1-2. '제목/소제목'과 다음 내용을 묶어주는 '헤더 잘림 방지' 로직
+        if (isHeader || isSubheading) { // 조건 확장
             let nextNode = nodes[i + 1];
             if (nextNode && nextNode.nodeType === Node.TEXT_NODE && nextNode.textContent.trim() === '') {
                 nextNode = nodes[i + 2]; // 공백 텍스트 노드는 건너뛰고 다음 노드를 확인
@@ -4251,7 +4255,7 @@ function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3000) { // 목�
             }
         }
         
-        // 일반적인 페이지 나누기: 현재 노드를 추가하면 목표량을 초과할 경우 페이지 나눔
+        // 06-24-1-3. 일반적인 페이지 나누기: 현재 노드를 추가하면 목표량을 초과할 경우 페이지 나눔
         if (currentVolume > 0 && (currentVolume + nodeVolume) > targetVolume) {
             pages.push(currentPageContainer.innerHTML);
             currentPageContainer = document.createElement('div');
@@ -4268,18 +4272,91 @@ function splitHtmlIntoPagesByVolume(htmlContent, targetVolume = 3000) { // 목�
     return pages;
 }
 
+/* ======================================================================
+ (신규 최종본) 06-25-1. '대표 셀' 기반 테이블 부피 계산 함수 v3.0
+ - 각 열의 가장 긴 셀을 기준으로 너비 비율을 계산하고,
+   안전 여백(Safety Margin)을 포함하여 최종 부피를 산출하는 가장 정교한 버전
+ ====================================================================== */
+function calculateTableVolume_Final(tableElement) {
+    // 06-25-1-1. 부피 계산에 사용할 상수 정의
+    const CHARS_PER_LINE_FULL = 45;      // 페이지 전체 너비에 해당하는 기준 글자 수
+    const VOLUME_PER_LINE = 100;         // 텍스트 한 줄이 차지하는 부피 점수
+    const BASE_VOLUME_PER_CELL = 20;     // 셀의 최소 여백을 보장하기 위한 기본 점수
+    const SAFETY_MARGIN_MULTIPLIER = 1.08; // 최종 부피에 추가할 안전 여백 (8%)
+
+    const rows = Array.from(tableElement.getElementsByTagName('tr'));
+    if (rows.length === 0) return 0;
+
+    // 06-25-1-2. 테이블의 최대 열(column) 개수 파악 (colspan 고려)
+    let maxCols = 0;
+    rows.forEach(row => {
+        let currentColCount = 0;
+        Array.from(row.cells).forEach(cell => {
+            currentColCount += cell.colSpan || 1;
+        });
+        if (currentColCount > maxCols) {
+            maxCols = currentColCount;
+        }
+    });
+    if (maxCols === 0) return 0;
+
+    // 06-25-1-3. 각 열의 '너비 요구량 점수'(가장 긴 텍스트 길이) 찾기
+    const colWidthScores = new Array(maxCols).fill(0);
+    rows.forEach(row => {
+        Array.from(row.cells).forEach((cell, cellIndex) => {
+            const cellTextLength = cell.textContent.trim().length;
+            if (cellTextLength > colWidthScores[cellIndex]) {
+                colWidthScores[cellIndex] = cellTextLength;
+            }
+        });
+    });
+
+    // 06-25-1-4. '너비 요구량 점수'를 기준으로 각 열의 최종 너비 비율 계산
+    const totalWidthScore = colWidthScores.reduce((sum, score) => sum + score, 0);
+    const colWidthProportions = colWidthScores.map(score => totalWidthScore > 0 ? score / totalWidthScore : 1 / maxCols);
+
+    // 06-25-1-5. 각 열의 너비 비율을 바탕으로 '유효 줄당 글자 수' 계산
+    const charsPerLineByCol = colWidthProportions.map(proportion => CHARS_PER_LINE_FULL * proportion);
+
+    // 06-25-1-6. 위 정보를 바탕으로 각 행의 최종 부피를 계산
+    let totalTableVolume = 0;
+    rows.forEach(row => {
+        let maxCellVolumeInRow = 0;
+        Array.from(row.cells).forEach((cell, cellIndex) => {
+            const cellTextLength = cell.textContent.trim().length;
+            const charsPerLineForThisCell = charsPerLineByCol[cellIndex];
+            
+            // 셀의 예상 줄 수 계산 (0으로 나누는 오류 방지)
+            const estimatedLines = charsPerLineForThisCell > 0 ? Math.ceil(cellTextLength / charsPerLineForThisCell) : (cellTextLength > 0 ? 1 : 0);
+            
+            // 셀의 최종 부피 계산
+            const cellVolume = BASE_VOLUME_PER_CELL + (estimatedLines * VOLUME_PER_LINE);
+            
+            if (cellVolume > maxCellVolumeInRow) {
+                maxCellVolumeInRow = cellVolume;
+            }
+        });
+        // 06-25-1-7. 행의 부피(가장 높이가 높은 셀의 부피)를 테이블 전체 부피에 누적
+        totalTableVolume += maxCellVolumeInRow;
+    });
+
+    // 06-25-1-8. 계산된 총 부피에 안전 여백을 곱하여 최종 반환
+    return Math.round(totalTableVolume * SAFETY_MARGIN_MULTIPLIER);
+}
+
+
 /* ========================================
- (최종 개선) 06-25-2. 개별 노드 부피 계산 함수 (줄 단위 계산 적용)
- - 텍스트 길이를 '실제 차지하는 줄 수'로 변환하여 부피를 계산하는 가장 현실적인 버전
+ (최종 수정) 06-25-2. 개별 노드 부피 계산 함수 (테이블 로직 교체)
+ - 테이블(table)을 만나면, 새로 만든 최종 부피 계산 함수를 호출하도록 수정합니다.
  ======================================== */
 function calculateNodeVolume(node) {
-    // 1. 기본 노드 타입 검사 (기존 로직 유지)
+    // 06-25-2-1. 기본 노드 타입 검사
     if (node.nodeType !== Node.ELEMENT_NODE) {
         if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() === '') return 0;
         return 0; 
     }
     
-    // 2. no-break 블록 처리 (기존 로직 유지)
+    // 06-25-2-2. no-break 블록 처리
     if (node.classList.contains('no-break')) {
         let totalVolume = 0;
         node.childNodes.forEach(child => {
@@ -4288,48 +4365,46 @@ function calculateNodeVolume(node) {
         return totalVolume;
     }
 
-    // 3. (핵심) 줄 단위 계산을 위한 상수 정의
-    const CHARS_PER_LINE = 45;  // 한 줄을 채우는 평균 글자 수 (사용자 데이터 기반 보정)
-    const VOLUME_PER_LINE = 100; // 텍스트 한 줄이 차지하는 부피 점수
-
     const tagName = node.tagName.toLowerCase();
     const textContent = node.textContent.trim();
     let volume = 0;
 
-    // 4. 태그별 부피 계산 로직
+    // 06-25-2-3. 태그별 부피 계산 로직
     switch (tagName) {
+        // --- 일반 태그 부피 계산 (이전과 동일) ---
         case 'h1': volume = 230; break;
         case 'h2': volume = 200; break;
         case 'h3': volume = 150; break;
         case 'h4': volume = 120; break;
-        
         case 'p':
         case 'blockquote':
-            // (수정) 기본 여백 점수 40점 + (줄 수 * 줄당 점수)
-            // Math.ceil을 사용하여 1글자라도 있으면 1줄로 계산하도록 함
-            const lines = textContent.length > 0 ? Math.ceil(textContent.length / CHARS_PER_LINE) : 0;
-            volume = 40 + (lines * VOLUME_PER_LINE);
+            const lines = textContent.length > 0 ? Math.ceil(textContent.length / 45) : 0;
+            volume = 40 + (lines * 100);
             break;
-
         case 'li':
-            // (수정) 리스트 항목은 p보다 기본 여백이 적으므로 20점으로 설정
-            const liLines = textContent.length > 0 ? Math.ceil(textContent.length / CHARS_PER_LINE) : 0;
-            volume = 20 + (liLines * VOLUME_PER_LINE);
+            const liLines = textContent.length > 0 ? Math.ceil(textContent.length / 45) : 0;
+            volume = 20 + (liLines * 100);
             break;
-
-        case 'br':
-            // (신규) br 태그는 p보다 여백이 적은 줄바꿈이므로, 한 줄 부피(100)보다 낮은 고정 점수 80점을 부여
-            volume = 80; break;
-
-        case 'tr': volume = 200; break;
+        case 'br': volume = 80; break;
         case 'hr': volume = 50; break;
         case 'img': volume = 1200; break;
 
-        case 'ul': case 'ol': case 'table': case 'tbody': case 'div':
-            // 컨테이너 태그는 자식 요소들의 부피를 합산 (기존 로직 유지)
+        // (핵심) 'table'을 만나면 새로 만든 최종 함수를 호출합니다.
+        case 'table':
+            volume = calculateTableVolume_Final(node);
+            break;
+            
+        // --- 자식 요소의 부피를 합산하는 컨테이너 태그 ---
+        case 'ul': case 'ol': case 'div':
             let containerChildVolume = 0;
             node.childNodes.forEach(child => { containerChildVolume += calculateNodeVolume(child); });
             volume = containerChildVolume;
+            break;
+            
+        // (핵심) 테이블 관련 태그들은 개별적으로 계산하지 않으므로 0을 반환합니다.
+        // (이들의 부피는 calculateTableVolume_Final 함수 내에서 모두 계산됩니다.)
+        case 'tr': case 'td': case 'th': case 'tbody': case 'thead': case 'tfoot':
+            volume = 0; 
             break;
             
         default: volume = 0; break;
