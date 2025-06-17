@@ -4213,115 +4213,83 @@ function setupTheoryBookNavigation() {
      - 테이블 계산 오류 수정 및 로직 개선
      ======================================== */
 
-// 06-10-4-2-1. HTML을 실제 브라우저 렌더링 높이 기준으로 페이지 분할하는 함수 (완전 개선판)
+// 06-10-4-2-1. HTML을 실제 브라우저 렌더링 높이 기준으로 페이지 분할하는 함수 (논리 오류 수정판)
 function splitHtmlIntoPagesByActualHeight(htmlContent) {
     console.log('📄 HTML 페이지 분할 시작 (실제 렌더링 기반)');
     
-    // 1. 임시 측정 컨테이너 생성 (실제 이론 페이지와 동일한 스타일 적용)
+    // 1. 임시 측정 컨테이너 생성
     const tempContainer = document.createElement('div');
     tempContainer.style.cssText = `
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-        width: 50%;
-        max-height: none;
-        overflow: visible;
+        position: absolute; top: -9999px; left: -9999px;
+        width: 650px; max-height: none; overflow: visible; visibility: hidden;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background-color: #fff;
-        padding: 5px 20px;
-        box-sizing: border-box;
-        line-height: 1.6;
-        color: #333;
+        background-color: #fff; padding: 5px 20px; box-sizing: border-box;
+        line-height: 1.7; color: #333;
     `;
+    
+    // 실제 이론 페이지 스타일 복사
+    const samplePage = document.querySelector('.theory-page');
+    if (samplePage) {
+        const styles = window.getComputedStyle(samplePage);
+        tempContainer.style.font = styles.font;
+        tempContainer.style.lineHeight = styles.lineHeight;
+        tempContainer.style.width = `${samplePage.clientWidth}px`;
+    }
     document.body.appendChild(tempContainer);
     
-    // 2. 페이지 최대 높이 계산 (이론 페이지의 실제 사용 가능 높이)
+    // 2. 페이지 최대 높이 계산
     const theoryMainContent = document.getElementById('theoryMainContent');
-    const maxPageHeight = theoryMainContent ? 
-        Math.floor(theoryMainContent.clientHeight * 0.9) : 800; // 90% 사용, 여백 확보
-    
+    const maxPageHeight = theoryMainContent ? Math.floor(theoryMainContent.clientHeight * 0.90) : 800;
     console.log(`📏 페이지 최대 높이: ${maxPageHeight}px`);
     
     // 3. HTML을 의미 단위 블록으로 파싱
     const parser = new DOMParser();
     const doc = parser.parseFromString(`<div>${htmlContent}</div>`, 'text/html');
-    const contentDiv = doc.querySelector('div');
-    
+    const nodes = Array.from(doc.body.firstChild.childNodes);
+
     const blocks = [];
-    
-    // 모든 자식 노드를 순회하며 블록 단위로 분리
-    function parseBlocks(element) {
-        for (let node of element.childNodes) {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-                const tagName = node.tagName.toLowerCase();
-                
-                // 블록 레벨 요소들을 개별 블록으로 처리
-                if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div', 'blockquote', 
-                     'ul', 'ol', 'table', 'pre', 'hr'].includes(tagName)) {
-                    
-                    // 제목 요소나 강조 텍스트 여부 판단
-                    const isHeading = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName);
-                    const isStrongText = (tagName === 'p' && node.querySelector('strong')) ||
-                                       (tagName === 'div' && node.querySelector('strong'));
-                    
-                    blocks.push({
-                        element: node.cloneNode(true),
-                        html: node.outerHTML,
-                        isHeading: isHeading,
-                        isStrongText: isStrongText,
-                        needsFollowingContent: isHeading || isStrongText // 다음 콘텐츠와 함께 있어야 함
-                    });
-                } else {
-                    // 인라인 요소는 재귀적으로 처리
-                    parseBlocks(node);
-                }
-            } else if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
-                // 텍스트 노드를 p 태그로 감싸서 처리
-                const p = document.createElement('p');
-                p.textContent = node.textContent.trim();
-                blocks.push({
-                    element: p,
-                    html: p.outerHTML,
-                    isHeading: false,
-                    isStrongText: false,
-                    needsFollowingContent: false
-                });
-            }
-        }
-    }
-    
-    parseBlocks(contentDiv);
+    nodes.forEach(node => {
+        if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() === '') return;
+        
+        const isHeading = node.nodeType === Node.ELEMENT_NODE && 
+            ['h1', 'h2', 'h3', 'h4'].includes(node.tagName.toLowerCase());
+        const isStrongText = node.nodeType === Node.ELEMENT_NODE && 
+            node.tagName.toLowerCase() === 'p' && 
+            node.firstElementChild?.tagName === 'STRONG';
+
+        blocks.push({
+            html: node.outerHTML || node.textContent,
+            needsFollowingContent: isHeading || isStrongText,
+            elementText: node.textContent.trim().substring(0, 30)
+        });
+    });
     console.log(`📦 총 ${blocks.length}개 블록으로 파싱 완료`);
     
-    // 4. 실제 높이 측정을 통한 페이지 분할
+    // 4. 페이지 분할 메인 로직
     const pages = [];
     let currentPageHtml = '';
-    let currentPageHeight = 0;
     let blockIndex = 0;
-    
+
     while (blockIndex < blocks.length) {
         const currentBlock = blocks[blockIndex];
         
-        // 임시 컨테이너에 현재 페이지 + 새 블록을 추가하여 높이 측정
+        // 현재 페이지에 이 블록을 추가했을 때의 높이 측정
         tempContainer.innerHTML = currentPageHtml + currentBlock.html;
         const testHeight = tempContainer.scrollHeight;
-        
+
         // 페이지 높이를 초과하는 경우
-        if (testHeight > maxPageHeight && currentPageHtml !== '') {
+        if (currentPageHtml !== '' && testHeight > maxPageHeight) {
             
-            // 제목 고아 현상 방지 로직
+            // 제목 고아 현상 방지: 제목이 페이지 하단에 혼자 남을 경우
             if (currentBlock.needsFollowingContent) {
-                console.log(`🚫 제목 고아 현상 방지: "${currentBlock.element.textContent.substring(0, 30)}..."`);
+                console.log(`🚫 제목 고아 현상 방지: "${currentBlock.elementText}..."`);
                 
                 // 현재 페이지를 완성하고 제목을 다음 페이지로 이동
-                if (currentPageHtml.trim()) {
-                    pages.push(currentPageHtml);
-                    console.log(`📄 페이지 ${pages.length} 완성 (높이: ${currentPageHeight}px)`);
-                }
+                pages.push(currentPageHtml);
+                console.log(`📄 페이지 ${pages.length} 완성`);
                 
-                // 새 페이지 시작 (제목 + 최소 1개 후속 블록 포함)
+                // 새 페이지는 제목으로 시작
                 currentPageHtml = currentBlock.html;
-                currentPageHeight = tempContainer.scrollHeight;
                 blockIndex++;
                 
                 // 제목 다음에 오는 콘텐츠도 함께 포함 (고아 현상 완전 방지)
@@ -4332,7 +4300,6 @@ function splitHtmlIntoPagesByActualHeight(htmlContent) {
                     
                     if (combinedHeight <= maxPageHeight) {
                         currentPageHtml += nextBlock.html;
-                        currentPageHeight = combinedHeight;
                         blockIndex++;
                         console.log(`✅ 제목과 후속 콘텐츠를 함께 배치`);
                     }
@@ -4342,33 +4309,30 @@ function splitHtmlIntoPagesByActualHeight(htmlContent) {
             
             // 일반 블록의 경우: 현재 페이지 완성 후 새 페이지 시작
             pages.push(currentPageHtml);
-            console.log(`📄 페이지 ${pages.length} 완성 (높이: ${currentPageHeight}px)`);
+            console.log(`📄 페이지 ${pages.length} 완성`);
             
             currentPageHtml = currentBlock.html;
-            tempContainer.innerHTML = currentPageHtml;
-            currentPageHeight = tempContainer.scrollHeight;
             
         } else {
             // 페이지에 여유가 있는 경우: 블록 추가
             currentPageHtml += currentBlock.html;
-            currentPageHeight = testHeight;
         }
         
         blockIndex++;
     }
-    
+
     // 마지막 페이지 추가
     if (currentPageHtml.trim()) {
         pages.push(currentPageHtml);
-        console.log(`📄 마지막 페이지 ${pages.length} 완성 (높이: ${currentPageHeight}px)`);
+        console.log(`📄 마지막 페이지 ${pages.length} 완성`);
     }
     
-    // 5. 임시 컨테이너 제거
+    // 임시 컨테이너 제거
     document.body.removeChild(tempContainer);
-    
     console.log(`✅ 페이지 분할 완료: 총 ${pages.length}페이지 생성`);
     return pages;
 }
+
 
 
 </script>
