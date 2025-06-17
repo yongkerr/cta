@@ -2594,14 +2594,15 @@ async function loadQuizChapter(subject, chapter, isReturning) {
 }
 
 
-/* ===== (최종版) 이론 챕터 로딩 함수 (v7.0 - '선 렌더링 후 측정' 방식 적용) ===== */
+/* ===== (최종 수정) 06-10-4-2. 이론 챕터 로딩 함수 (페이지 분할 알고리즘 적용) ===== */
 async function loadTheoryChapter(subject, chapter) {
     const breadcrumb = document.getElementById('breadcrumb-text');
     const loadingSpinner = document.getElementById('theoryLoadingSpinner');
     const theoryBook = document.getElementById('theoryBook');
-    if (!breadcrumb || !loadingSpinner || !theoryBook) return;
+    const theoryMainContent = document.getElementById('theoryMainContent');
+    if (!breadcrumb || !loadingSpinner || !theoryBook || !theoryMainContent) return;
 
-    // --- 1. 로딩 화면 표시 ---
+    // 1. 로딩 화면 표시 및 경로 업데이트
     loadingSpinner.innerHTML = `📚 <strong>${subject} &gt; ${chapter}</strong> 이론을 불러오는 중...`;
     loadingSpinner.style.display = 'block';
     theoryBook.style.display = 'none';
@@ -2610,70 +2611,50 @@ async function loadTheoryChapter(subject, chapter) {
     breadcrumb.innerHTML = path.map((p, i) => i === path.length - 1 ? `<span class="current">${p}</span>` : `<span>${p}</span>`).join(' &gt; ');
 
     try {
-        // --- 2. 콘텐츠 데이터 가져오기 ---
+        // 2. Back4App에서 해당 챕터의 모든 콘텐츠 조각을 가져옴
         const theoryContents = await loadTheoryContentFromBack4App(subject, chapter);
-        if (theoryContents.length === 0) {
+        if (theoryContents.length > 0) {
+            // 3. 가져온 모든 HTML 조각을 하나의 긴 HTML 문자열로 합침
+            const fullHtmlContent = theoryContents.map(item => item.content).join('');
+            
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★
+            //       이 부분을 수정했습니다
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★
+            const pages = splitHtmlIntoPagesByActualHeight(fullHtmlContent);
+
+            // 4. 분할된 페이지 데이터를 사용하여 책 렌더링 함수 호출
+            renderTheoryBookAsPages(pages);
+            
+            // 5. 플로팅 목차 생성 및 스크롤 스파이 이벤트 연결
+            const firstPage = document.querySelector('.theory-page');
+            if (firstPage) {
+                renderFloatingTOC(theoryBook);
+                document.querySelectorAll('.theory-page').forEach(page => {
+                    page.removeEventListener('scroll', updateScrollSpy);
+                    page.addEventListener('scroll', updateScrollSpy);
+                });
+            }
+            
+            loadingSpinner.style.display = 'none';
+            theoryBook.style.display = 'flex';
+        } else {
             loadingSpinner.innerHTML = `😥 해당 챕터(<strong>${subject} &gt; ${chapter}</strong>)에 대한 이론 콘텐츠가 아직 준비되지 않았습니다.`;
-            return;
         }
-        const fullHtmlContent = theoryContents.map(item => item.content).join('');
-
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        //            '선 렌더링 후 측정' 핵심 로직
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-        // --- 3. 측정을 위해 빈 페이지 '임시' 렌더링 ---
-        //  - display가 'none'이 아니어야 정확한 측정이 가능합니다.
-        theoryBook.style.display = 'flex'; 
-        renderTheoryBookAsPages(['']); // 내용 없는 빈 페이지 하나를 먼저 그립니다.
-        
-        const tempPage = theoryBook.querySelector('.theory-page');
-        if (!tempPage) {
-            throw new Error("페이지 높이를 측정할 수 없습니다.");
-        }
-
-        // --- 4. 화면에 보이는 실제 페이지 높이 '측정' ---
-        const pageHeight = tempPage.clientHeight;
-        const dynamicPageHeightLimit = pageHeight - 40; // 상하 여백 20px씩 고려
-        
-        console.log(`측정된 실제 페이지 높이: ${pageHeight}px, 적용될 최대 높이: ${dynamicPageHeightLimit}px`);
-
-        // --- 5. 측정된 실제 높이를 기준으로 콘텐츠 '분할' ---
-        const pages = splitHtmlIntoPagesByActualHeight(fullHtmlContent, dynamicPageHeightLimit);
-
-        // --- 6. 분할된 콘텐츠로 '최종' 렌더링 ---
-        renderTheoryBookAsPages(pages);
-        
-        // --- 7. 부가 기능 활성화 ---
-        renderFloatingTOC(theoryBook);
-        document.querySelectorAll('.theory-page').forEach(page => {
-            page.removeEventListener('scroll', updateScrollSpy);
-            page.addEventListener('scroll', updateScrollSpy);
-        });
-
-        loadingSpinner.style.display = 'none';
-
     } catch (error) {
-        console.error('❌ 이론 콘텐츠 처리 실패:', error);
-        loadingSpinner.innerHTML = '이론 콘텐츠를 처리하는 중 오류가 발생했습니다.';
-        theoryBook.style.display = 'flex';
+        console.error('❌ 이론 콘텐츠 로딩 실패:', error);
+        loadingSpinner.innerHTML = '이론 콘텐츠를 불러오는 중 오류가 발생했습니다.';
     }
 }
 
-/* ===== (최종版) 분할된 페이지 배열을 받아 책을 렌더링하는 함수 ===== */
+// (신규) 06-10-4-3. 분할된 페이지 배열을 받아 책을 렌더링하는 함수
 function renderTheoryBookAsPages(pages) {
     const theoryBook = document.getElementById('theoryBook');
     if (!theoryBook) return;
     
-    theoryBook.innerHTML = ''; // 기존 내용(임시 페이지 포함)을 깨끗이 비웁니다.
-
-    // 만약 분할된 페이지가 없다면, 여기서 함수를 종료합니다.
-    if (!pages || pages.length === 0) {
-        return;
-    }
+    theoryBook.innerHTML = '';
+    theoryBook.style.width = '';
 
     let finalHtml = '';
-    // 분할된 페이지 배열을 순회하며 '두 페이지 보기' HTML을 생성합니다.
     for (let i = 0; i < pages.length; i += 2) {
         const leftPageContent = pages[i] || '';
         const rightPageContent = pages[i + 1] || '';
@@ -4234,22 +4215,22 @@ function setupTheoryBookNavigation() {
 
 /**
  * ======================================================================
- * (최종版) '실제 높이' 기반 페이지 분할 알고리즘 (v7.0 - 최종 규칙 적용)
- * - '시작 → 연쇄 → 완성' 규칙에 따라 최소한의 묶음 단위를 구성합니다.
- * - 외부에서 측정한 동적 페이지 높이를 기준으로 분할합니다.
+ * (최종 개선版) '실제 높이' 기반 페이지 분할 알고리즘 (v6.0 - no-break 규칙 적용)
+ * - 사용자가 정의한 <div class="no-break">를 최우선으로 존중하여 콘텐츠 묶음을 구성합니다.
+ * - 이를 통해 페이지 분할에 대한 직접적인 제어와 자동 분할의 균형을 맞춥니다.
  * ======================================================================
  */
-function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit) {
-    // --- 1. 사전 준비 ---
+function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit = 690) {
+    // --- 1. 사전 준비: 측정 환경 설정 ---
     const sourceContainer = document.createElement('div');
     sourceContainer.innerHTML = htmlContent;
     const nodes = Array.from(sourceContainer.childNodes);
 
     const measurementDiv = document.createElement('div');
     measurementDiv.style.position = 'absolute';
-    measurementDiv.style.left = '-9999px';
-    measurementDiv.style.width = '630px'; 
-    measurementDiv.style.padding = '5px 20px';
+    measurementDiv.style.left = '-9999px'; // 화면 밖에 둠
+    measurementDiv.style.width = '630px';  // 실제 페이지 콘텐츠 너비와 일치시켜야 함
+    measurementDiv.style.padding = '5px 20px'; // CSS와 동일한 패딩 적용
     measurementDiv.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     measurementDiv.style.visibility = 'hidden';
     document.body.appendChild(measurementDiv);
@@ -4260,11 +4241,12 @@ function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit) {
         const tagName = n.tagName.toLowerCase();
         return ['h1', 'h2', 'h3', 'h4'].includes(tagName) || (tagName === 'p' && n.querySelector('strong'));
     };
-    
+
     const isWhitespaceNode = (n) => {
         return n.nodeType === Node.TEXT_NODE && n.textContent.trim() === '';
     };
-
+    
+    // 노드들의 실제 렌더링 높이를 측정하는 함수
     const measureNodeHeight = (nodesToMeasure) => {
         const tempContainer = document.createElement('div');
         nodesToMeasure.forEach(n => tempContainer.appendChild(n.cloneNode(true)));
@@ -4290,12 +4272,18 @@ function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit) {
         let lastIndexInUnit = i;
         const currentNode = nodes[i];
         
-        // '시작 → 연쇄 → 완성' 묶음 규칙 적용
-        if (isHeadingElement(currentNode)) {
-            // [규칙 1: 시작]
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        //       (핵심 개선) 'no-break' 규칙 최우선 적용
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        if (currentNode.nodeType === Node.ELEMENT_NODE && currentNode.tagName.toLowerCase() === 'div' && currentNode.classList.contains('no-break')) {
+            // [규칙 1: no-break 우선] - 이 div 전체를 하나의 단위로 취급
             unitToProcess.push(currentNode);
-
-            // [규칙 2: 연쇄]
+            
+        } else if (isHeadingElement(currentNode)) {
+            // [규칙 2: 고아 제목 방지] - 제목 요소를 만나면 다음 내용까지 묶음
+            unitToProcess.push(currentNode);
+            
+            // 연속되는 제목들을 모두 묶음에 추가
             let headingChainIndex = i + 1;
             while (headingChainIndex < nodes.length) {
                 const nextNode = nodes[headingChainIndex];
@@ -4312,7 +4300,7 @@ function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit) {
                 }
             }
             
-            // [규칙 3: 완성]
+            // 제목 체인 바로 뒤의 첫 번째 '내용' 요소까지만 포함
             let firstContentIndex = lastIndexInUnit + 1;
             while (firstContentIndex < nodes.length && isWhitespaceNode(nodes[firstContentIndex])) {
                 firstContentIndex++;
@@ -4321,22 +4309,21 @@ function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit) {
                  unitToProcess.push(nodes[firstContentIndex]);
                  lastIndexInUnit = firstContentIndex;
             }
-            
         } else {
-            // 제목이 아닌 요소(div.no-break 포함)는 그 자체로 하나의 단위
+            // [규칙 3: 일반 요소] - 그 외의 요소는 그 자체로 하나의 단위
             unitToProcess.push(currentNode);
         }
 
         i = lastIndexInUnit + 1; // 다음 탐색 시작 위치로 인덱스 점프
 
-        // 단위(unit) 처리
         const unitHeight = measureNodeHeight(unitToProcess);
-        
-        if (currentPageNodes.length > 0 && (currentPageHeight + unitHeight) > pageHeightLimit) {
+
+        // 현재 페이지에 단위를 추가할 수 없는 경우, 페이지를 나누고 새 페이지에서 시작
+        if (currentPageNodes.length > 0 && (currentPageHeight + unitHeight > pageHeightLimit)) {
              pages.push(currentPageNodes.map(n => n.outerHTML).join(''));
              currentPageNodes = unitToProcess;
              currentPageHeight = unitHeight;
-        } else {
+        } else { // 현재 페이지에 단위를 추가할 수 있는 경우
             currentPageNodes.push(...unitToProcess);
             currentPageHeight += unitHeight;
         }
@@ -4347,132 +4334,10 @@ function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit) {
         pages.push(currentPageNodes.map(n => n.outerHTML).join(''));
     }
 
-    document.body.removeChild(measurementDiv);
+    document.body.removeChild(measurementDiv); // 측정용 div 제거
     
-    console.log(`✅ 콘텐츠 분할 완료 (v7.0): 총 ${pages.length} 페이지`);
+    console.log(`✅ 콘텐츠 분할 완료 (v6.0): 총 ${pages.length} 페이지`);
     return pages;
-}
-
-
-/**
- * 06-28-2. 개별 노드 부피 계산 함수 (정교화된 최종 버전)
- * - no-break, 테이블, 다중 라인 P 태그의 계산 정확도를 대폭 향상
- */
-function calculateNodeVolume(node) {
-    // 텍스트 노드는 부피를 0으로 계산 (항상 Element 노드 기준으로 계산)
-    if (node.nodeType !== Node.ELEMENT_NODE) {
-        const textLength = node.textContent?.trim().length || 0;
-        // 텍스트 노드 자체에도 최소한의 부피를 주어 완전히 무시되지 않도록 함
-        return Math.ceil(textLength / 5); 
-    }
-
-    // 1. (핵심) 'no-break' 클래스를 가진 div는 내용물 전체를 하나의 단위로 계산
-    if (node.classList.contains('no-break')) {
-        let totalVolume = 0;
-        // 재귀적으로 모든 자식 노드의 부피를 합산하여 반환
-        node.childNodes.forEach(child => {
-            totalVolume += calculateNodeVolume(child);
-        });
-        // 그룹 자체에 대한 추가 부피(여백 등)를 더해줌
-        return totalVolume + 50; 
-    }
-
-    const tagName = node.tagName.toLowerCase();
-
-    // 2. (핵심) 테이블 부피 계산 정교화
-    if (tagName === 'table') {
-        const CHARS_PER_LINE_FULL = 45; // 한 줄에 들어가는 평균 글자 수
-        const VOLUME_PER_LINE = 100;    // 한 줄이 차지하는 부피
-        const BASE_VOLUME_PER_CELL = 20;  // 셀 자체의 기본 부피 (패딩 등)
-        
-        const rows = Array.from(node.getElementsByTagName('tr'));
-        if (rows.length === 0) return 0;
-        
-        let totalTableVolume = 50; // 테이블 자체의 기본 부피
-        rows.forEach(row => {
-            let maxCellHeightInRow = 0; // 해당 줄에서 가장 높은 셀의 높이(부피)
-            Array.from(row.cells).forEach(cell => {
-                const len = cell.textContent.trim().length;
-                // 셀의 텍스트가 몇 줄을 차지할지 추정
-                const lines = Math.ceil(len / (CHARS_PER_LINE_FULL / (row.cells.length || 1)));
-                const cellVolume = BASE_VOLUME_PER_CELL + (lines * VOLUME_PER_LINE);
-                if (cellVolume > maxCellHeightInRow) {
-                    maxCellHeightInRow = cellVolume;
-                }
-            });
-            // 테이블 전체 부피는 각 줄의 최대 높이를 더한 값
-            totalTableVolume += maxCellHeightInRow;
-        });
-        return totalTableVolume;
-    }
-
-    let volume = 0;
-    const textContent = node.textContent.trim();
-    
-    switch (tagName) {
-        case 'h1': volume = 230 ; break;
-        case 'h2': volume = 200 ; break;
-        case 'h3': volume = 150 ; break;
-        case 'h4': volume = 120 ; break;
-        
-        // 3. (핵심) P, blockquote, li 등의 부피 계산 정교화 (<br> 태그 및 줄바꿈 고려)
-        case 'p':
-        case 'blockquote':
-        case 'ul':
-        case 'ol':
-        case 'li':
-            const BASE_VOLUME = 40;
-            const VOLUME_PER_LINE = 100;
-            const CHARS_PER_LINE = 45;
-
-            // 내용이 없으면 부피도 0
-            if (node.innerHTML.trim() === '') {
-                volume = 0;
-                break;
-            }
-            
-            // <br> 태그를 기준으로 텍스트를 나누어 줄 수를 계산
-            const linesArray = node.innerHTML.split(/<br\s*\/?>/i);
-            let totalLines = 0;
-
-            linesArray.forEach(lineHtml => {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = lineHtml;
-                const lineText = (tempDiv.textContent || "").trim();
-                
-                if (lineText.length > 0) {
-                    // 글자 수에 기반한 줄 수 계산
-                    totalLines += Math.max(1, Math.ceil(lineText.length / CHARS_PER_LINE));
-                } else {
-                    // 내용 없는 줄도 높이를 차지하므로 1줄로 계산
-                    totalLines += 1;
-                }
-            });
-            
-            // BR 태그로 나눈 후 마지막 빈 줄은 제외
-            if (linesArray.length > 1 && (linesArray[linesArray.length - 1].trim() === '')) {
-                totalLines -= 1;
-            }
-
-            volume = BASE_VOLUME + (totalLines * VOLUME_PER_LINE);
-            break;
-
-        case 'br': volume = 80; break;
-        case 'hr': volume = 50; break;
-        case 'img': volume = 1200; break; // 이미지는 부피를 크게 설정
-
-        // div, tr, th, td 등은 자식요소에서 부피가 계산되므로 자체 부피는 0
-        case 'div':
-        case 'tr': case 'td': case 'th': case 'tbody': case 'thead': case 'tfoot':
-             let containerChildVolume = 0;
-             node.childNodes.forEach(child => { containerChildVolume += calculateNodeVolume(child); });
-             volume = containerChildVolume;
-             break;
-        default:
-             volume = 20 + textContent.length * 2; // 예측하지 못한 태그에 대한 기본값
-             break;
-    }
-    return volume;
 }
 
 </script>
