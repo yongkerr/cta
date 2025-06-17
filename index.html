@@ -2594,7 +2594,7 @@ async function loadQuizChapter(subject, chapter, isReturning) {
 }
 
 
-/* ===== (최종 수정) 이론 챕터 로딩 함수 (동적 높이 측정 적용) ===== */
+/* ===== (최종 수정) 이론 챕터 로딩 함수 (책 높이 동적 측정 적용) ===== */
 async function loadTheoryChapter(subject, chapter) {
     const breadcrumb = document.getElementById('breadcrumb-text');
     const loadingSpinner = document.getElementById('theoryLoadingSpinner');
@@ -2616,16 +2616,16 @@ async function loadTheoryChapter(subject, chapter) {
             const fullHtmlContent = theoryContents.map(item => item.content).join('');
 
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            //            동적 높이 측정 로직 추가
+            //            동적 높이 측정 로직 수정
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             
-            // 1. 페이지 컨테이너의 실제 높이를 가져옵니다.
-            const containerHeight = theoryMainContent.clientHeight;
+            // 1. '바깥 틀'이 아닌 '책 자체'(theoryBook)의 실제 높이를 가져옵니다.
+            const bookContainerHeight = theoryBook.clientHeight;
             
             // 2. 위아래 여백(padding) 등을 고려하여 페이지 최대 높이를 살짝 작게 설정합니다.
-            const dynamicPageHeight = containerHeight - 40; // 상하 여백 20px씩 고려
+            const dynamicPageHeight = bookContainerHeight - 40; // 상하 여백 20px씩 고려
             
-            console.log(`페이지 컨테이너 높이: ${containerHeight}px, 적용될 최대 높이: ${dynamicPageHeight}px`);
+            console.log(`측정된 책의 높이: ${bookContainerHeight}px, 적용될 페이지 최대 높이: ${dynamicPageHeight}px`);
 
             // 3. 측정한 동적 높이를 페이지 분할 함수에 전달합니다.
             const pages = splitHtmlIntoPagesByActualHeight(fullHtmlContent, dynamicPageHeight);
@@ -4223,7 +4223,7 @@ function setupTheoryBookNavigation() {
 
 /**
  * ======================================================================
- * (최종版) '실제 높이' 기반 페이지 분할 알고리즘 (v5.1 - 동적 높이 적용)
+ * (최종版) '실제 높이' 기반 페이지 분할 알고리즘 (v6.0 - 최종 규칙 적용)
  * - '시작 → 연쇄 → 완성' 규칙에 따라 최소한의 묶음 단위를 구성합니다.
  * - 외부에서 측정한 동적 페이지 높이를 기준으로 분할합니다.
  * ======================================================================
@@ -4297,7 +4297,7 @@ function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit) {
                     lastIndexInUnit = headingChainIndex;
                     headingChainIndex++;
                 } else {
-                    break;
+                    break; // 제목 체인 종료
                 }
             }
             
@@ -4316,16 +4316,17 @@ function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit) {
             unitToProcess.push(currentNode);
         }
 
-        i = lastIndexInUnit + 1;
+        i = lastIndexInUnit + 1; // 다음 탐색 시작 위치로 인덱스 점프
 
         // 단위(unit) 처리
         const unitHeight = measureNodeHeight(unitToProcess);
         
+        // 현재 페이지에 단위를 추가할 수 없는 경우, 페이지를 나누고 새 페이지에서 시작
         if (currentPageNodes.length > 0 && (currentPageHeight + unitHeight) > pageHeightLimit) {
              pages.push(currentPageNodes.map(n => n.outerHTML).join(''));
              currentPageNodes = unitToProcess;
              currentPageHeight = unitHeight;
-        } else {
+        } else { // 현재 페이지에 단위를 추가할 수 있는 경우
             currentPageNodes.push(...unitToProcess);
             currentPageHeight += unitHeight;
         }
@@ -4338,7 +4339,7 @@ function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit) {
 
     document.body.removeChild(measurementDiv);
     
-    console.log(`✅ 콘텐츠 분할 완료 (v5.1): 총 ${pages.length} 페이지`);
+    console.log(`✅ 콘텐츠 분할 완료 (v6.0): 총 ${pages.length} 페이지`);
     return pages;
 }
 
