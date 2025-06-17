@@ -2594,7 +2594,7 @@ async function loadQuizChapter(subject, chapter, isReturning) {
 }
 
 
-/* ===== (최종 수정) 06-10-4-2. 이론 챕터 로딩 함수 (페이지 분할 알고리즘 적용) ===== */
+/* ===== (최종 수정) 이론 챕터 로딩 함수 (동적 높이 측정 적용) ===== */
 async function loadTheoryChapter(subject, chapter) {
     const breadcrumb = document.getElementById('breadcrumb-text');
     const loadingSpinner = document.getElementById('theoryLoadingSpinner');
@@ -2602,7 +2602,7 @@ async function loadTheoryChapter(subject, chapter) {
     const theoryMainContent = document.getElementById('theoryMainContent');
     if (!breadcrumb || !loadingSpinner || !theoryBook || !theoryMainContent) return;
 
-    // 1. 로딩 화면 표시 및 경로 업데이트
+    // 1. 로딩 화면 표시
     loadingSpinner.innerHTML = `📚 <strong>${subject} &gt; ${chapter}</strong> 이론을 불러오는 중...`;
     loadingSpinner.style.display = 'block';
     theoryBook.style.display = 'none';
@@ -2611,21 +2611,29 @@ async function loadTheoryChapter(subject, chapter) {
     breadcrumb.innerHTML = path.map((p, i) => i === path.length - 1 ? `<span class="current">${p}</span>` : `<span>${p}</span>`).join(' &gt; ');
 
     try {
-        // 2. Back4App에서 해당 챕터의 모든 콘텐츠 조각을 가져옴
         const theoryContents = await loadTheoryContentFromBack4App(subject, chapter);
         if (theoryContents.length > 0) {
-            // 3. 가져온 모든 HTML 조각을 하나의 긴 HTML 문자열로 합침
             const fullHtmlContent = theoryContents.map(item => item.content).join('');
-            
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★
-            //       이 부분을 수정했습니다
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★
-            const pages = splitHtmlIntoPagesByActualHeight(fullHtmlContent);
 
-            // 4. 분할된 페이지 데이터를 사용하여 책 렌더링 함수 호출
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            //            동적 높이 측정 로직 추가
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            
+            // 1. 페이지 컨테이너의 실제 높이를 가져옵니다.
+            const containerHeight = theoryMainContent.clientHeight;
+            
+            // 2. 위아래 여백(padding) 등을 고려하여 페이지 최대 높이를 살짝 작게 설정합니다.
+            const dynamicPageHeight = containerHeight - 40; // 상하 여백 20px씩 고려
+            
+            console.log(`페이지 컨테이너 높이: ${containerHeight}px, 적용될 최대 높이: ${dynamicPageHeight}px`);
+
+            // 3. 측정한 동적 높이를 페이지 분할 함수에 전달합니다.
+            const pages = splitHtmlIntoPagesByActualHeight(fullHtmlContent, dynamicPageHeight);
+            
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
             renderTheoryBookAsPages(pages);
             
-            // 5. 플로팅 목차 생성 및 스크롤 스파이 이벤트 연결
             const firstPage = document.querySelector('.theory-page');
             if (firstPage) {
                 renderFloatingTOC(theoryBook);
@@ -4215,12 +4223,12 @@ function setupTheoryBookNavigation() {
 
 /**
  * ======================================================================
- * (최종版) '실제 높이' 기반 페이지 분할 알고리즘 (v5.0 - 사용자 규칙 적용)
- * - '시작 → 연쇄 → 완성' 규칙에 따라 최소한의 묶음 단위를 구성하여
- * 제목 고아 현상 방지와 여백 최소화의 균형을 맞춥니다.
+ * (최종版) '실제 높이' 기반 페이지 분할 알고리즘 (v5.1 - 동적 높이 적용)
+ * - '시작 → 연쇄 → 완성' 규칙에 따라 최소한의 묶음 단위를 구성합니다.
+ * - 외부에서 측정한 동적 페이지 높이를 기준으로 분할합니다.
  * ======================================================================
  */
-function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit = 580) {
+function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit) {
     // --- 1. 사전 준비 ---
     const sourceContainer = document.createElement('div');
     sourceContainer.innerHTML = htmlContent;
@@ -4271,15 +4279,12 @@ function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit = 580) {
         let lastIndexInUnit = i;
         const currentNode = nodes[i];
         
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        //       사용자 정의 '묶음 규칙' 적용 시작
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
+        // '시작 → 연쇄 → 완성' 묶음 규칙 적용
         if (isHeadingElement(currentNode)) {
-            // [규칙 1: 시작] - 제목 요소를 만나면 묶음 시작
+            // [규칙 1: 시작]
             unitToProcess.push(currentNode);
 
-            // [규칙 2: 연쇄] - 연속되는 제목들을 모두 묶음에 추가
+            // [규칙 2: 연쇄]
             let headingChainIndex = i + 1;
             while (headingChainIndex < nodes.length) {
                 const nextNode = nodes[headingChainIndex];
@@ -4292,11 +4297,11 @@ function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit = 580) {
                     lastIndexInUnit = headingChainIndex;
                     headingChainIndex++;
                 } else {
-                    break; // 제목 체인 종료
+                    break;
                 }
             }
             
-            // [규칙 3: 완성] - 제목 체인 바로 뒤의 첫 번째 '내용' 요소까지만 포함
+            // [규칙 3: 완성]
             let firstContentIndex = lastIndexInUnit + 1;
             while (firstContentIndex < nodes.length && isWhitespaceNode(nodes[firstContentIndex])) {
                 firstContentIndex++;
@@ -4307,24 +4312,20 @@ function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit = 580) {
             }
             
         } else {
-            // 제목이 아니면 그 자체로 하나의 단위
+            // 제목이 아닌 요소(div.no-break 포함)는 그 자체로 하나의 단위
             unitToProcess.push(currentNode);
         }
 
-        i = lastIndexInUnit + 1; // 다음 탐색 시작 위치로 인덱스 점프
+        i = lastIndexInUnit + 1;
 
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        //                  묶음 규칙 적용 끝
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
+        // 단위(unit) 처리
         const unitHeight = measureNodeHeight(unitToProcess);
         
-        // 현재 페이지에 단위를 추가할 수 없는 경우, 페이지를 나누고 새 페이지에서 시작
-        if (currentPageNodes.length > 0 && (currentPageHeight + unitHeight > pageHeightLimit)) {
+        if (currentPageNodes.length > 0 && (currentPageHeight + unitHeight) > pageHeightLimit) {
              pages.push(currentPageNodes.map(n => n.outerHTML).join(''));
              currentPageNodes = unitToProcess;
              currentPageHeight = unitHeight;
-        } else { // 현재 페이지에 단위를 추가할 수 있는 경우
+        } else {
             currentPageNodes.push(...unitToProcess);
             currentPageHeight += unitHeight;
         }
@@ -4337,7 +4338,7 @@ function splitHtmlIntoPagesByActualHeight(htmlContent, pageHeightLimit = 580) {
 
     document.body.removeChild(measurementDiv);
     
-    console.log(`✅ 콘텐츠 분할 완료 (v5.0): 총 ${pages.length} 페이지`);
+    console.log(`✅ 콘텐츠 분할 완료 (v5.1): 총 ${pages.length} 페이지`);
     return pages;
 }
 
